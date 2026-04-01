@@ -1,17 +1,9 @@
 import { createContext, useContext, useState, useEffect, useRef } from "react";
 import { fcl } from "@/lib/flow";
-import {
-  useAddRewardPoints,
-  useConnectWallet,
-  useGetRewards,
-  getGetRewardsQueryKey,
-} from "@workspace/api-client-react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useConnectWallet } from "@workspace/api-client-react";
 import { useToast } from "@/hooks/use-toast";
 
 type FCLUser = { addr?: string; loggedIn?: boolean };
-
-type Rewards = { totalPoints: number; walletAddress: string } | undefined;
 
 type WalletContextType = {
   walletAddress: string | null;
@@ -19,9 +11,9 @@ type WalletContextType = {
   isConnecting: boolean;
   showManualInput: boolean;
   manualAddress: string;
-  rewards: Rewards;
+  flowRewards: number;
   handleConnect: () => Promise<void>;
-  handleDisconnect: () => Promise<void>;
+  handleDisconnect: () => void;
   handleManualConnect: () => void;
   addFlowReward: (activity: string, points: number) => void;
   setManualAddress: (addr: string) => void;
@@ -30,23 +22,21 @@ type WalletContextType = {
 
 const WalletContext = createContext<WalletContextType | null>(null);
 
+const INITIAL_REWARDS = 100;
+
 export function WalletProvider({ children }: { children: React.ReactNode }) {
   const { toast } = useToast();
-  const queryClient = useQueryClient();
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
   const [showManualInput, setShowManualInput] = useState(false);
   const [manualAddress, setManualAddress] = useState("");
   const [isManual, setIsManual] = useState(false);
+  const [flowRewards, setFlowRewards] = useState(INITIAL_REWARDS);
 
   const isManualRef = useRef(false);
   isManualRef.current = isManual;
 
   const connectWalletMutation = useConnectWallet();
-  const addReward = useAddRewardPoints();
-  const { data: rewards } = useGetRewards({
-    query: { queryKey: getGetRewardsQueryKey() },
-  });
 
   useEffect(() => {
     const unsub = fcl.currentUser.subscribe((user: FCLUser) => {
@@ -58,10 +48,9 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
           { data: { walletAddress: user.addr } },
           {
             onSuccess: () => {
-              queryClient.invalidateQueries({ queryKey: getGetRewardsQueryKey() });
               toast({
-                title: "Connected to Flow Testnet",
-                description: `${user.addr!.substring(0, 6)}...${user.addr!.slice(-4)}`,
+                title: "Wallet Connected",
+                description: `Flow Testnet — ${user.addr!.substring(0, 8)}...`,
               });
             },
           }
@@ -91,12 +80,13 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const handleDisconnect = async () => {
-    if (!isManual) await fcl.unauthenticate();
+  const handleDisconnect = () => {
+    if (!isManual) fcl.unauthenticate();
     setWalletAddress(null);
     setIsManual(false);
     setShowManualInput(false);
     setManualAddress("");
+    setFlowRewards(INITIAL_REWARDS);
     toast({ title: "Wallet Disconnected" });
   };
 
@@ -110,8 +100,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
       { data: { walletAddress: trimmed } },
       {
         onSuccess: () => {
-          queryClient.invalidateQueries({ queryKey: getGetRewardsQueryKey() });
-          toast({ title: "Connected to Flow Testnet", description: "Manual address accepted." });
+          toast({ title: "Wallet Connected", description: "Flow Testnet — manual address." });
         },
       }
     );
@@ -119,18 +108,11 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
 
   const addFlowReward = (activity: string, points: number) => {
     if (!walletAddress) return;
-    addReward.mutate(
-      { data: { activity, points, walletAddress } },
-      {
-        onSuccess: () => {
-          queryClient.invalidateQueries({ queryKey: getGetRewardsQueryKey() });
-          toast({
-            title: `+${points} FLOW Earned`,
-            description: activity,
-          });
-        },
-      }
-    );
+    setFlowRewards((prev) => prev + points);
+    toast({
+      title: `+${points} FLOW Earned`,
+      description: activity,
+    });
   };
 
   return (
@@ -141,7 +123,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
         isConnecting,
         showManualInput,
         manualAddress,
-        rewards,
+        flowRewards,
         handleConnect,
         handleDisconnect,
         handleManualConnect,

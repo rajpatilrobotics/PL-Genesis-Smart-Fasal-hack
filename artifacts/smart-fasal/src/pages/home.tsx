@@ -1,10 +1,9 @@
 import { useEffect, useState } from "react";
-import { 
+import {
   useGetWeather, getGetWeatherQueryKey,
   useGetLatestSensorData, getGetLatestSensorDataQueryKey,
   useGetAiRecommendation,
   useStoreOnFilecoin,
-  useGetRewards, getGetRewardsQueryKey,
   useSubmitSensorData,
   useGetFilecoinRecords, getGetFilecoinRecordsQueryKey
 } from "@workspace/api-client-react";
@@ -12,50 +11,39 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { CloudRain, Droplets, Thermometer, Wind, Brain, Database, RefreshCw, UploadCloud, ShieldCheck } from "lucide-react";
+import { CloudRain, Droplets, Thermometer, Wind, Brain, Database, RefreshCw, ShieldCheck, Zap } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useQueryClient } from "@tanstack/react-query";
+import { useWallet } from "@/lib/wallet-context";
 
 export default function Home() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { walletAddress, addFlowReward } = useWallet();
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
-  
-  // Weather Data
+
   const { data: weather, isLoading: loadingWeather } = useGetWeather({}, {
-    query: {
-      queryKey: getGetWeatherQueryKey({}),
-    }
+    query: { queryKey: getGetWeatherQueryKey({}) }
   });
 
-  // Sensor Data with polling
   const { data: sensorData, isLoading: loadingSensor } = useGetLatestSensorData({
-    query: {
-      queryKey: getGetLatestSensorDataQueryKey(),
-      refetchInterval: 3000,
-    }
+    query: { queryKey: getGetLatestSensorDataQueryKey(), refetchInterval: 3000 }
   });
 
-  // Filecoin Records
   const { data: filecoinRecords } = useGetFilecoinRecords({
     query: { queryKey: getGetFilecoinRecordsQueryKey() }
   });
 
-  // Update timestamp when sensor data changes
   useEffect(() => {
-    if (sensorData) {
-      setLastUpdated(new Date());
-    }
+    if (sensorData) setLastUpdated(new Date());
   }, [sensorData]);
 
-  // Mutations
   const getAiRec = useGetAiRecommendation();
   const storeOnFilecoin = useStoreOnFilecoin();
   const submitSensor = useSubmitSensorData();
 
   const handleGetRecommendation = () => {
     if (!sensorData) return;
-    
     getAiRec.mutate({
       data: {
         nitrogen: sensorData.nitrogen,
@@ -69,36 +57,24 @@ export default function Home() {
       }
     }, {
       onSuccess: () => {
-        toast({
-          title: "AI Recommendation Updated",
-          description: "Latest crop insights are available.",
-        });
+        toast({ title: "AI Recommendation Updated", description: "Latest crop insights are available." });
+        if (walletAddress) addFlowReward("AI Crop Recommendation", 10);
       },
       onError: () => {
-        toast({
-          title: "Error",
-          description: "Failed to generate AI recommendation.",
-          variant: "destructive"
-        });
+        toast({ title: "Error", description: "Failed to generate AI recommendation.", variant: "destructive" });
       }
     });
   };
 
   const handleStoreData = () => {
     if (!sensorData) return;
-    
     storeOnFilecoin.mutate({
-      data: {
-        dataType: "sensor_snapshot",
-        data: sensorData as any
-      }
+      data: { dataType: "sensor_snapshot", data: sensorData as Record<string, unknown> }
     }, {
       onSuccess: (res) => {
-        toast({
-          title: "Secured on Filecoin",
-          description: `CID: ${res.cid.substring(0, 10)}...`,
-        });
+        toast({ title: "Secured on Filecoin", description: `CID: ${res.cid.substring(0, 10)}...` });
         queryClient.invalidateQueries({ queryKey: getGetFilecoinRecordsQueryKey() });
+        if (walletAddress) addFlowReward("Store Data on Filecoin", 20);
       }
     });
   };
@@ -122,14 +98,26 @@ export default function Home() {
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      {/* Header Info */}
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold tracking-tight">Farm Dashboard</h2>
-        <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground bg-muted px-2.5 py-1 rounded-full cursor-pointer hover:bg-muted/80" onClick={handleSimulateSensor}>
+        <div
+          className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground bg-muted px-2.5 py-1 rounded-full cursor-pointer hover:bg-muted/80"
+          onClick={handleSimulateSensor}
+        >
           <RefreshCw className="w-3 h-3 animate-spin-slow" />
           <span>Live: {lastUpdated.toLocaleTimeString()}</span>
         </div>
       </div>
+
+      {/* Reward hint banner — only when wallet connected */}
+      {walletAddress && (
+        <div className="flex items-center gap-2 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5">
+          <Zap className="w-4 h-4 shrink-0 text-amber-500" />
+          <span>
+            Earn FLOW rewards: <strong>AI Insights +10</strong> · <strong>Store Data +20</strong> · <strong>Insurance +50</strong>
+          </span>
+        </div>
+      )}
 
       {/* Weather Widget */}
       <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20 overflow-hidden relative">
@@ -204,7 +192,6 @@ export default function Home() {
                 </div>
                 <Progress value={(sensorData.potassium / 300) * 100} className="h-2.5 [&>div]:bg-purple-500" />
               </div>
-              
               <div className="grid grid-cols-2 gap-4 mt-6 pt-4 border-t border-border">
                 <div className="bg-muted/50 p-3 rounded-xl">
                   <p className="text-xs text-muted-foreground mb-1">Soil pH</p>
@@ -224,33 +211,39 @@ export default function Home() {
 
       {/* Actions */}
       <div className="grid grid-cols-2 gap-3">
-        <Button 
-          onClick={handleGetRecommendation} 
+        <Button
+          onClick={handleGetRecommendation}
           disabled={!sensorData || getAiRec.isPending}
-          className="h-14 font-semibold text-wrap leading-tight"
+          className="h-14 font-semibold text-wrap leading-tight relative"
           data-testid="button-get-ai-rec"
         >
           <Brain className="w-5 h-5 mr-2 shrink-0" />
-          {getAiRec.isPending ? "Analyzing..." : "Get AI Insights"}
+          <span>{getAiRec.isPending ? "Analyzing..." : "Get AI Insights"}</span>
+          {walletAddress && (
+            <span className="absolute top-1 right-2 text-[9px] bg-white/20 text-white px-1 rounded-full">+10 FLOW</span>
+          )}
         </Button>
-        <Button 
+        <Button
           variant="secondary"
-          onClick={handleStoreData} 
+          onClick={handleStoreData}
           disabled={!sensorData || storeOnFilecoin.isPending}
-          className="h-14 font-semibold text-wrap leading-tight"
+          className="h-14 font-semibold text-wrap leading-tight relative"
           data-testid="button-store-filecoin"
         >
           <Database className="w-5 h-5 mr-2 shrink-0" />
-          {storeOnFilecoin.isPending ? "Securing..." : "Store on Filecoin"}
+          <span>{storeOnFilecoin.isPending ? "Securing..." : "Store Data"}</span>
+          {walletAddress && (
+            <span className="absolute top-1 right-2 text-[9px] bg-foreground/10 text-foreground/70 px-1 rounded-full">+20 FLOW</span>
+          )}
         </Button>
       </div>
 
-      {/* AI Prediction Result Card (Show if we have a recent mutation result) */}
+      {/* AI Result Card */}
       {getAiRec.data && (
         <Card className="border-accent/50 bg-accent/5">
           <CardHeader className="pb-2">
             <CardTitle className="text-lg flex items-center">
-              <Brain className="w-5 h-5 mr-2 text-accent" /> 
+              <Brain className="w-5 h-5 mr-2 text-accent" />
               Latest AI Prediction
             </CardTitle>
           </CardHeader>
@@ -263,7 +256,7 @@ export default function Home() {
               <div className="text-center p-2 bg-background rounded-lg border border-border">
                 <p className="text-[10px] uppercase font-bold text-muted-foreground">Risk</p>
                 <p className={`text-sm font-bold mt-1 ${
-                  getAiRec.data.riskLevel === 'LOW' ? 'text-green-600' : 
+                  getAiRec.data.riskLevel === 'LOW' ? 'text-green-600' :
                   getAiRec.data.riskLevel === 'MEDIUM' ? 'text-yellow-600' : 'text-red-600'
                 }`}>{getAiRec.data.riskLevel}</p>
               </div>
@@ -277,7 +270,7 @@ export default function Home() {
         </Card>
       )}
 
-      {/* Filecoin Records Link */}
+      {/* Filecoin Records */}
       {filecoinRecords && filecoinRecords.length > 0 && (
         <Card className="bg-transparent border-dashed">
           <CardContent className="p-4 flex justify-between items-center text-sm">
@@ -285,7 +278,10 @@ export default function Home() {
               <ShieldCheck className="w-4 h-4" />
               {filecoinRecords.length} records secured on IPFS
             </span>
-            <Button variant="link" className="h-auto p-0" onClick={() => window.open(filecoinRecords[0].url, '_blank')}>View Latest</Button>
+            <Button variant="link" className="h-auto p-0"
+              onClick={() => window.open(filecoinRecords[0].url, '_blank')}>
+              View Latest
+            </Button>
           </CardContent>
         </Card>
       )}

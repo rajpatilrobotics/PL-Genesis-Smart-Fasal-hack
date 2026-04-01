@@ -3,13 +3,12 @@ import {
   useGetInsuranceClaims, getGetInsuranceClaimsQueryKey,
   useCreateInsuranceClaim
 } from "@workspace/api-client-react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
@@ -38,19 +37,14 @@ export default function Insurance() {
   const handleClaimSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     createClaim.mutate({
-      data: {
-        claimType: claimForm.type,
-        description: claimForm.description
-      }
+      data: { claimType: claimForm.type, description: claimForm.description }
     }, {
       onSuccess: () => {
         toast({ title: "Claim Submitted", description: "Your insurance claim has been registered." });
         setClaimOpen(false);
         setClaimForm({ type: "DROUGHT", description: "" });
         queryClient.invalidateQueries({ queryKey: getGetInsuranceClaimsQueryKey() });
-        if (walletAddress) {
-          addFlowReward("Insurance Claim Filed", 50);
-        }
+        if (walletAddress) addFlowReward("Insurance Claim Filed", 50);
       },
       onError: () => {
         toast({ title: "Error", description: "Failed to submit claim.", variant: "destructive" });
@@ -73,14 +67,13 @@ export default function Insurance() {
         <h2 className="text-2xl font-bold tracking-tight">Parametric Insurance</h2>
         <p className="text-muted-foreground text-sm">Automated protection against climate risks</p>
         {walletAddress && (
-          <div className="mt-2 flex items-center gap-1.5 text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-1.5 w-fit">
-            <Zap className="w-3.5 h-3.5" />
-            <span>Filing a claim earns <strong>+50 FLOW</strong> to your wallet</span>
+          <div className="mt-2 flex items-center gap-1.5 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-1.5 w-fit">
+            <Zap className="w-3.5 h-3.5 text-amber-500" />
+            Filing a claim earns <strong>+50 FLOW</strong>
           </div>
         )}
       </div>
 
-      {/* Risk Assessment Card */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -139,10 +132,10 @@ export default function Insurance() {
           {risk?.eligibleForClaim && (
             <Dialog open={claimOpen} onOpenChange={setClaimOpen}>
               <DialogTrigger asChild>
-                <Button className="w-full font-bold" size="lg" variant="destructive" data-testid="button-open-claim">
+                <Button className="w-full font-bold relative" size="lg" variant="destructive" data-testid="button-open-claim">
                   Claim Insurance (Eligible)
                   {walletAddress && (
-                    <span className="ml-2 text-xs bg-white/20 px-1.5 py-0.5 rounded-full">+50 FLOW</span>
+                    <span className="absolute right-4 text-[9px] bg-white/20 px-1.5 py-px rounded-full">+50 FLOW</span>
                   )}
                 </Button>
               </DialogTrigger>
@@ -150,8 +143,8 @@ export default function Insurance() {
                 <DialogHeader>
                   <DialogTitle>File Parametric Claim</DialogTitle>
                   <DialogDescription>
-                    Your farm conditions have triggered an automated payout eligibility.
-                    {walletAddress && " Filing earns +50 FLOW rewards."}
+                    Your farm conditions qualify for an automated payout.
+                    {walletAddress && <span className="text-amber-600 font-semibold"> Filing earns +50 FLOW.</span>}
                   </DialogDescription>
                 </DialogHeader>
                 <form onSubmit={handleClaimSubmit} className="space-y-4 pt-4">
@@ -188,13 +181,11 @@ export default function Insurance() {
         </CardFooter>
       </Card>
 
-      {/* Claims History */}
       <div>
         <h3 className="text-lg font-bold mb-3 flex items-center gap-2">
           <FileText className="w-5 h-5" />
           Claims History
         </h3>
-
         {loadingClaims ? (
           <div className="space-y-3">
             <Skeleton className="h-20 w-full" />

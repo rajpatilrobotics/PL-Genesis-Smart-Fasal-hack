@@ -24,10 +24,7 @@ export default function AiHub() {
   const [recForm, setRecForm] = useState({
     nitrogen: "120", phosphorus: "45", potassium: "180", ph: "6.5", moisture: "40"
   });
-
-  const [diseaseForm, setDiseaseForm] = useState({
-    cropName: "", imageDescription: ""
-  });
+  const [diseaseForm, setDiseaseForm] = useState({ cropName: "", imageDescription: "" });
 
   const getAiRec = useGetAiRecommendation();
   const detectDisease = useDetectDisease();
@@ -50,9 +47,7 @@ export default function AiHub() {
       onSuccess: () => {
         toast({ title: "Analysis Complete", description: "New recommendation generated." });
         queryClient.invalidateQueries({ queryKey: getGetAiRecommendationHistoryQueryKey() });
-        if (walletAddress) {
-          addFlowReward("AI Crop Recommendation", 10);
-        }
+        if (walletAddress) addFlowReward("AI Crop Recommendation", 10);
       },
       onError: () => {
         toast({ title: "Error", description: "Failed to get recommendation.", variant: "destructive" });
@@ -63,18 +58,12 @@ export default function AiHub() {
   const handleDiseaseSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!diseaseForm.imageDescription) return;
-
     detectDisease.mutate({
-      data: {
-        cropName: diseaseForm.cropName,
-        imageDescription: diseaseForm.imageDescription
-      }
+      data: { cropName: diseaseForm.cropName, imageDescription: diseaseForm.imageDescription }
     }, {
       onSuccess: () => {
         toast({ title: "Detection Complete", description: "Review the diagnosis below." });
-        if (walletAddress) {
-          addFlowReward("Disease Detection Analysis", 10);
-        }
+        if (walletAddress) addFlowReward("Disease Detection Analysis", 10);
       },
       onError: () => {
         toast({ title: "Error", description: "Failed to analyze symptoms.", variant: "destructive" });
@@ -88,9 +77,9 @@ export default function AiHub() {
         <h2 className="text-2xl font-bold tracking-tight">AI Farm Hub</h2>
         <p className="text-muted-foreground text-sm">Powered insights for better yields</p>
         {walletAddress && (
-          <div className="mt-2 flex items-center gap-1.5 text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-1.5 w-fit">
-            <Zap className="w-3.5 h-3.5" />
-            <span>Each AI analysis earns <strong>+10 FLOW</strong> to your wallet</span>
+          <div className="mt-2 flex items-center gap-1.5 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-1.5 w-fit">
+            <Zap className="w-3.5 h-3.5 text-amber-500" />
+            Each AI analysis earns <strong>+10 FLOW</strong>
           </div>
         )}
       </div>
@@ -133,9 +122,12 @@ export default function AiHub() {
                     <Input id="moisture" value={recForm.moisture} onChange={e => setRecForm({ ...recForm, moisture: e.target.value })} type="number" required />
                   </div>
                 </div>
-                <Button type="submit" className="w-full" disabled={getAiRec.isPending} data-testid="button-submit-rec">
+                <Button type="submit" className="w-full relative" disabled={getAiRec.isPending} data-testid="button-submit-rec">
                   <Sparkles className="w-4 h-4 mr-2" />
                   {getAiRec.isPending ? "Analyzing..." : "Generate Insights"}
+                  {walletAddress && (
+                    <span className="absolute right-3 text-[9px] bg-white/20 px-1.5 py-px rounded-full">+10 FLOW</span>
+                  )}
                 </Button>
               </form>
             </CardContent>
@@ -165,7 +157,6 @@ export default function AiHub() {
                     <p className="font-bold text-lg">{getAiRec.data.yieldPercent}%</p>
                   </div>
                 </div>
-
                 <div className="space-y-2 text-sm">
                   <div className="p-3 bg-background rounded-lg shadow-sm border border-border">
                     <p className="font-semibold mb-1 text-primary">Fertilizer Advice</p>
@@ -212,27 +203,21 @@ export default function AiHub() {
               <form onSubmit={handleDiseaseSubmit} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="crop">Crop Name (Optional)</Label>
-                  <Input
-                    id="crop"
-                    placeholder="e.g. Wheat, Tomato"
-                    value={diseaseForm.cropName}
-                    onChange={e => setDiseaseForm({ ...diseaseForm, cropName: e.target.value })}
-                  />
+                  <Input id="crop" placeholder="e.g. Wheat, Tomato" value={diseaseForm.cropName}
+                    onChange={e => setDiseaseForm({ ...diseaseForm, cropName: e.target.value })} />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="symptoms">Describe Symptoms</Label>
-                  <Textarea
-                    id="symptoms"
-                    placeholder="e.g. Yellowing leaves with brown spots on the edges..."
-                    rows={4}
-                    required
+                  <Textarea id="symptoms" placeholder="e.g. Yellowing leaves with brown spots..." rows={4} required
                     value={diseaseForm.imageDescription}
-                    onChange={e => setDiseaseForm({ ...diseaseForm, imageDescription: e.target.value })}
-                  />
+                    onChange={e => setDiseaseForm({ ...diseaseForm, imageDescription: e.target.value })} />
                 </div>
-                <Button type="submit" className="w-full" disabled={detectDisease.isPending} data-testid="button-submit-disease">
+                <Button type="submit" className="w-full relative" disabled={detectDisease.isPending} data-testid="button-submit-disease">
                   <Search className="w-4 h-4 mr-2" />
                   {detectDisease.isPending ? "Scanning..." : "Scan & Detect"}
+                  {walletAddress && (
+                    <span className="absolute right-3 text-[9px] bg-white/20 px-1.5 py-px rounded-full">+10 FLOW</span>
+                  )}
                 </Button>
               </form>
             </CardContent>
@@ -266,7 +251,6 @@ export default function AiHub() {
                     <p className="font-bold text-lg text-destructive">{detectDisease.data.diseaseName}</p>
                   </div>
                 </div>
-
                 <div className="bg-background p-3 rounded-lg border border-border shadow-sm">
                   <p className="font-bold mb-1">Recommended Treatment</p>
                   <p className="text-sm text-muted-foreground">{detectDisease.data.treatment}</p>
