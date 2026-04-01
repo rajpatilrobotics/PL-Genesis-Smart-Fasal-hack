@@ -1,0 +1,98 @@
+Upgrade the app into a connected smart agriculture system with an automated Web3 pipeline, real-time feedback, and a farmer-centric experience.
+
+1. SMART PIPELINE (CORE EXPERIENCE)
+Create a central "Analyze Farm" action.
+
+On click:
+- collect current sensor data (NPK, pH, moisture, temperature)
+- trigger a sequential pipeline (simulate async steps with slight delay for realism)
+
+Pipeline Steps:
+1. AI Analysis → generate insights (risk, irrigation advice)
+2. Privacy Layer (Zama-inspired):
+   - if enabled, mask raw values but keep insights visible
+3. Filecoin Storage:
+   - create structured JSON:
+     { npk, ph, moisture, temperature, timestamp, walletAddress }
+   - generate realistic CID (bafy...)
+4. Access Control (Lit-inspired):
+   - apply selected access level (Private / Expert / Public)
+5. Flow Rewards:
+   - increment rewards (+20 FLOW)
+6. Starknet Insurance:
+   - if moisture < 30 AND temperature > 35:
+     mark as "High Risk"
+     auto-trigger insurance status
+
+Display pipeline with animated step progression:
+"Processing Farm Data..."
+✔ AI Analysis Complete
+✔ Privacy Applied
+✔ Stored on Filecoin (CID visible)
+✔ Access Level Applied
+✔ Rewards Issued (+FLOW)
+✔ Insurance Checked (status shown)
+
+2. FARMER PROFILE DASHBOARD
+Create a dedicated profile view:
+
+Display:
+- Wallet Address
+- Network: Flow Testnet
+- Total Rewards
+- Contribution Count (data uploads)
+- Certificates Earned (Hypercerts)
+- Current Risk Level
+
+Add badge:
+"Sustainable Farmer"
+
+3. DATA HISTORY TIMELINE
+Maintain a structured log of actions:
+
+Each entry should include:
+- CID
+- timestamp
+- reward earned
+- access level
+- risk status
+
+Display as a clean vertical timeline.
+
+4. EXPERT DASHBOARD (LIT USE CASE)
+Create filtered view:
+
+- show only "Expert-only" data
+- allow browsing entries with CID + insights
+- simulate expert access permission
+
+5. VISUAL RISK SYSTEM
+Show real-time status using colors:
+
+- Green → Safe
+- Yellow → Medium Risk
+- Red → High Risk
+
+If high risk:
+- show "Insurance Auto-Triggered"
+- display estimated payout (mock value)
+
+6. UI / UX REQUIREMENTS
+- modern card-based dashboard
+- smooth transitions for pipeline steps
+- highlight key elements:
+  wallet, CID, rewards, risk
+
+Add subtle labels:
+- "Powered by Flow"
+- "Stored on Filecoin"
+- "Access via Lit Protocol"
+- "Privacy via Zama"
+- "Insurance via Starknet"
+- "Recognition via Hypercerts"
+
+IMPORTANT:
+- All features must feel like one continuous system (not separate buttons)
+- Use structured data, not random values
+- Avoid crashes or heavy processing
+- Prioritize smooth user experience and clarity

@@ -5,6 +5,26 @@ import { useToast } from "@/hooks/use-toast";
 
 type FCLUser = { addr?: string; loggedIn?: boolean };
 
+export type AccessLevel = "Private" | "Expert" | "Public";
+export type RiskStatus = "Low" | "Medium" | "High";
+
+export type DataEntry = {
+  cid: string;
+  timestamp: string;
+  reward: number;
+  accessLevel: AccessLevel;
+  riskStatus: RiskStatus;
+  aiHealth?: number;
+  aiYield?: number;
+  insights?: string;
+  nitrogen?: number;
+  phosphorus?: number;
+  potassium?: number;
+  ph?: number;
+  moisture?: number;
+  temperature?: number;
+};
+
 type WalletContextType = {
   walletAddress: string | null;
   isManual: boolean;
@@ -12,10 +32,16 @@ type WalletContextType = {
   showManualInput: boolean;
   manualAddress: string;
   flowRewards: number;
+  contributionCount: number;
+  dataHistory: DataEntry[];
+  certificates: string[];
+  currentRisk: RiskStatus;
   handleConnect: () => Promise<void>;
   handleDisconnect: () => void;
   handleManualConnect: () => void;
   addFlowReward: (activity: string, points: number) => void;
+  addDataEntry: (entry: DataEntry) => void;
+  setCurrentRisk: (risk: RiskStatus) => void;
   setManualAddress: (addr: string) => void;
   setShowManualInput: (show: boolean) => void;
 };
@@ -23,6 +49,15 @@ type WalletContextType = {
 const WalletContext = createContext<WalletContextType | null>(null);
 
 const INITIAL_REWARDS = 100;
+
+function computeCertificates(count: number): string[] {
+  const certs: string[] = [];
+  if (count >= 1) certs.push("Early Adopter");
+  if (count >= 3) certs.push("Sustainable Farmer");
+  if (count >= 5) certs.push("Data Pioneer");
+  if (count >= 10) certs.push("Climate Guardian");
+  return certs;
+}
 
 export function WalletProvider({ children }: { children: React.ReactNode }) {
   const { toast } = useToast();
@@ -32,9 +67,14 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
   const [manualAddress, setManualAddress] = useState("");
   const [isManual, setIsManual] = useState(false);
   const [flowRewards, setFlowRewards] = useState(INITIAL_REWARDS);
+  const [contributionCount, setContributionCount] = useState(0);
+  const [dataHistory, setDataHistory] = useState<DataEntry[]>([]);
+  const [currentRisk, setCurrentRisk] = useState<RiskStatus>("Medium");
 
   const isManualRef = useRef(false);
   isManualRef.current = isManual;
+
+  const certificates = computeCertificates(contributionCount);
 
   const connectWalletMutation = useConnectWallet();
 
@@ -87,6 +127,8 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     setShowManualInput(false);
     setManualAddress("");
     setFlowRewards(INITIAL_REWARDS);
+    setContributionCount(0);
+    setDataHistory([]);
     toast({ title: "Wallet Disconnected" });
   };
 
@@ -115,6 +157,12 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
+  const addDataEntry = (entry: DataEntry) => {
+    setDataHistory((prev) => [entry, ...prev]);
+    setContributionCount((prev) => prev + 1);
+    setCurrentRisk(entry.riskStatus);
+  };
+
   return (
     <WalletContext.Provider
       value={{
@@ -124,10 +172,16 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
         showManualInput,
         manualAddress,
         flowRewards,
+        contributionCount,
+        dataHistory,
+        certificates,
+        currentRisk,
         handleConnect,
         handleDisconnect,
         handleManualConnect,
         addFlowReward,
+        addDataEntry,
+        setCurrentRisk,
         setManualAddress,
         setShowManualInput,
       }}

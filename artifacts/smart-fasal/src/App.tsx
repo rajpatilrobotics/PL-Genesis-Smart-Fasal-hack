@@ -10,6 +10,7 @@ import AiHub from "@/pages/ai-hub";
 import Insurance from "@/pages/insurance";
 import Market from "@/pages/market";
 import Community from "@/pages/community";
+import Profile from "@/pages/profile";
 import NotFound from "@/pages/not-found";
 import { WalletProvider } from "@/lib/wallet-context";
 
@@ -24,6 +25,7 @@ function Router() {
       <Route path="/insurance" component={Insurance} />
       <Route path="/market" component={Market} />
       <Route path="/community" component={Community} />
+      <Route path="/profile" component={Profile} />
       <Route component={NotFound} />
     </Switch>
   );

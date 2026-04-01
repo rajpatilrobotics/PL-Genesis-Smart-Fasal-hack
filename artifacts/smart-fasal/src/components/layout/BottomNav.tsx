@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Home, BarChart2, Brain, Shield, ShoppingCart, Users } from "lucide-react";
+import { Home, Brain, Shield, ShoppingCart, Users, UserCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function BottomNav() {
@@ -7,30 +7,30 @@ export default function BottomNav() {
 
   const links = [
     { href: "/", icon: Home, label: "Home" },
-    { href: "/analytics", icon: BarChart2, label: "Analytics" },
     { href: "/ai", icon: Brain, label: "AI Hub" },
     { href: "/insurance", icon: Shield, label: "Insurance" },
     { href: "/market", icon: ShoppingCart, label: "Market" },
     { href: "/community", icon: Users, label: "Community" },
+    { href: "/profile", icon: UserCircle2, label: "Profile" },
   ];
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-lg border-t border-border">
-      <div className="container mx-auto px-2 max-w-md">
+    <div className="fixed bottom-0 left-0 right-0 z-50 bg-background/90 backdrop-blur-lg border-t border-border">
+      <div className="container mx-auto px-1 max-w-md">
         <nav className="flex items-center justify-between h-16">
           {links.map((link) => {
             const Icon = link.icon;
             const isActive = location === link.href;
-            
+
             return (
-              <Link 
-                key={link.href} 
+              <Link
+                key={link.href}
                 href={link.href}
                 className={cn(
-                  "flex flex-col items-center justify-center w-full h-full space-y-1 text-xs font-medium transition-colors hover:text-primary",
+                  "flex flex-col items-center justify-center flex-1 h-full space-y-0.5 text-[10px] font-medium transition-colors hover:text-primary",
                   isActive ? "text-primary" : "text-muted-foreground"
                 )}
-                data-testid={`nav-${link.label.toLowerCase()}`}
+                data-testid={`nav-${link.label.toLowerCase().replace(" ", "-")}`}
               >
                 <div className={cn(
                   "p-1.5 rounded-full transition-all duration-300",
@@ -39,8 +39,8 @@ export default function BottomNav() {
                   <Icon className="w-5 h-5" strokeWidth={isActive ? 2.5 : 2} />
                 </div>
                 <span className={cn(
-                  "scale-90 transition-transform",
-                  isActive ? "scale-100 font-bold" : "font-medium"
+                  "transition-all",
+                  isActive ? "font-bold" : "font-medium"
                 )}>{link.label}</span>
               </Link>
             );
