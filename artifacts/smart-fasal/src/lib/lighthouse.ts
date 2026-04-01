@@ -1,8 +1,9 @@
 
 let cachedApiKey: string | null = null;
 let cacheChecked = false;
+let lighthouseReachable: boolean | null = null; // null = not tested yet
 
-const UPLOAD_TIMEOUT_MS = 12000;
+const UPLOAD_TIMEOUT_MS = 3000; // short timeout — if it doesn't respond in 3s, it's blocked
 
 async function getApiKey(): Promise<string | null> {
   if (cacheChecked) return cachedApiKey;
@@ -19,17 +20,15 @@ async function getApiKey(): Promise<string | null> {
   }
 }
 
-function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
-  const timeout = new Promise<never>((_, reject) =>
-    setTimeout(() => reject(new Error(`Timed out after ${ms}ms`)), ms)
-  );
-  return Promise.race([promise, timeout]);
-}
-
 export async function lighthouseUpload(
   dataType: string,
   data: object
 ): Promise<{ cid: string; url: string; real: boolean }> {
+  // If we already know Lighthouse is unreachable, skip immediately
+  if (lighthouseReachable === false) {
+    return { cid: "", url: "", real: false };
+  }
+
   const apiKey = await getApiKey();
 
   if (apiKey) {
@@ -42,28 +41,33 @@ export async function lighthouseUpload(
       });
       const fileName = `smartfasal-${dataType}-${Date.now()}.json`;
       const formData = new FormData();
-      const blob = new Blob([payload], { type: "application/json" });
-      formData.append("file", blob, fileName);
+      formData.append(
+        "file",
+        new Blob([payload], { type: "application/json" }),
+        fileName
+      );
 
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), UPLOAD_TIMEOUT_MS);
 
-      const doUpload = fetch("https://node.lighthouse.storage/api/v0/add", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${apiKey}` },
-        body: formData,
-        signal: controller.signal,
-      });
-
-      const res = await withTimeout(doUpload, UPLOAD_TIMEOUT_MS).finally(() =>
-        clearTimeout(timeoutId)
-      );
+      let res: Response;
+      try {
+        res = await fetch("https://node.lighthouse.storage/api/v0/add", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${apiKey}` },
+          body: formData,
+          signal: controller.signal,
+        });
+      } finally {
+        clearTimeout(timeoutId);
+      }
 
       if (!res.ok) throw new Error(`Lighthouse HTTP ${res.status}`);
       const result = (await res.json()) as { Hash?: string };
       const cid = result.Hash;
       if (!cid) throw new Error("No CID in response");
 
+      lighthouseReachable = true;
       console.log(`[Lighthouse] ✅ Real upload — CID: ${cid}`);
       return {
         cid,
@@ -71,6 +75,7 @@ export async function lighthouseUpload(
         real: true,
       };
     } catch (err) {
+      lighthouseReachable = false; // cache: don't try again this session
       console.warn("[Lighthouse] Upload failed, falling back to simulated:", err);
     }
   }
