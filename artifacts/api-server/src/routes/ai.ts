@@ -116,7 +116,12 @@ router.post("/disease-detect", async (req, res): Promise<void> => {
     return;
   }
 
-  const { imageDescription, cropName } = parsed.data;
+  const { imageDescription, imageBase64, imageMimeType, cropName } = parsed.data;
+
+  if (!imageBase64 && !imageDescription) {
+    res.status(400).json({ error: "Provide either an image or a symptom description." });
+    return;
+  }
 
   let plantName = cropName || "Unknown Plant";
   let diseaseName = "Unknown Disease";
@@ -125,41 +130,67 @@ router.post("/disease-detect", async (req, res): Promise<void> => {
   let severity = "Moderate";
 
   try {
-    const prompt = `You are an expert plant pathologist. Analyze the following description of plant symptoms and provide a disease diagnosis.
+    const systemPrompt = `You are an expert plant pathologist and agronomist with decades of experience diagnosing crop diseases in India. Analyze the provided crop image or symptom description and give an accurate, actionable diagnosis. Be specific about the disease name, not generic. If unsure, provide the most likely diagnosis with honest confidence score.`;
 
-${cropName ? `Crop: ${cropName}` : ""}
-Symptom Description: ${imageDescription}
-
-Provide a JSON response with exactly these fields:
+    const userTextPrompt = `${cropName ? `Crop type: ${cropName}\n` : ""}${imageDescription ? `Additional symptoms noted by farmer: ${imageDescription}\n` : ""}
+Respond with a JSON object with exactly these fields:
 {
-  "plantName": "specific plant/crop name",
-  "diseaseName": "specific disease name",
-  "confidencePercent": <number 50-99>,
-  "treatment": "specific treatment recommendation in 2-3 sentences",
+  "plantName": "specific crop/plant name (e.g. Wheat, Tomato, Rice)",
+  "diseaseName": "specific disease name (e.g. Wheat Rust, Tomato Early Blight, Rice Blast)",
+  "confidencePercent": <integer 40-99>,
+  "treatment": "practical treatment steps in 2-3 sentences including pesticide names where relevant",
   "severity": "Mild" | "Moderate" | "Severe"
 }`;
 
+    let messages: Parameters<typeof openai.chat.completions.create>[0]["messages"];
+
+    if (imageBase64) {
+      const mimeType = (imageMimeType as `image/${string}`) || "image/jpeg";
+      messages = [
+        { role: "system", content: systemPrompt },
+        {
+          role: "user",
+          content: [
+            {
+              type: "image_url",
+              image_url: {
+                url: `data:${mimeType};base64,${imageBase64}`,
+                detail: "high",
+              },
+            },
+            { type: "text", text: userTextPrompt },
+          ],
+        },
+      ];
+    } else {
+      messages = [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userTextPrompt },
+      ];
+    }
+
     const completion = await openai.chat.completions.create({
-      model: "gpt-5.2",
-      max_completion_tokens: 512,
-      messages: [{ role: "user", content: prompt }],
+      model: "gpt-4o",
+      max_completion_tokens: 600,
+      messages,
       response_format: { type: "json_object" },
     });
 
     const content = completion.choices[0]?.message?.content;
     if (content) {
       const result = JSON.parse(content);
-      plantName = result.plantName || plantName;
-      diseaseName = result.diseaseName || diseaseName;
-      confidencePercent = Number(result.confidencePercent) || 80;
+      plantName = result.plantName || (cropName ?? "Unknown Plant");
+      diseaseName = result.diseaseName || "Unknown Disease";
+      confidencePercent = Math.min(99, Math.max(10, Number(result.confidencePercent) || 80));
       treatment = result.treatment || treatment;
       severity = result.severity || severity;
     }
-  } catch {
-    plantName = cropName || "Wheat";
-    diseaseName = "Leaf Blight";
-    confidencePercent = 78;
-    treatment = "Apply fungicide containing mancozeb or copper-based compounds. Remove infected plant parts and improve field drainage.";
+  } catch (err) {
+    console.error("Disease detection AI error:", err);
+    plantName = cropName || "Unknown Plant";
+    diseaseName = "Analysis Failed";
+    confidencePercent = 0;
+    treatment = "Could not complete analysis. Please try again or consult your local agricultural extension officer.";
     severity = "Moderate";
   }
 

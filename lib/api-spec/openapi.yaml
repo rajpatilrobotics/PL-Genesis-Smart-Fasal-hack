@@ -697,11 +697,16 @@ components:
       type: object
       properties:
         imageDescription:
-          type: string
+          type: ["string", "null"]
+        imageBase64:
+          type: ["string", "null"]
+          description: Base64-encoded image data (without data URI prefix) for vision analysis
+        imageMimeType:
+          type: ["string", "null"]
+          description: MIME type of the image, e.g. image/jpeg
         cropName:
           type: ["string", "null"]
-      required:
-        - imageDescription
+      required: []
 
     DiseaseDetectResult:
       type: object

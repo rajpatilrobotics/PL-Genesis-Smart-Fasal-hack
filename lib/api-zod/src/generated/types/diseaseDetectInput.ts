@@ -7,7 +7,18 @@
  */
 
 export interface DiseaseDetectInput {
-  imageDescription: string;
+  /** @nullable */
+  imageDescription?: string | null;
+  /**
+   * Base64-encoded image data (without data URI prefix) for vision analysis
+   * @nullable
+   */
+  imageBase64?: string | null;
+  /**
+   * MIME type of the image, e.g. image/jpeg
+   * @nullable
+   */
+  imageMimeType?: string | null;
   /** @nullable */
   cropName?: string | null;
 }

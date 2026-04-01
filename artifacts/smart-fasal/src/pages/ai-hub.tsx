@@ -146,18 +146,48 @@ export default function AiHub() {
     }
   };
 
-  const handleDiseaseSubmit = (e: React.FormEvent) => {
+  const fileToBase64 = (file: File): Promise<{ base64: string; mimeType: string }> =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = reader.result as string;
+        const [header, base64] = result.split(",");
+        const mimeType = header.match(/data:([^;]+)/)?.[1] ?? "image/jpeg";
+        resolve({ base64, mimeType });
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+
+  const handleDiseaseSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!diseaseForm.imageDescription && !imageFile) {
       toast({ title: "Add a photo or describe symptoms", variant: "destructive" });
       return;
     }
     setEvidence(null);
-    const description = diseaseForm.imageDescription ||
-      `Photo uploaded: ${imageFile?.name}. Visual inspection required.`;
+
+    let imageBase64: string | null = null;
+    let imageMimeType: string | null = null;
+
+    if (imageFile) {
+      try {
+        const result = await fileToBase64(imageFile);
+        imageBase64 = result.base64;
+        imageMimeType = result.mimeType;
+      } catch {
+        toast({ title: "Failed to read image file", variant: "destructive" });
+        return;
+      }
+    }
 
     detectDisease.mutate({
-      data: { cropName: diseaseForm.cropName, imageDescription: description }
+      data: {
+        cropName: diseaseForm.cropName || null,
+        imageDescription: diseaseForm.imageDescription || null,
+        imageBase64,
+        imageMimeType,
+      }
     }, {
       onSuccess: (data) => {
         toast({ title: "Detection Complete", description: "Archiving evidence to Filecoin..." });

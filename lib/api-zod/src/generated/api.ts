@@ -117,7 +117,17 @@ export const GetAiRecommendationHistoryResponse = zod.array(
  * @summary Detect crop disease from image description
  */
 export const DetectDiseaseBody = zod.object({
-  imageDescription: zod.string(),
+  imageDescription: zod.string().nullish(),
+  imageBase64: zod
+    .string()
+    .nullish()
+    .describe(
+      "Base64-encoded image data (without data URI prefix) for vision analysis",
+    ),
+  imageMimeType: zod
+    .string()
+    .nullish()
+    .describe("MIME type of the image, e.g. image\/jpeg"),
   cropName: zod.string().nullish(),
 });
 
