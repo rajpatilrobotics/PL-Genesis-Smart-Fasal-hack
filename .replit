@@ -26,3 +26,12 @@ timeoutMs = 20000
 
 [nix]
 channel = "stable-25_05"
+
+[userenv]
+
+[userenv.shared]
+ETH_WALLET_ADDRESS = "0x1C9d29F655E2674665eFD84B3997c8E76F1f88Cc"
+STARKNET_WALLET_ADDRESS = "0x17ecda611fa4c7f75758f669a2cf0a0d1091032b1e3172bc9f293f462818d9c"
+STARKNET_PUBLIC_KEY = "0x5647cc4b9b494bfeb21175eb4f148f88bf59acd6d642099e32f0249591c65ab"
+OPTIMISM_RPC_URL = "https://sepolia.optimism.io"
+STARKNET_RPC_URL = "https://starknet-sepolia.public.blastapi.io/rpc/v0_7"

@@ -10,16 +10,21 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
+    "@hypercerts-org/sdk": "^2.9.1",
     "@lighthouse-web3/sdk": "^0.4.5",
+    "@safe-global/protocol-kit": "^7.0.0",
     "@workspace/api-zod": "workspace:*",
     "@workspace/db": "workspace:*",
     "@workspace/integrations-openai-ai-server": "workspace:*",
     "cookie-parser": "^1.4.7",
     "cors": "^2",
     "drizzle-orm": "catalog:",
+    "ethers": "^6.16.0",
     "express": "^5",
+    "fhevmjs": "^0.6.2",
     "pino": "^9",
-    "pino-http": "^10"
+    "pino-http": "^10",
+    "starknet": "^9.4.2"
   },
   "devDependencies": {
     "@types/cookie-parser": "^1.4.10",
