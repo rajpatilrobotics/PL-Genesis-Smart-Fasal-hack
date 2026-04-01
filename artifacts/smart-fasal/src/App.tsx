@@ -11,6 +11,7 @@ import Insurance from "@/pages/insurance";
 import Market from "@/pages/market";
 import Community from "@/pages/community";
 import Profile from "@/pages/profile";
+import Web3Hub from "@/pages/web3-hub";
 import NotFound from "@/pages/not-found";
 import { WalletProvider } from "@/lib/wallet-context";
 
@@ -26,6 +27,7 @@ function Router() {
       <Route path="/market" component={Market} />
       <Route path="/community" component={Community} />
       <Route path="/profile" component={Profile} />
+      <Route path="/web3" component={Web3Hub} />
       <Route component={NotFound} />
     </Switch>
   );

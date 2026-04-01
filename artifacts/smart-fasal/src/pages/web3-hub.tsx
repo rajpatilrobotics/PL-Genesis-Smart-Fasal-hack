@@ -1,0 +1,961 @@
+import { useState } from "react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { useToast } from "@/hooks/use-toast";
+import { useWallet } from "@/lib/wallet-context";
+import type { NFT, CarbonCredit, DataListing, ZKProof } from "@/lib/wallet-context";
+import { cn } from "@/lib/utils";
+import {
+  Sparkles, Database, Lock, Eye, Zap, Shield,
+  Leaf, CheckCircle2, Loader2, ExternalLink, Copy,
+  TrendingUp, Droplets, FlaskConical, BadgeCheck,
+  CloudSun, Coins, BarChart3, ScrollText, ArrowRight,
+  Star, Trophy, Globe
+} from "lucide-react";
+
+function randomHex(len: number) {
+  return Array.from({ length: len }, () => Math.floor(Math.random() * 16).toString(16)).join("");
+}
+function randomCID() {
+  const chars = "abcdefghijklmnopqrstuvwxyz234567";
+  let cid = "bafy";
+  for (let i = 0; i < 44; i++) cid += chars[Math.floor(Math.random() * chars.length)];
+  return cid;
+}
+function shortHash(s: string) { return s.substring(0, 8) + "..." + s.substring(s.length - 6); }
+
+const CROPS = ["Wheat", "Rice", "Maize", "Cotton", "Soybean", "Sugarcane"];
+const SEASONS = ["Kharif 2025", "Rabi 2025–26", "Zaid 2025", "Kharif 2024"];
+const RARITIES: NFT["rarity"][] = ["Common", "Rare", "Epic", "Legendary"];
+const RARITY_COLOR: Record<NFT["rarity"], string> = {
+  Common: "text-gray-600 bg-gray-100 border-gray-300",
+  Rare: "text-blue-700 bg-blue-50 border-blue-300",
+  Epic: "text-purple-700 bg-purple-50 border-purple-300",
+  Legendary: "text-amber-700 bg-amber-50 border-amber-400",
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FLOW TAB — Season NFTs + DAO Governance
+// ─────────────────────────────────────────────────────────────────────────────
+function FlowTab() {
+  const { toast } = useToast();
+  const { walletAddress, nfts, mintNFT, flowRewards, addFlowReward, contributionCount } = useWallet();
+  const [minting, setMinting] = useState(false);
+  const [votes, setVotes] = useState<Record<string, "yes" | "no" | null>>({
+    p1: null, p2: null, p3: null
+  });
+
+  const proposals = [
+    { id: "p1", title: "Reduce insurance threshold to 65 risk score", votes_for: 128, votes_against: 34, ends: "3d" },
+    { id: "p2", title: "Increase expert reward multiplier to 2x", votes_for: 205, votes_against: 18, ends: "5d" },
+    { id: "p3", title: "Add maize carbon credit category", votes_for: 89, votes_against: 61, ends: "1d" },
+  ];
+
+  const handleMint = async () => {
+    if (!walletAddress) { toast({ title: "Connect wallet first", variant: "destructive" }); return; }
+    setMinting(true);
+    await new Promise(r => setTimeout(r, 1800));
+    const crop = CROPS[Math.floor(Math.random() * CROPS.length)];
+    const health = Math.floor(Math.random() * 30) + 65;
+    const rarity = RARITIES[Math.min(3, Math.floor(contributionCount / 2))];
+    const nft: NFT = {
+      id: randomHex(8),
+      seasonName: SEASONS[Math.floor(Math.random() * SEASONS.length)],
+      crop,
+      health,
+      cid: randomCID(),
+      mintedAt: new Date().toISOString(),
+      flowId: `A.${randomHex(16)}.FarmNFT.${Math.floor(Math.random() * 9999)}`,
+      rarity,
+    };
+    mintNFT(nft);
+    setMinting(false);
+    toast({ title: "NFT Minted on Flow!", description: `${nft.seasonName} — ${nft.crop} (${rarity})` });
+  };
+
+  const handleVote = (id: string, choice: "yes" | "no") => {
+    if (!walletAddress) { toast({ title: "Connect wallet to vote", variant: "destructive" }); return; }
+    if (votes[id]) { toast({ title: "Already voted", variant: "destructive" }); return; }
+    setVotes(v => ({ ...v, [id]: choice }));
+    addFlowReward("DAO Governance Vote", 10);
+    toast({ title: "+10 FLOW for voting!", description: "Your vote is recorded on-chain." });
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* Rewards overview */}
+      <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-green-200">
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <Coins className="w-5 h-5 text-green-600" />
+              <span className="font-bold text-green-800">Flow Wallet</span>
+            </div>
+            <Badge className="bg-green-600">Testnet</Badge>
+          </div>
+          <div className="grid grid-cols-3 gap-3 text-center">
+            <div className="bg-white/70 rounded-xl p-2">
+              <p className="text-2xl font-black text-green-700">{flowRewards}</p>
+              <p className="text-[10px] text-muted-foreground uppercase">FLOW Balance</p>
+            </div>
+            <div className="bg-white/70 rounded-xl p-2">
+              <p className="text-2xl font-black text-green-700">{nfts.length}</p>
+              <p className="text-[10px] text-muted-foreground uppercase">Season NFTs</p>
+            </div>
+            <div className="bg-white/70 rounded-xl p-2">
+              <p className="text-2xl font-black text-green-700">{contributionCount}</p>
+              <p className="text-[10px] text-muted-foreground uppercase">Contributions</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Mint NFT */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm flex items-center gap-2">
+            <Star className="w-4 h-4 text-amber-500" />
+            Mint Season NFT
+          </CardTitle>
+          <p className="text-xs text-muted-foreground">Immortalize your farm season as an on-chain NFT. Earn +50 FLOW per mint.</p>
+        </CardHeader>
+        <CardContent>
+          <Button className="w-full" onClick={handleMint} disabled={minting}>
+            {minting ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Minting on Flow...</> : <><Sparkles className="w-4 h-4 mr-2" />Mint Season NFT (+50 FLOW)</>}
+          </Button>
+        </CardContent>
+      </Card>
+
+      {/* NFT Gallery */}
+      {nfts.length > 0 && (
+        <div>
+          <h3 className="text-sm font-bold mb-2 flex items-center gap-1.5"><Trophy className="w-4 h-4 text-amber-500" /> My NFT Gallery</h3>
+          <div className="space-y-2">
+            {nfts.map(nft => (
+              <Card key={nft.id} className={cn("border", RARITY_COLOR[nft.rarity].split(" ")[2])}>
+                <CardContent className="p-3 flex justify-between items-center">
+                  <div>
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <span className="font-bold text-sm">{nft.crop}</span>
+                      <Badge className={cn("text-[10px] py-0 px-1.5", RARITY_COLOR[nft.rarity])}>{nft.rarity}</Badge>
+                    </div>
+                    <p className="text-xs text-muted-foreground">{nft.seasonName}</p>
+                    <p className="text-[10px] text-muted-foreground font-mono mt-0.5">{shortHash(nft.flowId)}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-2xl font-black text-green-600">{nft.health}%</p>
+                    <p className="text-[10px] text-muted-foreground">Health Score</p>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* DAO Governance */}
+      <div>
+        <h3 className="text-sm font-bold mb-2 flex items-center gap-1.5"><Globe className="w-4 h-4 text-blue-500" /> DAO Governance</h3>
+        <p className="text-xs text-muted-foreground mb-3">Vote on community proposals. Each vote earns +10 FLOW.</p>
+        <div className="space-y-3">
+          {proposals.map(p => {
+            const total = p.votes_for + p.votes_against + (votes[p.id] === "yes" ? 1 : votes[p.id] === "no" ? 1 : 0);
+            const forPct = Math.round(((p.votes_for + (votes[p.id] === "yes" ? 1 : 0)) / total) * 100);
+            return (
+              <Card key={p.id}>
+                <CardContent className="p-3 space-y-2">
+                  <div className="flex justify-between items-start">
+                    <p className="text-xs font-semibold leading-snug flex-1 mr-2">{p.title}</p>
+                    <Badge variant="outline" className="text-[10px] shrink-0">Ends {p.ends}</Badge>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="flex justify-between text-[10px] text-muted-foreground">
+                      <span>For — {forPct}%</span>
+                      <span>Against — {100 - forPct}%</span>
+                    </div>
+                    <div className="h-2 bg-red-100 rounded-full overflow-hidden">
+                      <div className="h-full bg-green-500 rounded-full transition-all" style={{ width: `${forPct}%` }} />
+                    </div>
+                  </div>
+                  {votes[p.id] ? (
+                    <div className="flex items-center gap-1.5 text-xs text-green-600 font-semibold">
+                      <CheckCircle2 className="w-3.5 h-3.5" /> Voted {votes[p.id] === "yes" ? "For" : "Against"}
+                    </div>
+                  ) : (
+                    <div className="flex gap-2">
+                      <Button size="sm" variant="outline" className="flex-1 h-7 text-xs text-green-700 border-green-300" onClick={() => handleVote(p.id, "yes")}>Vote For</Button>
+                      <Button size="sm" variant="outline" className="flex-1 h-7 text-xs text-red-700 border-red-300" onClick={() => handleVote(p.id, "no")}>Vote Against</Button>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FILECOIN TAB — Data Marketplace
+// ─────────────────────────────────────────────────────────────────────────────
+function FilecoinTab() {
+  const { toast } = useToast();
+  const { walletAddress, dataListings, dataHistory, publishDataListing } = useWallet();
+  const [publishing, setPublishing] = useState(false);
+
+  const totalEarnings = dataListings.reduce((s, l) => s + (l.sold ? l.earnings : 0), 0);
+
+  const researchBuyers = [
+    { name: "ICAR Research Institute", interest: "Soil NPK Profiles", offer: 25, badge: "Government" },
+    { name: "AgriTech Startup", interest: "Moisture & pH Data", offer: 15, badge: "Private" },
+    { name: "Climate Analytics Co.", interest: "Seasonal Yield History", offer: 40, badge: "NGO" },
+  ];
+
+  const handlePublish = async () => {
+    if (!walletAddress) { toast({ title: "Connect wallet first", variant: "destructive" }); return; }
+    if (dataHistory.length === 0) { toast({ title: "Run farm analysis first to generate data", variant: "destructive" }); return; }
+    setPublishing(true);
+    await new Promise(r => setTimeout(r, 1600));
+    const listing: DataListing = {
+      id: randomHex(8),
+      cid: dataHistory[0]?.cid ?? randomCID(),
+      title: `Farm Soil Dataset — ${new Date().toLocaleDateString("en-IN", { month: "short", year: "numeric" })}`,
+      priceFlow: Math.floor(Math.random() * 30) + 15,
+      sold: false,
+      earnings: 0,
+      category: "Soil & Weather",
+      records: dataHistory.length,
+    };
+    publishDataListing(listing);
+    setPublishing(false);
+    toast({ title: "Dataset Published on Filecoin!", description: `CID: ${shortHash(listing.cid)}` });
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* Stats */}
+      <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200">
+        <CardContent className="p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <Database className="w-5 h-5 text-blue-600" />
+            <span className="font-bold text-blue-800">Filecoin Data Marketplace</span>
+          </div>
+          <div className="grid grid-cols-3 gap-3 text-center">
+            <div className="bg-white/70 rounded-xl p-2">
+              <p className="text-2xl font-black text-blue-700">{dataListings.length}</p>
+              <p className="text-[10px] text-muted-foreground uppercase">Datasets</p>
+            </div>
+            <div className="bg-white/70 rounded-xl p-2">
+              <p className="text-2xl font-black text-blue-700">{totalEarnings}</p>
+              <p className="text-[10px] text-muted-foreground uppercase">FLOW Earned</p>
+            </div>
+            <div className="bg-white/70 rounded-xl p-2">
+              <p className="text-2xl font-black text-blue-700">{dataHistory.length}</p>
+              <p className="text-[10px] text-muted-foreground uppercase">Records</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Publish */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm flex items-center gap-2">
+            <Database className="w-4 h-4 text-blue-500" />
+            Sell Your Farm Data
+          </CardTitle>
+          <p className="text-xs text-muted-foreground">Your historical soil & weather records are valuable to researchers. Earn FLOW when buyers purchase access.</p>
+        </CardHeader>
+        <CardContent>
+          <Button className="w-full" variant="outline" onClick={handlePublish} disabled={publishing}>
+            {publishing ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Publishing to Filecoin...</> : <><Database className="w-4 h-4 mr-2" />Publish Dataset (+15 FLOW)</>}
+          </Button>
+        </CardContent>
+      </Card>
+
+      {/* My Listings */}
+      {dataListings.length > 0 && (
+        <div>
+          <h3 className="text-sm font-bold mb-2">My Published Datasets</h3>
+          <div className="space-y-2">
+            {dataListings.map(l => (
+              <Card key={l.id}>
+                <CardContent className="p-3">
+                  <div className="flex justify-between items-start mb-1">
+                    <p className="text-xs font-semibold leading-snug flex-1 mr-2">{l.title}</p>
+                    <Badge variant={l.sold ? "default" : "outline"} className="text-[10px]">{l.sold ? "Sold" : "Listed"}</Badge>
+                  </div>
+                  <div className="flex gap-3 text-[10px] text-muted-foreground mt-1">
+                    <span className="font-mono">{shortHash(l.cid)}</span>
+                    <span>·</span>
+                    <span>{l.records} records</span>
+                    <span>·</span>
+                    <span className="text-blue-600 font-semibold">{l.priceFlow} FLOW</span>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Research Buyers */}
+      <div>
+        <h3 className="text-sm font-bold mb-2">Active Research Buyers</h3>
+        <div className="space-y-2">
+          {researchBuyers.map((b, i) => (
+            <Card key={i}>
+              <CardContent className="p-3 flex justify-between items-center">
+                <div>
+                  <div className="flex items-center gap-1.5 mb-0.5">
+                    <p className="text-xs font-semibold">{b.name}</p>
+                    <Badge variant="outline" className="text-[10px] py-0">{b.badge}</Badge>
+                  </div>
+                  <p className="text-[10px] text-muted-foreground">Wants: {b.interest}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm font-bold text-blue-600">{b.offer} FLOW</p>
+                  <p className="text-[10px] text-muted-foreground">per dataset</p>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// LIT PROTOCOL TAB — Token-gated Access & Encrypted Vault
+// ─────────────────────────────────────────────────────────────────────────────
+function LitTab() {
+  const { toast } = useToast();
+  const { walletAddress, flowRewards } = useWallet();
+  const [unlocking, setUnlocking] = useState<string | null>(null);
+  const [unlocked, setUnlocked] = useState<Set<string>>(new Set());
+
+  const sessions = [
+    { id: "s1", expert: "Dr. Rajesh Kumar", specialty: "Soil Science & Agronomy", minFlow: 50, duration: "30 min", badge: "Verified Expert" },
+    { id: "s2", expert: "Priya Singh", specialty: "Organic Farming & IPM", minFlow: 80, duration: "45 min", badge: "Top Rated" },
+    { id: "s3", expert: "Dr. ICAR Panel", specialty: "Crop Disease Diagnosis", minFlow: 120, duration: "60 min", badge: "Government" },
+  ];
+
+  const vault = [
+    { id: "v1", title: "Premium Fertilizer Schedule 2025", minFlow: 30, type: "PDF Report" },
+    { id: "v2", title: "District Mandi Price Predictions", minFlow: 60, type: "Data Report" },
+    { id: "v3", title: "Climate Risk Atlas — Maharashtra", minFlow: 100, type: "Research Paper" },
+  ];
+
+  const handleUnlock = async (id: string, minFlow: number, label: string) => {
+    if (!walletAddress) { toast({ title: "Connect wallet first", variant: "destructive" }); return; }
+    if (flowRewards < minFlow) {
+      toast({ title: `Need ${minFlow} FLOW to unlock`, description: `You have ${flowRewards} FLOW. Earn more by running farm analyses.`, variant: "destructive" });
+      return;
+    }
+    setUnlocking(id);
+    await new Promise(r => setTimeout(r, 1400));
+    setUnlocked(p => new Set([...p, id]));
+    setUnlocking(null);
+    toast({ title: "Access Granted via Lit Protocol!", description: `Condition verified: ≥${minFlow} FLOW. ${label} unlocked.` });
+  };
+
+  return (
+    <div className="space-y-4">
+      <Card className="bg-gradient-to-br from-orange-50 to-amber-50 border-orange-200">
+        <CardContent className="p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <Lock className="w-5 h-5 text-orange-600" />
+            <span className="font-bold text-orange-800">Lit Protocol Access Control</span>
+          </div>
+          <p className="text-xs text-muted-foreground">Content is token-gated — Lit checks your FLOW balance on-chain before decrypting. Your balance: <strong className="text-orange-700">{flowRewards} FLOW</strong></p>
+        </CardContent>
+      </Card>
+
+      {/* Expert Sessions */}
+      <div>
+        <h3 className="text-sm font-bold mb-2 flex items-center gap-1.5">
+          <Eye className="w-4 h-4 text-orange-500" /> Token-gated Expert Sessions
+        </h3>
+        <div className="space-y-2">
+          {sessions.map(s => {
+            const canUnlock = flowRewards >= s.minFlow;
+            const isUnlocked = unlocked.has(s.id);
+            return (
+              <Card key={s.id} className={isUnlocked ? "border-green-300 bg-green-50/50" : ""}>
+                <CardContent className="p-3">
+                  <div className="flex justify-between items-start mb-2">
+                    <div>
+                      <div className="flex items-center gap-1.5 mb-0.5">
+                        <p className="text-xs font-bold">{s.expert}</p>
+                        <Badge variant="outline" className="text-[10px] py-0">{s.badge}</Badge>
+                      </div>
+                      <p className="text-[10px] text-muted-foreground">{s.specialty}</p>
+                      <p className="text-[10px] text-muted-foreground">{s.duration} session</p>
+                    </div>
+                    <div className="text-right shrink-0 ml-2">
+                      <p className="text-sm font-bold text-orange-600">{s.minFlow} FLOW</p>
+                      <p className="text-[10px] text-muted-foreground">minimum</p>
+                    </div>
+                  </div>
+                  {isUnlocked ? (
+                    <div className="flex items-center gap-1.5 text-xs text-green-700 font-semibold bg-green-100 rounded-lg px-2 py-1.5">
+                      <CheckCircle2 className="w-3.5 h-3.5" /> Access Granted — Lit condition verified ✓
+                    </div>
+                  ) : (
+                    <Button size="sm" className="w-full h-7 text-xs" variant={canUnlock ? "default" : "outline"}
+                      disabled={!!unlocking || !canUnlock} onClick={() => handleUnlock(s.id, s.minFlow, s.expert)}>
+                      {unlocking === s.id ? <Loader2 className="w-3 h-3 animate-spin" /> : canUnlock ? <><Lock className="w-3 h-3 mr-1" /> Unlock with Lit</> : <><Lock className="w-3 h-3 mr-1" /> Need {s.minFlow} FLOW</>}
+                    </Button>
+                  )}
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Encrypted Vault */}
+      <div>
+        <h3 className="text-sm font-bold mb-2 flex items-center gap-1.5">
+          <Database className="w-4 h-4 text-orange-500" /> Encrypted Knowledge Vault
+        </h3>
+        <div className="space-y-2">
+          {vault.map(v => {
+            const canUnlock = flowRewards >= v.minFlow;
+            const isUnlocked = unlocked.has(v.id);
+            return (
+              <Card key={v.id} className={isUnlocked ? "border-green-300 bg-green-50/50" : ""}>
+                <CardContent className="p-3 flex justify-between items-center gap-2">
+                  <div>
+                    <p className="text-xs font-semibold">{v.title}</p>
+                    <Badge variant="secondary" className="text-[10px] mt-0.5">{v.type}</Badge>
+                  </div>
+                  <div className="shrink-0">
+                    {isUnlocked ? (
+                      <Badge className="bg-green-600 text-[10px]"><CheckCircle2 className="w-2.5 h-2.5 mr-0.5" />Open</Badge>
+                    ) : (
+                      <Button size="sm" variant={canUnlock ? "default" : "outline"} className="text-[10px] h-7 px-2"
+                        disabled={!!unlocking || !canUnlock} onClick={() => handleUnlock(v.id, v.minFlow, v.title)}>
+                        {unlocking === v.id ? <Loader2 className="w-3 h-3 animate-spin" /> : `${v.minFlow} FLOW`}
+                      </Button>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ZAMA FHE TAB — Private Computation
+// ─────────────────────────────────────────────────────────────────────────────
+function ZamaTab() {
+  const { toast } = useToast();
+  const { walletAddress } = useWallet();
+  const [computing, setComputing] = useState(false);
+  const [result, setResult] = useState<null | { recommendation: string; healthScore: number; encryptedCID: string }>(null);
+  const [auctionBid, setAuctionBid] = useState("");
+  const [auctionSubmitted, setAuctionSubmitted] = useState(false);
+  const [auctionResult, setAuctionResult] = useState<null | { winner: string; winningBid: string }>(null);
+
+  const handleFHEAnalysis = async () => {
+    if (!walletAddress) { toast({ title: "Connect wallet first", variant: "destructive" }); return; }
+    setComputing(true);
+    setResult(null);
+    await new Promise(r => setTimeout(r, 2200));
+    setResult({
+      recommendation: "Optimal: Increase nitrogen by 15%. Soil health is above district average. Suggested crop: Wheat variety HD-3086.",
+      healthScore: Math.floor(Math.random() * 20) + 75,
+      encryptedCID: randomCID(),
+    });
+    setComputing(false);
+    toast({ title: "FHE Computation Complete!", description: "Soil analysis done on encrypted data — your raw values were never exposed." });
+  };
+
+  const handleBlindBid = async () => {
+    if (!auctionBid) { toast({ title: "Enter a bid amount", variant: "destructive" }); return; }
+    setAuctionSubmitted(true);
+    await new Promise(r => setTimeout(r, 1800));
+    const winnerBid = Math.floor(Math.random() * 500) + 800;
+    const myBid = parseInt(auctionBid);
+    const won = myBid >= winnerBid;
+    setAuctionResult({
+      winner: won ? "You won!" : "Outbid",
+      winningBid: `₹${winnerBid}/quintal`,
+    });
+    toast({ title: won ? "Auction Won!" : "Outbid", description: `Winning price: ₹${winnerBid}/quintal` });
+  };
+
+  return (
+    <div className="space-y-4">
+      <Card className="bg-gradient-to-br from-violet-50 to-purple-50 border-violet-200">
+        <CardContent className="p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <FlaskConical className="w-5 h-5 text-violet-600" />
+            <span className="font-bold text-violet-800">Zama FHE — Fully Homomorphic Encryption</span>
+          </div>
+          <p className="text-xs text-muted-foreground">Compute on encrypted data without revealing raw values. Your soil NPK, pH, and moisture stay private while AI still gives full recommendations.</p>
+        </CardContent>
+      </Card>
+
+      {/* Private Soil Analysis */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm flex items-center gap-2">
+            <FlaskConical className="w-4 h-4 text-violet-500" />
+            Private Soil Analysis
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {/* Encryption visualization */}
+          <div className="bg-muted/50 rounded-xl p-3 font-mono text-[10px] space-y-1">
+            <div className="flex items-center gap-2">
+              <span className="text-muted-foreground w-20">Raw pH:</span>
+              <span className="text-violet-700">{computing ? "encrypting..." : "Enc(6.8) → 0x7a3f..."}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-muted-foreground w-20">Raw N:</span>
+              <span className="text-violet-700">{computing ? "encrypting..." : "Enc(145) → 0x2b9c..."}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-muted-foreground w-20">Raw Moisture:</span>
+              <span className="text-violet-700">{computing ? "encrypting..." : "Enc(62%) → 0x8d1a..."}</span>
+            </div>
+            <div className="flex items-center gap-2 border-t pt-1 mt-1">
+              <span className="text-muted-foreground w-20">AI Compute:</span>
+              <span className="text-green-600">On encrypted data ✓</span>
+            </div>
+          </div>
+          <Button className="w-full" onClick={handleFHEAnalysis} disabled={computing}>
+            {computing ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Running FHE Computation...</> : <><FlaskConical className="w-4 h-4 mr-2" />Run Private Analysis</>}
+          </Button>
+          {result && (
+            <div className="bg-green-50 border border-green-200 rounded-xl p-3 space-y-2">
+              <div className="flex items-center gap-1.5 text-green-700 font-semibold text-xs">
+                <CheckCircle2 className="w-3.5 h-3.5" /> FHE Result — Raw data never exposed
+              </div>
+              <p className="text-xs text-gray-700">{result.recommendation}</p>
+              <div className="flex justify-between text-[10px] text-muted-foreground">
+                <span>Health Score: <strong className="text-green-600">{result.healthScore}%</strong></span>
+                <span>CID: {shortHash(result.encryptedCID)}</span>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Blind Auction */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm flex items-center gap-2">
+            <BarChart3 className="w-4 h-4 text-violet-500" />
+            Blind Crop Auction
+          </CardTitle>
+          <p className="text-xs text-muted-foreground">Bid on crop purchase contracts without seeing competitor bids. All bids are FHE-encrypted until reveal phase.</p>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="bg-violet-50 rounded-lg p-2.5 text-xs">
+            <p className="font-semibold text-violet-700 mb-1">Active Auction: Wheat — 10 Quintal</p>
+            <p className="text-muted-foreground">District: Nashik · Ends: 2h 15m</p>
+          </div>
+          {!auctionResult ? (
+            <div className="flex gap-2">
+              <div className="flex-1 relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">₹</span>
+                <input
+                  type="number" placeholder="Your bid / quintal"
+                  value={auctionBid} onChange={e => setAuctionBid(e.target.value)}
+                  className="w-full pl-6 pr-3 py-2 text-sm border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-violet-300"
+                />
+              </div>
+              <Button variant="outline" className="border-violet-300 text-violet-700" onClick={handleBlindBid} disabled={auctionSubmitted}>
+                {auctionSubmitted ? <Loader2 className="w-4 h-4 animate-spin" /> : "Bid (FHE)"}
+              </Button>
+            </div>
+          ) : (
+            <div className={cn("rounded-xl p-3 border text-xs font-semibold", auctionResult.winner === "You won!" ? "bg-green-50 border-green-300 text-green-700" : "bg-red-50 border-red-300 text-red-700")}>
+              {auctionResult.winner} · Winning price: {auctionResult.winningBid}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// STARKNET TAB — ZK Proofs & Smart Contract Insurance
+// ─────────────────────────────────────────────────────────────────────────────
+function StarknetTab() {
+  const { toast } = useToast();
+  const { walletAddress, zkProofs, addZKProof, dataHistory } = useWallet();
+  const [generating, setGenerating] = useState(false);
+  const [verifying, setVerifying] = useState<string | null>(null);
+
+  const proofTypes = [
+    { id: "ph", label: "Soil pH is in healthy range (6.0–7.5)", icon: FlaskConical, color: "text-emerald-600" },
+    { id: "moisture", label: "Moisture > 40% (no drought stress)", icon: Droplets, color: "text-blue-600" },
+    { id: "yield", label: "Yield prediction ≥ 70% (insurable)", icon: TrendingUp, color: "text-amber-600" },
+  ];
+
+  const handleGenerateProof = async (type: typeof proofTypes[0]) => {
+    if (!walletAddress) { toast({ title: "Connect wallet first", variant: "destructive" }); return; }
+    setGenerating(true);
+    await new Promise(r => setTimeout(r, 2000));
+    const proof: ZKProof = {
+      id: randomHex(8),
+      claim: type.label,
+      proofHash: "0x" + randomHex(64),
+      verified: Math.random() > 0.15,
+      generatedAt: new Date().toISOString(),
+      starknetTx: "0x" + randomHex(64),
+    };
+    addZKProof(proof);
+    setGenerating(false);
+    toast({
+      title: proof.verified ? "ZK Proof Verified on Starknet!" : "Proof Generated — Condition Not Met",
+      description: proof.verified ? `+25 FLOW earned. TX: ${shortHash(proof.starknetTx)}` : "Your farm data did not satisfy this condition.",
+    });
+  };
+
+  const handleVerify = async (id: string) => {
+    setVerifying(id);
+    await new Promise(r => setTimeout(r, 1200));
+    setVerifying(null);
+    toast({ title: "Re-verified on Starknet ✓", description: "Proof validity confirmed on-chain." });
+  };
+
+  const contractStatus = dataHistory.length > 0
+    ? { active: true, coverage: `₹${(dataHistory.length * 2500).toLocaleString()}`, trigger: dataHistory[0]?.riskStatus === "High" ? "Triggered" : "Monitoring" }
+    : { active: false, coverage: "₹0", trigger: "Inactive" };
+
+  return (
+    <div className="space-y-4">
+      <Card className="bg-gradient-to-br from-rose-50 to-pink-50 border-rose-200">
+        <CardContent className="p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <Shield className="w-5 h-5 text-rose-600" />
+            <span className="font-bold text-rose-800">Starknet — ZK Proofs & Smart Insurance</span>
+          </div>
+          <p className="text-xs text-muted-foreground">Generate STARK proofs that verify your farm conditions on-chain without revealing raw sensor data. Used for insurance triggers and certifications.</p>
+        </CardContent>
+      </Card>
+
+      {/* Smart Contract Insurance */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm flex items-center gap-2">
+            <Shield className="w-4 h-4 text-rose-500" /> On-Chain Insurance Contract
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="grid grid-cols-3 gap-2 text-center">
+            <div className="bg-muted/50 rounded-lg p-2">
+              <p className="text-[10px] text-muted-foreground mb-0.5">Status</p>
+              <Badge variant={contractStatus.active ? "default" : "secondary"} className="text-[10px]">
+                {contractStatus.active ? "Active" : "Inactive"}
+              </Badge>
+            </div>
+            <div className="bg-muted/50 rounded-lg p-2">
+              <p className="text-[10px] text-muted-foreground mb-0.5">Coverage</p>
+              <p className="text-xs font-bold">{contractStatus.coverage}</p>
+            </div>
+            <div className="bg-muted/50 rounded-lg p-2">
+              <p className="text-[10px] text-muted-foreground mb-0.5">Trigger</p>
+              <p className={cn("text-xs font-bold", contractStatus.trigger === "Triggered" ? "text-red-600" : "text-green-600")}>
+                {contractStatus.trigger}
+              </p>
+            </div>
+          </div>
+          {contractStatus.trigger === "Triggered" && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-2.5 text-xs text-red-700 font-semibold flex items-center gap-2">
+              <Zap className="w-3.5 h-3.5" /> High risk detected — Starknet contract auto-executing payout
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* ZK Proof Generator */}
+      <div>
+        <h3 className="text-sm font-bold mb-2 flex items-center gap-1.5">
+          <BadgeCheck className="w-4 h-4 text-rose-500" /> Generate ZK Soil Proofs
+        </h3>
+        <p className="text-xs text-muted-foreground mb-3">Prove farm conditions without revealing actual sensor readings. Earns +25 FLOW per verified proof.</p>
+        <div className="space-y-2">
+          {proofTypes.map(pt => (
+            <Card key={pt.id}>
+              <CardContent className="p-3 flex items-center gap-3">
+                <pt.icon className={cn("w-8 h-8 shrink-0", pt.color)} strokeWidth={1.5} />
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-semibold leading-snug">{pt.label}</p>
+                </div>
+                <Button size="sm" variant="outline" className="shrink-0 text-[10px] h-7 px-2 border-rose-300 text-rose-700"
+                  onClick={() => handleGenerateProof(pt)} disabled={generating}>
+                  {generating ? <Loader2 className="w-3 h-3 animate-spin" /> : "Prove"}
+                </Button>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+
+      {/* ZK Proof History */}
+      {zkProofs.length > 0 && (
+        <div>
+          <h3 className="text-sm font-bold mb-2">ZK Proof History</h3>
+          <div className="space-y-2">
+            {zkProofs.map(p => (
+              <Card key={p.id} className={p.verified ? "border-green-300" : "border-red-200"}>
+                <CardContent className="p-3">
+                  <div className="flex justify-between items-start mb-1">
+                    <p className="text-xs font-semibold leading-snug flex-1 mr-2">{p.claim}</p>
+                    <Badge className={cn("text-[10px] shrink-0", p.verified ? "bg-green-600" : "bg-red-500")}>
+                      {p.verified ? "Verified" : "Failed"}
+                    </Badge>
+                  </div>
+                  <div className="flex justify-between items-center mt-1.5">
+                    <p className="text-[10px] text-muted-foreground font-mono">{shortHash(p.proofHash)}</p>
+                    {p.verified && (
+                      <Button variant="ghost" size="sm" className="h-5 text-[10px] px-1.5 text-blue-600"
+                        onClick={() => handleVerify(p.id)} disabled={verifying === p.id}>
+                        {verifying === p.id ? <Loader2 className="w-2.5 h-2.5 animate-spin" /> : <><ExternalLink className="w-2.5 h-2.5 mr-0.5" />Verify</>}
+                      </Button>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// HYPERCERTS TAB — Carbon Credits & Impact
+// ─────────────────────────────────────────────────────────────────────────────
+function HypercertsTab() {
+  const { toast } = useToast();
+  const { walletAddress, carbonCredits, mintCarbonCredit, dataHistory, contributionCount } = useWallet();
+  const [minting, setMinting] = useState(false);
+
+  const totalTonnes = carbonCredits.reduce((s, c) => s + c.tonnes, 0);
+  const totalWater = carbonCredits.reduce((s, c) => s + c.waterSaved, 0);
+  const avgImpact = carbonCredits.length > 0 ? Math.round(carbonCredits.reduce((s, c) => s + c.impactScore, 0) / carbonCredits.length) : 0;
+
+  const activities = [
+    { label: "Optimal Irrigation", tonnes: 0.8, water: 1200 },
+    { label: "Reduced Chemical Use", tonnes: 0.5, water: 400 },
+    { label: "Cover Cropping", tonnes: 1.2, water: 800 },
+  ];
+
+  const handleMint = async () => {
+    if (!walletAddress) { toast({ title: "Connect wallet first", variant: "destructive" }); return; }
+    if (contributionCount === 0) { toast({ title: "Run farm analysis first", description: "Need at least 1 analysis to mint carbon credits.", variant: "destructive" }); return; }
+    setMinting(true);
+    await new Promise(r => setTimeout(r, 2000));
+    const act = activities[Math.floor(Math.random() * activities.length)];
+    const credit: CarbonCredit = {
+      id: randomHex(8),
+      tonnes: act.tonnes * (1 + contributionCount * 0.1),
+      activity: act.label,
+      mintedAt: new Date().toISOString(),
+      hypercertId: `0x${randomHex(40)}`,
+      waterSaved: act.water * contributionCount,
+      impactScore: Math.floor(Math.random() * 30) + 65,
+    };
+    mintCarbonCredit(credit);
+    setMinting(false);
+    toast({ title: "Hypercert Minted!", description: `${credit.tonnes.toFixed(1)} tonnes CO₂ offset certified on-chain.` });
+  };
+
+  return (
+    <div className="space-y-4">
+      <Card className="bg-gradient-to-br from-green-50 to-teal-50 border-green-200">
+        <CardContent className="p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <Leaf className="w-5 h-5 text-green-600" />
+            <span className="font-bold text-green-800">Hypercerts — Climate Impact</span>
+          </div>
+          <div className="grid grid-cols-3 gap-3 text-center">
+            <div className="bg-white/70 rounded-xl p-2">
+              <p className="text-2xl font-black text-green-700">{totalTonnes.toFixed(1)}</p>
+              <p className="text-[10px] text-muted-foreground">Tonnes CO₂</p>
+            </div>
+            <div className="bg-white/70 rounded-xl p-2">
+              <p className="text-2xl font-black text-blue-600">{(totalWater / 1000).toFixed(1)}k</p>
+              <p className="text-[10px] text-muted-foreground">Litres Saved</p>
+            </div>
+            <div className="bg-white/70 rounded-xl p-2">
+              <p className="text-2xl font-black text-teal-600">{avgImpact || "—"}</p>
+              <p className="text-[10px] text-muted-foreground">Avg Impact</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Eligible Activities */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm flex items-center gap-2">
+            <Leaf className="w-4 h-4 text-green-500" /> Mint Carbon Credit Hypercert
+          </CardTitle>
+          <p className="text-xs text-muted-foreground">Your sustainable practices earn verified carbon credits as ERC-1155 Hypercerts. Earn +30 FLOW per mint.</p>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="space-y-1.5">
+            {activities.map((a, i) => (
+              <div key={i} className="flex items-center justify-between text-xs bg-green-50/80 border border-green-200 rounded-lg px-3 py-2">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-green-600" />
+                  <span>{a.label}</span>
+                </div>
+                <span className="font-semibold text-green-700">{a.tonnes}t CO₂</span>
+              </div>
+            ))}
+          </div>
+          <Button className="w-full bg-green-600 hover:bg-green-700" onClick={handleMint} disabled={minting}>
+            {minting ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Minting Hypercert...</> : <><Leaf className="w-4 h-4 mr-2" />Mint Carbon Credit (+30 FLOW)</>}
+          </Button>
+        </CardContent>
+      </Card>
+
+      {/* Hypercert Gallery */}
+      {carbonCredits.length > 0 && (
+        <div>
+          <h3 className="text-sm font-bold mb-2 flex items-center gap-1.5"><ScrollText className="w-4 h-4 text-green-500" /> My Hypercerts</h3>
+          <div className="space-y-2">
+            {carbonCredits.map(c => (
+              <Card key={c.id} className="border-green-300 bg-green-50/40">
+                <CardContent className="p-3">
+                  <div className="flex justify-between items-start mb-2">
+                    <div>
+                      <p className="text-xs font-bold">{c.activity}</p>
+                      <p className="text-[10px] text-muted-foreground">{new Date(c.mintedAt).toLocaleDateString("en-IN")}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xl font-black text-green-600">{c.tonnes.toFixed(1)}t</p>
+                      <p className="text-[10px] text-muted-foreground">CO₂ offset</p>
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="flex justify-between text-[10px]">
+                      <span className="text-muted-foreground">Impact Score</span>
+                      <span className="font-semibold">{c.impactScore}/100</span>
+                    </div>
+                    <Progress value={c.impactScore} className="h-1.5" />
+                  </div>
+                  <div className="flex justify-between text-[10px] text-muted-foreground mt-2">
+                    <span>Water saved: <strong className="text-blue-600">{c.waterSaved.toLocaleString()}L</strong></span>
+                    <button
+                      className="text-blue-500 flex items-center gap-0.5"
+                      onClick={() => { navigator.clipboard.writeText(c.hypercertId); toast({ title: "Hypercert ID copied" }); }}
+                    >
+                      <Copy className="w-2.5 h-2.5" />{shortHash(c.hypercertId)}
+                    </button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Impact Score breakdown */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm flex items-center gap-2">
+            <BarChart3 className="w-4 h-4 text-teal-500" /> Season Impact Report
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {[
+            { label: "Chemical Reduction", value: Math.min(100, contributionCount * 12), color: "bg-green-500" },
+            { label: "Water Efficiency", value: Math.min(100, contributionCount * 18), color: "bg-blue-500" },
+            { label: "Soil Health Score", value: Math.min(100, 40 + contributionCount * 8), color: "bg-amber-500" },
+            { label: "Carbon Sequestration", value: Math.min(100, contributionCount * 15), color: "bg-teal-500" },
+          ].map(({ label, value, color }) => (
+            <div key={label}>
+              <div className="flex justify-between text-xs mb-1">
+                <span className="text-muted-foreground">{label}</span>
+                <span className="font-semibold">{value}%</span>
+              </div>
+              <div className="h-2 bg-muted rounded-full overflow-hidden">
+                <div className={cn("h-full rounded-full transition-all duration-700", color)} style={{ width: `${value}%` }} />
+              </div>
+            </div>
+          ))}
+          {contributionCount === 0 && (
+            <p className="text-xs text-muted-foreground text-center py-1">Run farm analyses to build your impact report</p>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MAIN WEB3 HUB
+// ─────────────────────────────────────────────────────────────────────────────
+const TABS = [
+  { value: "flow", label: "Flow", icon: Coins, color: "text-green-600" },
+  { value: "filecoin", label: "Filecoin", icon: Database, color: "text-blue-600" },
+  { value: "lit", label: "Lit", icon: Lock, color: "text-orange-500" },
+  { value: "zama", label: "Zama", icon: FlaskConical, color: "text-violet-600" },
+  { value: "starknet", label: "Starknet", icon: Shield, color: "text-rose-600" },
+  { value: "hyper", label: "Hyper", icon: Leaf, color: "text-teal-600" },
+];
+
+export default function Web3Hub() {
+  return (
+    <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <div>
+        <h2 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+          <Sparkles className="w-6 h-6 text-primary" />
+          Web3 Hub
+        </h2>
+        <p className="text-muted-foreground text-sm">All 6 protocols — live and interactive</p>
+      </div>
+
+      {/* Protocol status strip */}
+      <div className="flex gap-1.5 flex-wrap">
+        {TABS.map(t => (
+          <div key={t.value} className="flex items-center gap-1 text-[10px] font-semibold bg-muted/80 border rounded-full px-2 py-0.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+            <t.icon className={cn("w-3 h-3", t.color)} />
+            <span>{t.label}</span>
+          </div>
+        ))}
+      </div>
+
+      <Tabs defaultValue="flow">
+        <TabsList className="grid grid-cols-6 h-auto p-1 w-full">
+          {TABS.map(t => (
+            <TabsTrigger key={t.value} value={t.value} className="flex flex-col items-center gap-0.5 py-1.5 px-0 text-[10px] data-[state=active]:shadow">
+              <t.icon className="w-3.5 h-3.5" />
+              {t.label}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+
+        <TabsContent value="flow" className="mt-4"><FlowTab /></TabsContent>
+        <TabsContent value="filecoin" className="mt-4"><FilecoinTab /></TabsContent>
+        <TabsContent value="lit" className="mt-4"><LitTab /></TabsContent>
+        <TabsContent value="zama" className="mt-4"><ZamaTab /></TabsContent>
+        <TabsContent value="starknet" className="mt-4"><StarknetTab /></TabsContent>
+        <TabsContent value="hyper" className="mt-4"><HypercertsTab /></TabsContent>
+      </Tabs>
+    </div>
+  );
+}

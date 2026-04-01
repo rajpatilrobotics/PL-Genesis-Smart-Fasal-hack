@@ -23,6 +23,48 @@ export type DataEntry = {
   ph?: number;
   moisture?: number;
   temperature?: number;
+  zkProofId?: string;
+};
+
+export type NFT = {
+  id: string;
+  seasonName: string;
+  crop: string;
+  health: number;
+  cid: string;
+  mintedAt: string;
+  flowId: string;
+  rarity: "Common" | "Rare" | "Epic" | "Legendary";
+};
+
+export type CarbonCredit = {
+  id: string;
+  tonnes: number;
+  activity: string;
+  mintedAt: string;
+  hypercertId: string;
+  waterSaved: number;
+  impactScore: number;
+};
+
+export type DataListing = {
+  id: string;
+  cid: string;
+  title: string;
+  priceFlow: number;
+  sold: boolean;
+  earnings: number;
+  category: string;
+  records: number;
+};
+
+export type ZKProof = {
+  id: string;
+  claim: string;
+  proofHash: string;
+  verified: boolean;
+  generatedAt: string;
+  starknetTx: string;
 };
 
 type WalletContextType = {
@@ -36,6 +78,10 @@ type WalletContextType = {
   dataHistory: DataEntry[];
   certificates: string[];
   currentRisk: RiskStatus;
+  nfts: NFT[];
+  carbonCredits: CarbonCredit[];
+  dataListings: DataListing[];
+  zkProofs: ZKProof[];
   handleConnect: () => Promise<void>;
   handleDisconnect: () => void;
   handleManualConnect: () => void;
@@ -44,6 +90,10 @@ type WalletContextType = {
   setCurrentRisk: (risk: RiskStatus) => void;
   setManualAddress: (addr: string) => void;
   setShowManualInput: (show: boolean) => void;
+  mintNFT: (nft: NFT) => void;
+  mintCarbonCredit: (credit: CarbonCredit) => void;
+  publishDataListing: (listing: DataListing) => void;
+  addZKProof: (proof: ZKProof) => void;
 };
 
 const WalletContext = createContext<WalletContextType | null>(null);
@@ -59,6 +109,10 @@ function computeCertificates(count: number): string[] {
   return certs;
 }
 
+function randomHex(len: number) {
+  return Array.from({ length: len }, () => Math.floor(Math.random() * 16).toString(16)).join("");
+}
+
 export function WalletProvider({ children }: { children: React.ReactNode }) {
   const { toast } = useToast();
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
@@ -70,6 +124,10 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
   const [contributionCount, setContributionCount] = useState(0);
   const [dataHistory, setDataHistory] = useState<DataEntry[]>([]);
   const [currentRisk, setCurrentRisk] = useState<RiskStatus>("Medium");
+  const [nfts, setNFTs] = useState<NFT[]>([]);
+  const [carbonCredits, setCarbonCredits] = useState<CarbonCredit[]>([]);
+  const [dataListings, setDataListings] = useState<DataListing[]>([]);
+  const [zkProofs, setZKProofs] = useState<ZKProof[]>([]);
 
   const isManualRef = useRef(false);
   isManualRef.current = isManual;
@@ -129,6 +187,10 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     setFlowRewards(INITIAL_REWARDS);
     setContributionCount(0);
     setDataHistory([]);
+    setNFTs([]);
+    setCarbonCredits([]);
+    setDataListings([]);
+    setZKProofs([]);
     toast({ title: "Wallet Disconnected" });
   };
 
@@ -163,6 +225,26 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     setCurrentRisk(entry.riskStatus);
   };
 
+  const mintNFT = (nft: NFT) => {
+    setNFTs((prev) => [nft, ...prev]);
+    addFlowReward("Season NFT Minted on Flow", 50);
+  };
+
+  const mintCarbonCredit = (credit: CarbonCredit) => {
+    setCarbonCredits((prev) => [credit, ...prev]);
+    addFlowReward("Hypercert Carbon Credit Minted", 30);
+  };
+
+  const publishDataListing = (listing: DataListing) => {
+    setDataListings((prev) => [listing, ...prev]);
+    addFlowReward("Farm Data Published on Filecoin", 15);
+  };
+
+  const addZKProof = (proof: ZKProof) => {
+    setZKProofs((prev) => [proof, ...prev]);
+    addFlowReward("ZK Proof Verified on Starknet", 25);
+  };
+
   return (
     <WalletContext.Provider
       value={{
@@ -176,6 +258,10 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
         dataHistory,
         certificates,
         currentRisk,
+        nfts,
+        carbonCredits,
+        dataListings,
+        zkProofs,
         handleConnect,
         handleDisconnect,
         handleManualConnect,
@@ -184,6 +270,10 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
         setCurrentRisk,
         setManualAddress,
         setShowManualInput,
+        mintNFT,
+        mintCarbonCredit,
+        publishDataListing,
+        addZKProof,
       }}
     >
       {children}
