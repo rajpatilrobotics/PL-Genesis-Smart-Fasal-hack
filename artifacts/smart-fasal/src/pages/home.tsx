@@ -385,11 +385,12 @@ export default function Home() {
                   <Activity className="w-3.5 h-3.5 text-emerald-600" />
                   <span className="text-[10px] font-semibold text-emerald-600 uppercase">Soil Sensors</span>
                 </div>
-                <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-xs">
+                <div className="grid grid-cols-3 gap-x-2 gap-y-1 text-xs mt-1">
+                  <div><span className="text-muted-foreground">N</span> <span className="font-bold text-green-700">{sensorData.nitrogen}</span></div>
+                  <div><span className="text-muted-foreground">P</span> <span className="font-bold text-orange-600">{sensorData.phosphorus}</span></div>
+                  <div><span className="text-muted-foreground">K</span> <span className="font-bold text-purple-600">{sensorData.potassium}</span></div>
                   <div><span className="text-muted-foreground">pH</span> <span className="font-bold">{sensorData.ph}</span></div>
                   <div><span className="text-muted-foreground">H₂O</span> <span className="font-bold">{sensorData.moisture}%</span></div>
-                  <div><span className="text-muted-foreground">N</span> <span className="font-bold">{sensorData.nitrogen}</span></div>
-                  <div><span className="text-muted-foreground">P</span> <span className="font-bold">{sensorData.phosphorus}</span></div>
                 </div>
               </div>
             ) : <p className="text-xs text-muted-foreground">No data</p>}
