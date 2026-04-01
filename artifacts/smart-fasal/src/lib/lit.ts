@@ -25,7 +25,7 @@ let _client: LitNodeClient | null = null;
 export async function getLitClient(): Promise<LitNodeClient> {
   if (_client && (_client as any).ready) return _client;
   _client = new LitNodeClient({
-    litNetwork: LIT_NETWORK.DatilDev,
+    litNetwork: "datil-dev" as typeof LIT_NETWORK.DatilDev,
     debug: false,
   });
   await _client.connect();
@@ -67,7 +67,7 @@ export async function litEncrypt(plaintext: string): Promise<LitEncryptResult> {
     ciphertext,
     dataToEncryptHash,
     walletAddress: wallet.address,
-    network: LIT_NETWORK.DatilDev,
+    network: "datil-dev",
     nodeCount: 7,
   };
 }

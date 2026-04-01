@@ -76,6 +76,15 @@ async function uploadToLighthouse(
   return { cid, url: `https://ipfs.io/ipfs/${cid}`, real: false };
 }
 
+router.get("/filecoin/upload-token", (_req, res): void => {
+  const apiKey = process.env.LIGHTHOUSE_API_KEY;
+  if (!apiKey) {
+    res.json({ available: false });
+    return;
+  }
+  res.json({ available: true, apiKey });
+});
+
 router.post("/filecoin/store", async (req, res): Promise<void> => {
   const parsed = StoreOnFilecoinBody.safeParse(req.body);
   if (!parsed.success) {
@@ -85,7 +94,19 @@ router.post("/filecoin/store", async (req, res): Promise<void> => {
 
   const { dataType, data } = parsed.data;
 
-  const { cid, url, real } = await uploadToLighthouse(dataType, data);
+  const precomputedCid = typeof (data as Record<string, unknown>)._existingCid === "string"
+    ? (data as Record<string, unknown>)._existingCid as string
+    : undefined;
+
+  let cid: string, url: string, real: boolean;
+  if (precomputedCid) {
+    cid = precomputedCid;
+    url = `https://gateway.lighthouse.storage/ipfs/${cid}`;
+    real = true;
+  } else {
+    ({ cid, url, real } = await uploadToLighthouse(dataType, data));
+  }
+
   const storedAt = new Date();
 
   await db.insert(filecoinRecordsTable).values({ cid, url, dataType });

@@ -271,17 +271,42 @@ function FilecoinTab() {
     if (!walletAddress) { toast({ title: "Connect wallet first", variant: "destructive" }); return; }
     if (dataHistory.length === 0) { toast({ title: "Run farm analysis first to generate data", variant: "destructive" }); return; }
     setPublishing(true);
+    let realCid: string | null = null;
     try {
-      const result = await storeOnFilecoin.mutateAsync({
-        data: {
-          dataType: "soil-dataset",
-          data: {
+      const tokenRes = await fetch("/api/filecoin/upload-token");
+      if (tokenRes.ok) {
+        const { available, apiKey } = await tokenRes.json();
+        if (available && apiKey) {
+          const payload = JSON.stringify({
+            dataType: "soil-dataset",
             farmer: walletAddress,
             records: dataHistory.length,
             latestReading: dataHistory[0],
             timestamp: new Date().toISOString(),
             source: "SmartFasal IoT Sensors",
-          },
+          });
+          const form = new FormData();
+          form.append("file", new Blob([payload], { type: "application/json" }), `smartfasal-${Date.now()}.json`);
+          const uploadRes = await fetch("https://node.lighthouse.storage/api/v0/add", {
+            method: "POST",
+            headers: { Authorization: `Bearer ${apiKey}` },
+            body: form,
+          });
+          if (uploadRes.ok) {
+            const { Hash } = await uploadRes.json();
+            if (Hash) realCid = Hash;
+          }
+        }
+      }
+    } catch { /* network issue, fall through */ }
+
+    try {
+      const result = await storeOnFilecoin.mutateAsync({
+        data: {
+          dataType: "soil-dataset",
+          data: realCid
+            ? { _existingCid: realCid, farmer: walletAddress, records: dataHistory.length }
+            : { farmer: walletAddress, records: dataHistory.length, latestReading: dataHistory[0], timestamp: new Date().toISOString(), source: "SmartFasal IoT Sensors" },
         },
       });
       const listing: DataListing = {
@@ -296,22 +321,13 @@ function FilecoinTab() {
       };
       publishDataListing(listing);
       toast({
-        title: "Dataset Published on Filecoin! ✅",
-        description: `Real CID: ${shortHash(result.cid)} · Gateway: Lighthouse`,
+        title: realCid ? "Dataset Published on Filecoin! ✅" : "Dataset Published!",
+        description: realCid
+          ? `Real CID: ${shortHash(result.cid)} · Lighthouse Storage`
+          : `CID: ${shortHash(result.cid)}`,
       });
     } catch {
-      const listing: DataListing = {
-        id: randomHex(8),
-        cid: dataHistory[0]?.cid ?? randomCID(),
-        title: `Farm Soil Dataset — ${new Date().toLocaleDateString("en-IN", { month: "short", year: "numeric" })}`,
-        priceFlow: Math.floor(Math.random() * 30) + 15,
-        sold: false,
-        earnings: 0,
-        category: "Soil & Weather",
-        records: dataHistory.length,
-      };
-      publishDataListing(listing);
-      toast({ title: "Dataset Published on Filecoin!", description: `CID: ${shortHash(listing.cid)}` });
+      toast({ title: "Failed to publish", variant: "destructive" });
     } finally {
       setPublishing(false);
     }
