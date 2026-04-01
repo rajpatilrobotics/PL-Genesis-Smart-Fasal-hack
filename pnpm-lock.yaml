@@ -407,6 +407,9 @@ importers:
       '@onflow/fcl':
         specifier: ^1.21.10
         version: 1.21.10(@types/react@19.2.14)(jiti@2.6.1)(postcss@8.5.8)(react@19.1.0)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.2)(zod@3.25.76)
+      '@onflow/types':
+        specifier: ^1.5.0
+        version: 1.5.0
     devDependencies:
       '@hookform/resolvers':
         specifier: ^3.10.0

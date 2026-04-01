@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
-import { Leaf, Wallet, Gift, LogOut } from "lucide-react";
+import { Leaf, Wallet, Gift, LogOut, CheckCircle } from "lucide-react";
 import { useConnectWallet, useGetRewards, getGetRewardsQueryKey, useAddRewardPoints } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { fcl } from "@/lib/flow";
@@ -11,6 +12,9 @@ export default function TopHeader() {
   const queryClient = useQueryClient();
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
+  const [showManualInput, setShowManualInput] = useState(false);
+  const [manualAddress, setManualAddress] = useState("");
+  const [isManual, setIsManual] = useState(false);
 
   const connectWallet = useConnectWallet();
   const addReward = useAddRewardPoints();
@@ -24,17 +28,18 @@ export default function TopHeader() {
     const unsub = fcl.currentUser.subscribe((user: { addr?: string; loggedIn?: boolean }) => {
       if (user.loggedIn && user.addr) {
         setWalletAddress(user.addr);
+        setIsManual(false);
         connectWallet.mutate({ data: { walletAddress: user.addr } }, {
           onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: getGetRewardsQueryKey() });
           }
         });
-      } else {
+      } else if (!isManual) {
         setWalletAddress(null);
       }
     });
     return () => unsub();
-  }, []);
+  }, [isManual]);
 
   const handleConnect = async () => {
     setIsConnecting(true);
@@ -42,19 +47,39 @@ export default function TopHeader() {
       await fcl.authenticate();
     } catch {
       toast({
-        title: "Connection Failed",
-        description: "Could not connect to Flow Wallet.",
+        title: "Wallet Connection Failed",
+        description: "Could not connect automatically. You can enter your address manually below.",
         variant: "destructive",
       });
+      setShowManualInput(true);
     } finally {
       setIsConnecting(false);
     }
   };
 
   const handleDisconnect = async () => {
-    await fcl.unauthenticate();
+    if (!isManual) {
+      await fcl.unauthenticate();
+    }
     setWalletAddress(null);
+    setIsManual(false);
+    setShowManualInput(false);
+    setManualAddress("");
     toast({ title: "Wallet Disconnected" });
+  };
+
+  const handleManualConnect = () => {
+    const trimmed = manualAddress.trim();
+    if (!trimmed) return;
+    setWalletAddress(trimmed);
+    setIsManual(true);
+    setShowManualInput(false);
+    connectWallet.mutate({ data: { walletAddress: trimmed } }, {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: getGetRewardsQueryKey() });
+        toast({ title: "Wallet Connected", description: "Manual address accepted." });
+      }
+    });
   };
 
   const handleDailyCheckIn = () => {
@@ -99,8 +124,13 @@ export default function TopHeader() {
               </Button>
 
               <div className="flex items-center gap-1.5 bg-primary/10 border border-primary/20 rounded-full px-3 py-1.5">
-                <Wallet className="w-3.5 h-3.5 text-primary" />
+                {isManual ? (
+                  <CheckCircle className="w-3.5 h-3.5 text-green-500" />
+                ) : (
+                  <Wallet className="w-3.5 h-3.5 text-primary" />
+                )}
                 <span className="text-xs font-semibold text-primary">{displayAddress}</span>
+                <span className="text-[10px] text-green-600 font-medium">Connected</span>
                 {rewards?.totalPoints != null && (
                   <span className="bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full text-[10px] font-bold">
                     {rewards.totalPoints} pts
@@ -117,7 +147,7 @@ export default function TopHeader() {
             </>
           )}
 
-          {!walletAddress && (
+          {!walletAddress && !showManualInput && (
             <Button
               onClick={handleConnect}
               disabled={isConnecting}
@@ -127,6 +157,29 @@ export default function TopHeader() {
               <Wallet className="w-4 h-4 mr-2" />
               {isConnecting ? "Connecting..." : "Connect Flow"}
             </Button>
+          )}
+
+          {!walletAddress && showManualInput && (
+            <div className="flex items-center gap-2">
+              <Input
+                value={manualAddress}
+                onChange={(e) => setManualAddress(e.target.value)}
+                placeholder="0x... wallet address"
+                className="h-8 text-xs w-44"
+                onKeyDown={(e) => e.key === "Enter" && handleManualConnect()}
+              />
+              <Button size="sm" className="h-8 text-xs px-3" onClick={handleManualConnect}>
+                Connect
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-8 text-xs px-2"
+                onClick={() => setShowManualInput(false)}
+              >
+                Cancel
+              </Button>
+            </div>
           )}
         </div>
       </div>

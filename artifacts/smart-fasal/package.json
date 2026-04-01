@@ -75,6 +75,7 @@
     "zod": "catalog:"
   },
   "dependencies": {
-    "@onflow/fcl": "^1.21.10"
+    "@onflow/fcl": "^1.21.10",
+    "@onflow/types": "^1.5.0"
   }
 }
