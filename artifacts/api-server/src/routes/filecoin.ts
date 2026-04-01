@@ -12,52 +12,68 @@ import crypto from "crypto";
 
 const router: IRouter = Router();
 
-const LIGHTHOUSE_API_KEY = process.env.LIGHTHOUSE_API_KEY;
-
 async function uploadToLighthouse(
   dataType: string,
   data: object
 ): Promise<{ cid: string; url: string; real: boolean }> {
-  if (!LIGHTHOUSE_API_KEY) {
-    const hash = crypto
-      .createHash("sha256")
-      .update(JSON.stringify(data) + Date.now())
-      .digest("hex");
-    const cid = `bafybeig${hash.substring(0, 46)}`;
-    return { cid, url: `https://ipfs.io/ipfs/${cid}`, real: false };
+  const apiKey = process.env.LIGHTHOUSE_API_KEY;
+
+  if (apiKey) {
+    try {
+      const payload = JSON.stringify({
+        dataType,
+        data,
+        timestamp: new Date().toISOString(),
+        source: "SmartFasal",
+      });
+
+      const fileName = `smartfasal-${dataType}-${Date.now()}.json`;
+
+      const boundary = `----FormBoundary${crypto.randomBytes(8).toString("hex")}`;
+      const body = [
+        `--${boundary}`,
+        `Content-Disposition: form-data; name="file"; filename="${fileName}"`,
+        "Content-Type: application/json",
+        "",
+        payload,
+        `--${boundary}--`,
+      ].join("\r\n");
+
+      const response = await fetch("https://node.lighthouse.storage/api/v0/add", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": `multipart/form-data; boundary=${boundary}`,
+        },
+        body,
+      });
+
+      if (!response.ok) {
+        const errText = await response.text();
+        throw new Error(`Lighthouse HTTP ${response.status}: ${errText}`);
+      }
+
+      const result = (await response.json()) as { Hash?: string; Name?: string };
+      const cid = result.Hash;
+      if (!cid) throw new Error("Lighthouse returned no CID in response");
+
+      console.log(`[Filecoin] ✅ Real upload to Lighthouse — CID: ${cid}`);
+      return {
+        cid,
+        url: `https://gateway.lighthouse.storage/ipfs/${cid}`,
+        real: true,
+      };
+    } catch (err) {
+      console.error("[Filecoin] Lighthouse upload failed, falling back:", err);
+    }
   }
 
-  try {
-    const lighthouse = await import("@lighthouse-web3/sdk");
-    const lh = (lighthouse as any).default ?? lighthouse;
-
-    const payload = JSON.stringify({
-      dataType,
-      data,
-      timestamp: new Date().toISOString(),
-      source: "SmartFasal",
-    });
-    const fileName = `smartfasal-${dataType}-${Date.now()}.json`;
-
-    const response = await lh.uploadText(payload, LIGHTHOUSE_API_KEY, fileName);
-    const cid: string = response?.data?.Hash ?? response?.Hash;
-
-    if (!cid) throw new Error("Lighthouse returned no CID");
-
-    return {
-      cid,
-      url: `https://gateway.lighthouse.storage/ipfs/${cid}`,
-      real: true,
-    };
-  } catch (err) {
-    console.error("[Filecoin] Lighthouse upload failed, falling back:", err);
-    const hash = crypto
-      .createHash("sha256")
-      .update(JSON.stringify(data) + Date.now())
-      .digest("hex");
-    const cid = `bafybeig${hash.substring(0, 46)}`;
-    return { cid, url: `https://ipfs.io/ipfs/${cid}`, real: false };
-  }
+  const hash = crypto
+    .createHash("sha256")
+    .update(JSON.stringify(data) + Date.now())
+    .digest("hex");
+  const cid = `bafybeig${hash.substring(0, 46)}`;
+  return { cid, url: `https://ipfs.io/ipfs/${cid}`, real: false };
 }
 
 router.post("/filecoin/store", async (req, res): Promise<void> => {
