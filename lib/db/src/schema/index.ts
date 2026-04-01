@@ -6,3 +6,4 @@ export * from "./community";
 export * from "./filecoin";
 export * from "./rewards";
 export * from "./event-logs";
+export * from "./credit";

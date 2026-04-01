@@ -9,6 +9,7 @@ import communityRouter from "./community";
 import filecoinRouter from "./filecoin";
 import rewardsRouter from "./rewards";
 import analyticsRouter from "./analytics";
+import creditRouter from "./credit";
 
 const router: IRouter = Router();
 
@@ -22,5 +23,6 @@ router.use(communityRouter);
 router.use(filecoinRouter);
 router.use(rewardsRouter);
 router.use(analyticsRouter);
+router.use(creditRouter);
 
 export default router;

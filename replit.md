@@ -10,6 +10,7 @@ Full-stack mobile-style web app for Indian farmers combining:
 - Parametric insurance risk assessment
 - P2P marketplace with live mandi prices
 - Community platform with expert Q&A and encrypted chat
+- Verifiable Farmer Credit History (CIBIL-style 300–900 AI credit score, Filecoin archival, bank audit via CID)
 
 ## Stack
 

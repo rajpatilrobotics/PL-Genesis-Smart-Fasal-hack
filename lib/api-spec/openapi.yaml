@@ -561,6 +561,82 @@ paths:
                 items:
                   $ref: "#/components/schemas/EventLog"
 
+  /credit/seasons:
+    post:
+      operationId: submitCreditSeason
+      tags: [credit]
+      summary: Submit a season's farming record and compute credit score
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreditSeasonInput"
+      responses:
+        "200":
+          description: Created season record with credit score
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreditSeasonRecord"
+    get:
+      operationId: getCreditSeasons
+      tags: [credit]
+      summary: Get all season records for the farmer
+      parameters:
+        - name: farmerId
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of season records
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CreditSeasonRecord"
+
+  /credit/profile:
+    get:
+      operationId: getCreditProfile
+      tags: [credit]
+      summary: Get farmer credit profile with overall score and history
+      parameters:
+        - name: farmerId
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Credit profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreditProfile"
+
+  /credit/verify/{cid}:
+    get:
+      operationId: verifyCreditRecord
+      tags: [credit]
+      summary: Publicly verify a credit record by IPFS CID
+      parameters:
+        - name: cid
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Verified record
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreditSeasonRecord"
+        "404":
+          description: Record not found
+
 components:
   schemas:
     HealthStatus:
@@ -1298,3 +1374,156 @@ components:
         - eventType
         - description
         - createdAt
+
+    CreditSeasonInput:
+      type: object
+      properties:
+        farmerId:
+          type: ["string", "null"]
+        season:
+          type: string
+        cropGrown:
+          type: string
+        acresPlanted:
+          type: number
+        yieldKgPerAcre:
+          type: number
+        soilHealthScore:
+          type: number
+        practicesFollowed:
+          type: array
+          items:
+            type: string
+        weatherChallenges:
+          type: ["string", "null"]
+        inputCostPerAcre:
+          type: ["number", "null"]
+        revenuePerAcre:
+          type: ["number", "null"]
+        loanTaken:
+          type: ["number", "null"]
+        loanRepaid:
+          type: ["number", "null"]
+      required:
+        - season
+        - cropGrown
+        - acresPlanted
+        - yieldKgPerAcre
+        - soilHealthScore
+
+    CreditScoreBreakdown:
+      type: object
+      properties:
+        yieldScore:
+          type: number
+        soilHealthScore:
+          type: number
+        practicesScore:
+          type: number
+        consistencyScore:
+          type: number
+        repaymentScore:
+          type: number
+        summary:
+          type: string
+      required:
+        - yieldScore
+        - soilHealthScore
+        - practicesScore
+        - consistencyScore
+        - repaymentScore
+        - summary
+
+    CreditSeasonRecord:
+      type: object
+      properties:
+        id:
+          type: integer
+        farmerId:
+          type: string
+        season:
+          type: string
+        cropGrown:
+          type: string
+        acresPlanted:
+          type: number
+        yieldKgPerAcre:
+          type: number
+        soilHealthScore:
+          type: number
+        practicesFollowed:
+          type: array
+          items:
+            type: string
+        weatherChallenges:
+          type: ["string", "null"]
+        inputCostPerAcre:
+          type: ["number", "null"]
+        revenuePerAcre:
+          type: ["number", "null"]
+        loanTaken:
+          type: ["number", "null"]
+        loanRepaid:
+          type: ["number", "null"]
+        creditScore:
+          type: integer
+        creditRating:
+          type: string
+        scoreBreakdown:
+          $ref: "#/components/schemas/CreditScoreBreakdown"
+        ipfsCid:
+          type: string
+        ipfsUrl:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - farmerId
+        - season
+        - cropGrown
+        - acresPlanted
+        - yieldKgPerAcre
+        - soilHealthScore
+        - practicesFollowed
+        - creditScore
+        - creditRating
+        - scoreBreakdown
+        - ipfsCid
+        - ipfsUrl
+        - createdAt
+
+    CreditProfile:
+      type: object
+      properties:
+        farmerId:
+          type: string
+        overallScore:
+          type: integer
+        overallRating:
+          type: string
+        totalSeasons:
+          type: integer
+        averageYield:
+          type: number
+        averageSoilHealth:
+          type: number
+        seasons:
+          type: array
+          items:
+            $ref: "#/components/schemas/CreditSeasonRecord"
+        trend:
+          type: string
+        loanEligibility:
+          type: string
+      required:
+        - farmerId
+        - overallScore
+        - overallRating
+        - totalSeasons
+        - averageYield
+        - averageSoilHealth
+        - seasons
+        - trend
+        - loanEligibility

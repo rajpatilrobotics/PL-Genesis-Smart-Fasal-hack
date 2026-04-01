@@ -29,6 +29,9 @@ import type {
   CreateCommunityPostInput,
   CreateInsuranceClaimInput,
   CreateMarketListingInput,
+  CreditProfile,
+  CreditSeasonInput,
+  CreditSeasonRecord,
   DiseaseDetectInput,
   DiseaseDetectResult,
   EventLog,
@@ -37,6 +40,8 @@ import type {
   FilecoinRecord,
   FilecoinResult,
   FilecoinStoreInput,
+  GetCreditProfileParams,
+  GetCreditSeasonsParams,
   GetSensorHistoryParams,
   GetWeatherParams,
   HealthStatus,
@@ -2653,6 +2658,373 @@ export function useGetAnalyticsLogs<
   request?: SecondParameter<typeof customFetch>;
 }): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
   const queryOptions = getGetAnalyticsLogsQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Submit a season's farming record and compute credit score
+ */
+export const getSubmitCreditSeasonUrl = () => {
+  return `/api/credit/seasons`;
+};
+
+export const submitCreditSeason = async (
+  creditSeasonInput: CreditSeasonInput,
+  options?: RequestInit,
+): Promise<CreditSeasonRecord> => {
+  return customFetch<CreditSeasonRecord>(getSubmitCreditSeasonUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(creditSeasonInput),
+  });
+};
+
+export const getSubmitCreditSeasonMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof submitCreditSeason>>,
+    TError,
+    { data: BodyType<CreditSeasonInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof submitCreditSeason>>,
+  TError,
+  { data: BodyType<CreditSeasonInput> },
+  TContext
+> => {
+  const mutationKey = ["submitCreditSeason"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof submitCreditSeason>>,
+    { data: BodyType<CreditSeasonInput> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return submitCreditSeason(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type SubmitCreditSeasonMutationResult = NonNullable<
+  Awaited<ReturnType<typeof submitCreditSeason>>
+>;
+export type SubmitCreditSeasonMutationBody = BodyType<CreditSeasonInput>;
+export type SubmitCreditSeasonMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Submit a season's farming record and compute credit score
+ */
+export const useSubmitCreditSeason = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof submitCreditSeason>>,
+    TError,
+    { data: BodyType<CreditSeasonInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof submitCreditSeason>>,
+  TError,
+  { data: BodyType<CreditSeasonInput> },
+  TContext
+> => {
+  return useMutation(getSubmitCreditSeasonMutationOptions(options));
+};
+
+/**
+ * @summary Get all season records for the farmer
+ */
+export const getGetCreditSeasonsUrl = (params?: GetCreditSeasonsParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/credit/seasons?${stringifiedParams}`
+    : `/api/credit/seasons`;
+};
+
+export const getCreditSeasons = async (
+  params?: GetCreditSeasonsParams,
+  options?: RequestInit,
+): Promise<CreditSeasonRecord[]> => {
+  return customFetch<CreditSeasonRecord[]>(getGetCreditSeasonsUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetCreditSeasonsQueryKey = (
+  params?: GetCreditSeasonsParams,
+) => {
+  return [`/api/credit/seasons`, ...(params ? [params] : [])] as const;
+};
+
+export const getGetCreditSeasonsQueryOptions = <
+  TData = Awaited<ReturnType<typeof getCreditSeasons>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: GetCreditSeasonsParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getCreditSeasons>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetCreditSeasonsQueryKey(params);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getCreditSeasons>>
+  > = ({ signal }) => getCreditSeasons(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getCreditSeasons>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetCreditSeasonsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getCreditSeasons>>
+>;
+export type GetCreditSeasonsQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Get all season records for the farmer
+ */
+
+export function useGetCreditSeasons<
+  TData = Awaited<ReturnType<typeof getCreditSeasons>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: GetCreditSeasonsParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getCreditSeasons>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetCreditSeasonsQueryOptions(params, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Get farmer credit profile with overall score and history
+ */
+export const getGetCreditProfileUrl = (params?: GetCreditProfileParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/credit/profile?${stringifiedParams}`
+    : `/api/credit/profile`;
+};
+
+export const getCreditProfile = async (
+  params?: GetCreditProfileParams,
+  options?: RequestInit,
+): Promise<CreditProfile> => {
+  return customFetch<CreditProfile>(getGetCreditProfileUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetCreditProfileQueryKey = (
+  params?: GetCreditProfileParams,
+) => {
+  return [`/api/credit/profile`, ...(params ? [params] : [])] as const;
+};
+
+export const getGetCreditProfileQueryOptions = <
+  TData = Awaited<ReturnType<typeof getCreditProfile>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: GetCreditProfileParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getCreditProfile>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetCreditProfileQueryKey(params);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getCreditProfile>>
+  > = ({ signal }) => getCreditProfile(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getCreditProfile>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetCreditProfileQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getCreditProfile>>
+>;
+export type GetCreditProfileQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Get farmer credit profile with overall score and history
+ */
+
+export function useGetCreditProfile<
+  TData = Awaited<ReturnType<typeof getCreditProfile>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: GetCreditProfileParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getCreditProfile>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetCreditProfileQueryOptions(params, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Publicly verify a credit record by IPFS CID
+ */
+export const getVerifyCreditRecordUrl = (cid: string) => {
+  return `/api/credit/verify/${cid}`;
+};
+
+export const verifyCreditRecord = async (
+  cid: string,
+  options?: RequestInit,
+): Promise<CreditSeasonRecord> => {
+  return customFetch<CreditSeasonRecord>(getVerifyCreditRecordUrl(cid), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getVerifyCreditRecordQueryKey = (cid: string) => {
+  return [`/api/credit/verify/${cid}`] as const;
+};
+
+export const getVerifyCreditRecordQueryOptions = <
+  TData = Awaited<ReturnType<typeof verifyCreditRecord>>,
+  TError = ErrorType<void>,
+>(
+  cid: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof verifyCreditRecord>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getVerifyCreditRecordQueryKey(cid);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof verifyCreditRecord>>
+  > = ({ signal }) => verifyCreditRecord(cid, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!cid,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof verifyCreditRecord>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type VerifyCreditRecordQueryResult = NonNullable<
+  Awaited<ReturnType<typeof verifyCreditRecord>>
+>;
+export type VerifyCreditRecordQueryError = ErrorType<void>;
+
+/**
+ * @summary Publicly verify a credit record by IPFS CID
+ */
+
+export function useVerifyCreditRecord<
+  TData = Awaited<ReturnType<typeof verifyCreditRecord>>,
+  TError = ErrorType<void>,
+>(
+  cid: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof verifyCreditRecord>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getVerifyCreditRecordQueryOptions(cid, options);
 
   const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
     queryKey: QueryKey;

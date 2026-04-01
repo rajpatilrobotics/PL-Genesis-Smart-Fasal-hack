@@ -551,3 +551,171 @@ export const GetAnalyticsLogsResponseItem = zod.object({
   createdAt: zod.coerce.date(),
 });
 export const GetAnalyticsLogsResponse = zod.array(GetAnalyticsLogsResponseItem);
+
+/**
+ * @summary Submit a season's farming record and compute credit score
+ */
+export const SubmitCreditSeasonBody = zod.object({
+  farmerId: zod.string().nullish(),
+  season: zod.string(),
+  cropGrown: zod.string(),
+  acresPlanted: zod.number(),
+  yieldKgPerAcre: zod.number(),
+  soilHealthScore: zod.number(),
+  practicesFollowed: zod.array(zod.string()).optional(),
+  weatherChallenges: zod.string().nullish(),
+  inputCostPerAcre: zod.number().nullish(),
+  revenuePerAcre: zod.number().nullish(),
+  loanTaken: zod.number().nullish(),
+  loanRepaid: zod.number().nullish(),
+});
+
+export const SubmitCreditSeasonResponse = zod.object({
+  id: zod.number(),
+  farmerId: zod.string(),
+  season: zod.string(),
+  cropGrown: zod.string(),
+  acresPlanted: zod.number(),
+  yieldKgPerAcre: zod.number(),
+  soilHealthScore: zod.number(),
+  practicesFollowed: zod.array(zod.string()),
+  weatherChallenges: zod.string().nullish(),
+  inputCostPerAcre: zod.number().nullish(),
+  revenuePerAcre: zod.number().nullish(),
+  loanTaken: zod.number().nullish(),
+  loanRepaid: zod.number().nullish(),
+  creditScore: zod.number(),
+  creditRating: zod.string(),
+  scoreBreakdown: zod.object({
+    yieldScore: zod.number(),
+    soilHealthScore: zod.number(),
+    practicesScore: zod.number(),
+    consistencyScore: zod.number(),
+    repaymentScore: zod.number(),
+    summary: zod.string(),
+  }),
+  ipfsCid: zod.string(),
+  ipfsUrl: zod.string(),
+  createdAt: zod.coerce.date(),
+});
+
+/**
+ * @summary Get all season records for the farmer
+ */
+export const GetCreditSeasonsQueryParams = zod.object({
+  farmerId: zod.coerce.string().optional(),
+});
+
+export const GetCreditSeasonsResponseItem = zod.object({
+  id: zod.number(),
+  farmerId: zod.string(),
+  season: zod.string(),
+  cropGrown: zod.string(),
+  acresPlanted: zod.number(),
+  yieldKgPerAcre: zod.number(),
+  soilHealthScore: zod.number(),
+  practicesFollowed: zod.array(zod.string()),
+  weatherChallenges: zod.string().nullish(),
+  inputCostPerAcre: zod.number().nullish(),
+  revenuePerAcre: zod.number().nullish(),
+  loanTaken: zod.number().nullish(),
+  loanRepaid: zod.number().nullish(),
+  creditScore: zod.number(),
+  creditRating: zod.string(),
+  scoreBreakdown: zod.object({
+    yieldScore: zod.number(),
+    soilHealthScore: zod.number(),
+    practicesScore: zod.number(),
+    consistencyScore: zod.number(),
+    repaymentScore: zod.number(),
+    summary: zod.string(),
+  }),
+  ipfsCid: zod.string(),
+  ipfsUrl: zod.string(),
+  createdAt: zod.coerce.date(),
+});
+export const GetCreditSeasonsResponse = zod.array(GetCreditSeasonsResponseItem);
+
+/**
+ * @summary Get farmer credit profile with overall score and history
+ */
+export const GetCreditProfileQueryParams = zod.object({
+  farmerId: zod.coerce.string().optional(),
+});
+
+export const GetCreditProfileResponse = zod.object({
+  farmerId: zod.string(),
+  overallScore: zod.number(),
+  overallRating: zod.string(),
+  totalSeasons: zod.number(),
+  averageYield: zod.number(),
+  averageSoilHealth: zod.number(),
+  seasons: zod.array(
+    zod.object({
+      id: zod.number(),
+      farmerId: zod.string(),
+      season: zod.string(),
+      cropGrown: zod.string(),
+      acresPlanted: zod.number(),
+      yieldKgPerAcre: zod.number(),
+      soilHealthScore: zod.number(),
+      practicesFollowed: zod.array(zod.string()),
+      weatherChallenges: zod.string().nullish(),
+      inputCostPerAcre: zod.number().nullish(),
+      revenuePerAcre: zod.number().nullish(),
+      loanTaken: zod.number().nullish(),
+      loanRepaid: zod.number().nullish(),
+      creditScore: zod.number(),
+      creditRating: zod.string(),
+      scoreBreakdown: zod.object({
+        yieldScore: zod.number(),
+        soilHealthScore: zod.number(),
+        practicesScore: zod.number(),
+        consistencyScore: zod.number(),
+        repaymentScore: zod.number(),
+        summary: zod.string(),
+      }),
+      ipfsCid: zod.string(),
+      ipfsUrl: zod.string(),
+      createdAt: zod.coerce.date(),
+    }),
+  ),
+  trend: zod.string(),
+  loanEligibility: zod.string(),
+});
+
+/**
+ * @summary Publicly verify a credit record by IPFS CID
+ */
+export const VerifyCreditRecordParams = zod.object({
+  cid: zod.coerce.string(),
+});
+
+export const VerifyCreditRecordResponse = zod.object({
+  id: zod.number(),
+  farmerId: zod.string(),
+  season: zod.string(),
+  cropGrown: zod.string(),
+  acresPlanted: zod.number(),
+  yieldKgPerAcre: zod.number(),
+  soilHealthScore: zod.number(),
+  practicesFollowed: zod.array(zod.string()),
+  weatherChallenges: zod.string().nullish(),
+  inputCostPerAcre: zod.number().nullish(),
+  revenuePerAcre: zod.number().nullish(),
+  loanTaken: zod.number().nullish(),
+  loanRepaid: zod.number().nullish(),
+  creditScore: zod.number(),
+  creditRating: zod.string(),
+  scoreBreakdown: zod.object({
+    yieldScore: zod.number(),
+    soilHealthScore: zod.number(),
+    practicesScore: zod.number(),
+    consistencyScore: zod.number(),
+    repaymentScore: zod.number(),
+    summary: zod.string(),
+  }),
+  ipfsCid: zod.string(),
+  ipfsUrl: zod.string(),
+  createdAt: zod.coerce.date(),
+});

@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Home, Brain, Shield, ShoppingCart, Sparkles, UserCircle2 } from "lucide-react";
+import { Home, Brain, Shield, ShoppingCart, Sparkles, UserCircle2, BadgeIndianRupee } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function BottomNav() {
@@ -8,6 +8,7 @@ export default function BottomNav() {
   const links = [
     { href: "/", icon: Home, label: "Home" },
     { href: "/ai", icon: Brain, label: "AI Hub" },
+    { href: "/credit", icon: BadgeIndianRupee, label: "Credit" },
     { href: "/insurance", icon: Shield, label: "Insurance" },
     { href: "/market", icon: ShoppingCart, label: "Market" },
     { href: "/web3", icon: Sparkles, label: "Web3" },

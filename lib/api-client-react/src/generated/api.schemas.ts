@@ -326,6 +326,75 @@ export interface AnalyticsSummary {
   recentLogs: EventLog[];
 }
 
+export interface CreditSeasonInput {
+  /** @nullable */
+  farmerId?: string | null;
+  season: string;
+  cropGrown: string;
+  acresPlanted: number;
+  yieldKgPerAcre: number;
+  soilHealthScore: number;
+  practicesFollowed?: string[];
+  /** @nullable */
+  weatherChallenges?: string | null;
+  /** @nullable */
+  inputCostPerAcre?: number | null;
+  /** @nullable */
+  revenuePerAcre?: number | null;
+  /** @nullable */
+  loanTaken?: number | null;
+  /** @nullable */
+  loanRepaid?: number | null;
+}
+
+export interface CreditScoreBreakdown {
+  yieldScore: number;
+  soilHealthScore: number;
+  practicesScore: number;
+  consistencyScore: number;
+  repaymentScore: number;
+  summary: string;
+}
+
+export interface CreditSeasonRecord {
+  id: number;
+  farmerId: string;
+  season: string;
+  cropGrown: string;
+  acresPlanted: number;
+  yieldKgPerAcre: number;
+  soilHealthScore: number;
+  practicesFollowed: string[];
+  /** @nullable */
+  weatherChallenges?: string | null;
+  /** @nullable */
+  inputCostPerAcre?: number | null;
+  /** @nullable */
+  revenuePerAcre?: number | null;
+  /** @nullable */
+  loanTaken?: number | null;
+  /** @nullable */
+  loanRepaid?: number | null;
+  creditScore: number;
+  creditRating: string;
+  scoreBreakdown: CreditScoreBreakdown;
+  ipfsCid: string;
+  ipfsUrl: string;
+  createdAt: string;
+}
+
+export interface CreditProfile {
+  farmerId: string;
+  overallScore: number;
+  overallRating: string;
+  totalSeasons: number;
+  averageYield: number;
+  averageSoilHealth: number;
+  seasons: CreditSeasonRecord[];
+  trend: string;
+  loanEligibility: string;
+}
+
 export type GetSensorHistoryParams = {
   limit?: number;
 };
@@ -333,4 +402,12 @@ export type GetSensorHistoryParams = {
 export type GetWeatherParams = {
   lat?: number;
   lon?: number;
+};
+
+export type GetCreditSeasonsParams = {
+  farmerId?: string;
+};
+
+export type GetCreditProfileParams = {
+  farmerId?: string;
 };
