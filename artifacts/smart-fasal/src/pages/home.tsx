@@ -232,10 +232,13 @@ export default function Home() {
           }, { onSuccess: () => resolve(), onError: () => resolve() });
         });
       } else {
-        // Fall back to server-side store (will simulate CID)
+        // Fall back to server-side store, skipping Lighthouse (known blocked)
         const filecoinRes = await new Promise<{ cid: string }>((resolve, reject) => {
           storeOnFilecoin.mutate({
-            data: { dataType: "farm_analysis", data: farmPayload as Record<string, unknown> }
+            data: {
+              dataType: "farm_analysis",
+              data: { ...farmPayload, _skipLighthouse: true } as Record<string, unknown>
+            }
           }, {
             onSuccess: (d) => resolve(d as { cid: string }),
             onError: reject

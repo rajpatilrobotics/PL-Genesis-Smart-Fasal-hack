@@ -94,15 +94,25 @@ router.post("/filecoin/store", async (req, res): Promise<void> => {
 
   const { dataType, data } = parsed.data;
 
-  const precomputedCid = typeof (data as Record<string, unknown>)._existingCid === "string"
-    ? (data as Record<string, unknown>)._existingCid as string
+  const dataRecord = data as Record<string, unknown>;
+  const precomputedCid = typeof dataRecord._existingCid === "string"
+    ? dataRecord._existingCid as string
     : undefined;
+  const skipLighthouse = dataRecord._skipLighthouse === true;
 
   let cid: string, url: string, real: boolean;
   if (precomputedCid) {
     cid = precomputedCid;
     url = `https://gateway.lighthouse.storage/ipfs/${cid}`;
     real = true;
+  } else if (skipLighthouse) {
+    const hash = crypto
+      .createHash("sha256")
+      .update(JSON.stringify(data) + Date.now())
+      .digest("hex");
+    cid = `bafybeig${hash.substring(0, 46)}`;
+    url = `https://ipfs.io/ipfs/${cid}`;
+    real = false;
   } else {
     ({ cid, url, real } = await uploadToLighthouse(dataType, data));
   }
