@@ -2,6 +2,8 @@
 let cachedApiKey: string | null = null;
 let cacheChecked = false;
 
+const UPLOAD_TIMEOUT_MS = 12000;
+
 async function getApiKey(): Promise<string | null> {
   if (cacheChecked) return cachedApiKey;
   try {
@@ -15,6 +17,13 @@ async function getApiKey(): Promise<string | null> {
     cacheChecked = true;
     return null;
   }
+}
+
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  const timeout = new Promise<never>((_, reject) =>
+    setTimeout(() => reject(new Error(`Timed out after ${ms}ms`)), ms)
+  );
+  return Promise.race([promise, timeout]);
 }
 
 export async function lighthouseUpload(
@@ -36,11 +45,19 @@ export async function lighthouseUpload(
       const blob = new Blob([payload], { type: "application/json" });
       formData.append("file", blob, fileName);
 
-      const res = await fetch("https://node.lighthouse.storage/api/v0/add", {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), UPLOAD_TIMEOUT_MS);
+
+      const doUpload = fetch("https://node.lighthouse.storage/api/v0/add", {
         method: "POST",
         headers: { Authorization: `Bearer ${apiKey}` },
         body: formData,
+        signal: controller.signal,
       });
+
+      const res = await withTimeout(doUpload, UPLOAD_TIMEOUT_MS).finally(() =>
+        clearTimeout(timeoutId)
+      );
 
       if (!res.ok) throw new Error(`Lighthouse HTTP ${res.status}`);
       const result = (await res.json()) as { Hash?: string };
@@ -54,7 +71,7 @@ export async function lighthouseUpload(
         real: true,
       };
     } catch (err) {
-      console.warn("[Lighthouse] Client-side upload failed, falling back to server:", err);
+      console.warn("[Lighthouse] Upload failed, falling back to simulated:", err);
     }
   }
 
