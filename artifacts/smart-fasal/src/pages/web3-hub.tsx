@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { litEncrypt, litDecrypt, getLitClient, shortCipher, getEphemeralWallet, type LitEncryptResult } from "@/lib/lit";
 import { useStoreOnFilecoin } from "@workspace/api-client-react";
+import { lighthouseUpload } from "@/lib/lighthouse";
 import { fcl } from "@/lib/flow";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -273,31 +274,14 @@ function FilecoinTab() {
     setPublishing(true);
     let realCid: string | null = null;
     try {
-      const tokenRes = await fetch("/api/filecoin/upload-token");
-      if (tokenRes.ok) {
-        const { available, apiKey } = await tokenRes.json();
-        if (available && apiKey) {
-          const payload = JSON.stringify({
-            dataType: "soil-dataset",
-            farmer: walletAddress,
-            records: dataHistory.length,
-            latestReading: dataHistory[0],
-            timestamp: new Date().toISOString(),
-            source: "SmartFasal IoT Sensors",
-          });
-          const form = new FormData();
-          form.append("file", new Blob([payload], { type: "application/json" }), `smartfasal-${Date.now()}.json`);
-          const uploadRes = await fetch("https://node.lighthouse.storage/api/v0/add", {
-            method: "POST",
-            headers: { Authorization: `Bearer ${apiKey}` },
-            body: form,
-          });
-          if (uploadRes.ok) {
-            const { Hash } = await uploadRes.json();
-            if (Hash) realCid = Hash;
-          }
-        }
-      }
+      const lhResult = await lighthouseUpload("soil-dataset", {
+        farmer: walletAddress,
+        records: dataHistory.length,
+        latestReading: dataHistory[0],
+        timestamp: new Date().toISOString(),
+        source: "SmartFasal IoT Sensors",
+      });
+      if (lhResult.real && lhResult.cid) realCid = lhResult.cid;
     } catch { /* network issue, fall through */ }
 
     try {

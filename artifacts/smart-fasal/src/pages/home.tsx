@@ -23,6 +23,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useWallet } from "@/lib/wallet-context";
 import type { AccessLevel, RiskStatus } from "@/lib/wallet-context";
 import { cn } from "@/lib/utils";
+import { lighthouseUpload } from "@/lib/lighthouse";
 
 type PipelineStep = {
   id: string;
@@ -199,32 +200,49 @@ export default function Home() {
     setSteps(prev => prev.map(s => s.id === "filecoin" ? { ...s, status: "running" } : s));
     await delay(300);
 
+    let filecoinReal = false;
     try {
-      const filecoinRes = await new Promise<{ cid: string }>((resolve, reject) => {
-        storeOnFilecoin.mutate({
-          data: {
-            dataType: "farm_analysis",
+      const farmPayload = {
+        nitrogen: privacyEnabled ? "***" : sensorData.nitrogen,
+        phosphorus: privacyEnabled ? "***" : sensorData.phosphorus,
+        potassium: privacyEnabled ? "***" : sensorData.potassium,
+        ph: sensorData.ph,
+        moisture: sensorData.moisture,
+        temperature: weather?.temperature,
+        timestamp: new Date().toISOString(),
+        walletAddress: walletAddress ?? "anonymous",
+        accessLevel,
+        riskLevel,
+        aiHealth,
+        aiYield,
+      };
+
+      // Try real client-side upload to Lighthouse first
+      const lhResult = await lighthouseUpload("farm_analysis", farmPayload);
+      if (lhResult.real && lhResult.cid) {
+        cid = lhResult.cid;
+        filecoinReal = true;
+        // Register the real CID with the server DB
+        await new Promise<void>((resolve) => {
+          storeOnFilecoin.mutate({
             data: {
-              nitrogen: privacyEnabled ? "***" : sensorData.nitrogen,
-              phosphorus: privacyEnabled ? "***" : sensorData.phosphorus,
-              potassium: privacyEnabled ? "***" : sensorData.potassium,
-              ph: sensorData.ph,
-              moisture: sensorData.moisture,
-              temperature: weather?.temperature,
-              timestamp: new Date().toISOString(),
-              walletAddress: walletAddress ?? "anonymous",
-              accessLevel,
-              riskLevel,
-              aiHealth,
-              aiYield,
-            } as Record<string, unknown>
-          }
-        }, {
-          onSuccess: (d) => resolve(d as { cid: string }),
-          onError: reject
+              dataType: "farm_analysis",
+              data: { ...farmPayload, _existingCid: cid } as Record<string, unknown>
+            }
+          }, { onSuccess: () => resolve(), onError: () => resolve() });
         });
-      });
-      cid = filecoinRes.cid;
+      } else {
+        // Fall back to server-side store (will simulate CID)
+        const filecoinRes = await new Promise<{ cid: string }>((resolve, reject) => {
+          storeOnFilecoin.mutate({
+            data: { dataType: "farm_analysis", data: farmPayload as Record<string, unknown> }
+          }, {
+            onSuccess: (d) => resolve(d as { cid: string }),
+            onError: reject
+          });
+        });
+        cid = filecoinRes.cid;
+      }
       queryClient.invalidateQueries({ queryKey: getGetFilecoinRecordsQueryKey() });
     } catch {
       // use generated CID
@@ -232,7 +250,9 @@ export default function Home() {
 
     setSteps(prev => prev.map(s => s.id === "filecoin" ? {
       ...s, status: "done",
-      result: `CID: ${cid.substring(0, 16)}...`
+      result: filecoinReal
+        ? `✅ Real IPFS — CID: ${cid.substring(0, 20)}...`
+        : `CID: ${cid.substring(0, 16)}... (simulated)`
     } : s));
     await delay(400);
 
