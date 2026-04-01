@@ -10,7 +10,6 @@ fcl.config({
   ],
   "app.detail.title": "Smart Fasal",
   "app.detail.icon": "https://i.imgur.com/YaHeILZ.png",
-  "walletconnect.projectId": "7a76aaac5b7e35c4c5c4a4c4b4b4b4b4",
 });
 
 export { fcl };
