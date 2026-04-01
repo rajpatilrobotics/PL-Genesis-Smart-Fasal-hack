@@ -12,13 +12,52 @@ import crypto from "crypto";
 
 const router: IRouter = Router();
 
-// Simulate a Filecoin/IPFS CID generation
-function generateCid(data: object): string {
-  const hash = crypto
-    .createHash("sha256")
-    .update(JSON.stringify(data) + Date.now())
-    .digest("hex");
-  return `bafybeig${hash.substring(0, 46)}`;
+const LIGHTHOUSE_API_KEY = process.env.LIGHTHOUSE_API_KEY;
+
+async function uploadToLighthouse(
+  dataType: string,
+  data: object
+): Promise<{ cid: string; url: string; real: boolean }> {
+  if (!LIGHTHOUSE_API_KEY) {
+    const hash = crypto
+      .createHash("sha256")
+      .update(JSON.stringify(data) + Date.now())
+      .digest("hex");
+    const cid = `bafybeig${hash.substring(0, 46)}`;
+    return { cid, url: `https://ipfs.io/ipfs/${cid}`, real: false };
+  }
+
+  try {
+    const lighthouse = await import("@lighthouse-web3/sdk");
+    const lh = (lighthouse as any).default ?? lighthouse;
+
+    const payload = JSON.stringify({
+      dataType,
+      data,
+      timestamp: new Date().toISOString(),
+      source: "SmartFasal",
+    });
+    const fileName = `smartfasal-${dataType}-${Date.now()}.json`;
+
+    const response = await lh.uploadText(payload, LIGHTHOUSE_API_KEY, fileName);
+    const cid: string = response?.data?.Hash ?? response?.Hash;
+
+    if (!cid) throw new Error("Lighthouse returned no CID");
+
+    return {
+      cid,
+      url: `https://gateway.lighthouse.storage/ipfs/${cid}`,
+      real: true,
+    };
+  } catch (err) {
+    console.error("[Filecoin] Lighthouse upload failed, falling back:", err);
+    const hash = crypto
+      .createHash("sha256")
+      .update(JSON.stringify(data) + Date.now())
+      .digest("hex");
+    const cid = `bafybeig${hash.substring(0, 46)}`;
+    return { cid, url: `https://ipfs.io/ipfs/${cid}`, real: false };
+  }
 }
 
 router.post("/filecoin/store", async (req, res): Promise<void> => {
@@ -30,19 +69,15 @@ router.post("/filecoin/store", async (req, res): Promise<void> => {
 
   const { dataType, data } = parsed.data;
 
-  // Generate a simulated CID (in production this would use web3.storage)
-  const cid = generateCid({ dataType, data });
-  const url = `https://ipfs.io/ipfs/${cid}`;
+  const { cid, url, real } = await uploadToLighthouse(dataType, data);
   const storedAt = new Date();
 
-  // Save record to DB
-  await db.insert(filecoinRecordsTable).values({
-    cid,
-    url,
-    dataType,
-  });
+  await db.insert(filecoinRecordsTable).values({ cid, url, dataType });
 
-  await logEvent("filecoin", `Data stored on Filecoin: ${dataType} - CID: ${cid}`);
+  await logEvent(
+    "filecoin",
+    `Data stored on Filecoin${real ? " (Lighthouse ✓)" : " (simulated)"}: ${dataType} — CID: ${cid}`
+  );
 
   res.json(StoreOnFilecoinResponse.parse({ cid, url, dataType, storedAt }));
 });

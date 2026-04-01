@@ -28,6 +28,9 @@ if (!basePath) {
 
 export default defineConfig({
   base: basePath,
+  define: {
+    global: "globalThis",
+  },
   plugins: [
     react(),
     tailwindcss(),
@@ -50,6 +53,7 @@ export default defineConfig({
     alias: {
       "@": path.resolve(import.meta.dirname, "src"),
       "@assets": path.resolve(import.meta.dirname, "..", "..", "attached_assets"),
+      buffer: "buffer",
     },
     dedupe: ["react", "react-dom"],
   },
