@@ -11,6 +11,7 @@ import Insurance from "@/pages/insurance";
 import Market from "@/pages/market";
 import Community from "@/pages/community";
 import NotFound from "@/pages/not-found";
+import { WalletProvider } from "@/lib/wallet-context";
 
 const queryClient = new QueryClient();
 
@@ -33,13 +34,15 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-          <div className="pb-20 min-h-screen bg-muted/30">
-            <TopHeader />
-            <main className="container mx-auto px-4 py-6 max-w-md">
-              <Router />
-            </main>
-            <BottomNav />
-          </div>
+          <WalletProvider>
+            <div className="pb-20 min-h-screen bg-muted/30">
+              <TopHeader />
+              <main className="container mx-auto px-4 py-6 max-w-md">
+                <Router />
+              </main>
+              <BottomNav />
+            </div>
+          </WalletProvider>
         </WouterRouter>
         <Toaster />
       </TooltipProvider>

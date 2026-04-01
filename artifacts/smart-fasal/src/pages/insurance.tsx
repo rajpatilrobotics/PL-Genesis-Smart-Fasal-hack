@@ -1,4 +1,8 @@
-import { useGetInsuranceRisk, getGetInsuranceRiskQueryKey, useGetInsuranceClaims, getGetInsuranceClaimsQueryKey, useCreateInsuranceClaim } from "@workspace/api-client-react";
+import {
+  useGetInsuranceRisk, getGetInsuranceRiskQueryKey,
+  useGetInsuranceClaims, getGetInsuranceClaimsQueryKey,
+  useCreateInsuranceClaim
+} from "@workspace/api-client-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -9,13 +13,15 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { ShieldAlert, ShieldCheck, AlertCircle, FileText, CheckCircle2 } from "lucide-react";
+import { ShieldAlert, ShieldCheck, AlertCircle, FileText, CheckCircle2, Zap } from "lucide-react";
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { useWallet } from "@/lib/wallet-context";
 
 export default function Insurance() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { walletAddress, addFlowReward } = useWallet();
   const [claimOpen, setClaimOpen] = useState(false);
   const [claimForm, setClaimForm] = useState({ type: "DROUGHT", description: "" });
 
@@ -42,6 +48,9 @@ export default function Insurance() {
         setClaimOpen(false);
         setClaimForm({ type: "DROUGHT", description: "" });
         queryClient.invalidateQueries({ queryKey: getGetInsuranceClaimsQueryKey() });
+        if (walletAddress) {
+          addFlowReward("Insurance Claim Filed", 50);
+        }
       },
       onError: () => {
         toast({ title: "Error", description: "Failed to submit claim.", variant: "destructive" });
@@ -63,6 +72,12 @@ export default function Insurance() {
       <div>
         <h2 className="text-2xl font-bold tracking-tight">Parametric Insurance</h2>
         <p className="text-muted-foreground text-sm">Automated protection against climate risks</p>
+        {walletAddress && (
+          <div className="mt-2 flex items-center gap-1.5 text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-1.5 w-fit">
+            <Zap className="w-3.5 h-3.5" />
+            <span>Filing a claim earns <strong>+50 FLOW</strong> to your wallet</span>
+          </div>
+        )}
       </div>
 
       {/* Risk Assessment Card */}
@@ -126,6 +141,9 @@ export default function Insurance() {
               <DialogTrigger asChild>
                 <Button className="w-full font-bold" size="lg" variant="destructive" data-testid="button-open-claim">
                   Claim Insurance (Eligible)
+                  {walletAddress && (
+                    <span className="ml-2 text-xs bg-white/20 px-1.5 py-0.5 rounded-full">+50 FLOW</span>
+                  )}
                 </Button>
               </DialogTrigger>
               <DialogContent>
@@ -133,12 +151,13 @@ export default function Insurance() {
                   <DialogTitle>File Parametric Claim</DialogTitle>
                   <DialogDescription>
                     Your farm conditions have triggered an automated payout eligibility.
+                    {walletAddress && " Filing earns +50 FLOW rewards."}
                   </DialogDescription>
                 </DialogHeader>
                 <form onSubmit={handleClaimSubmit} className="space-y-4 pt-4">
                   <div className="space-y-2">
                     <Label>Trigger Event</Label>
-                    <Select value={claimForm.type} onValueChange={(val) => setClaimForm({...claimForm, type: val})}>
+                    <Select value={claimForm.type} onValueChange={(val) => setClaimForm({ ...claimForm, type: val })}>
                       <SelectTrigger data-testid="select-claim-type">
                         <SelectValue placeholder="Select type" />
                       </SelectTrigger>
@@ -152,10 +171,10 @@ export default function Insurance() {
                   </div>
                   <div className="space-y-2">
                     <Label>Additional Details</Label>
-                    <Textarea 
-                      placeholder="Describe the impact on your crops..." 
+                    <Textarea
+                      placeholder="Describe the impact on your crops..."
                       value={claimForm.description}
-                      onChange={e=>setClaimForm({...claimForm, description: e.target.value})}
+                      onChange={e => setClaimForm({ ...claimForm, description: e.target.value })}
                       required
                     />
                   </div>
@@ -175,7 +194,7 @@ export default function Insurance() {
           <FileText className="w-5 h-5" />
           Claims History
         </h3>
-        
+
         {loadingClaims ? (
           <div className="space-y-3">
             <Skeleton className="h-20 w-full" />
@@ -201,7 +220,7 @@ export default function Insurance() {
                       <span>Reward Payout</span>
                       <span className="flex items-center gap-1">
                         <CheckCircle2 className="w-3 h-3" />
-                        +{claim.rewardPoints} points
+                        +{claim.rewardPoints} FLOW
                       </span>
                     </div>
                   )}

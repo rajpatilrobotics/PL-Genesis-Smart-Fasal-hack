@@ -1,166 +1,105 @@
-import { useState, useEffect } from "react";
-import { Leaf, Wallet, Gift, LogOut, CheckCircle, WifiIcon } from "lucide-react";
-import { useConnectWallet, useGetRewards, getGetRewardsQueryKey, useAddRewardPoints } from "@workspace/api-client-react";
+import { Leaf, Wallet, Gift, LogOut, Wifi } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useToast } from "@/hooks/use-toast";
-import { useQueryClient } from "@tanstack/react-query";
-import { fcl } from "@/lib/flow";
-
-type FCLUser = {
-  addr?: string;
-  loggedIn?: boolean;
-};
+import { useWallet } from "@/lib/wallet-context";
 
 export default function TopHeader() {
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const [walletAddress, setWalletAddress] = useState<string | null>(null);
-  const [isConnecting, setIsConnecting] = useState(false);
-  const [showManualInput, setShowManualInput] = useState(false);
-  const [manualAddress, setManualAddress] = useState("");
-  const [isManual, setIsManual] = useState(false);
-
-  const connectWalletMutation = useConnectWallet();
-  const addReward = useAddRewardPoints();
-  const { data: rewards } = useGetRewards({
-    query: { queryKey: getGetRewardsQueryKey() },
-  });
-
-  useEffect(() => {
-    const unsub = fcl.currentUser.subscribe((user: FCLUser) => {
-      if (user.loggedIn && user.addr) {
-        setWalletAddress(user.addr);
-        setIsManual(false);
-        setIsConnecting(false);
-        connectWalletMutation.mutate(
-          { data: { walletAddress: user.addr } },
-          {
-            onSuccess: () => {
-              queryClient.invalidateQueries({ queryKey: getGetRewardsQueryKey() });
-              toast({
-                title: "Connected to Flow Testnet",
-                description: `${user.addr!.substring(0, 6)}...${user.addr!.slice(-4)}`,
-              });
-            },
-          }
-        );
-      } else if (!isManual) {
-        setWalletAddress(null);
-      }
-    });
-    return () => unsub();
-  }, [isManual]);
-
-  const handleConnect = async () => {
-    setIsConnecting(true);
-    try {
-      await fcl.authenticate();
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : String(err);
-      if (!message.includes("Declined") && !message.includes("Halted")) {
-        toast({
-          title: "Connection Failed",
-          description: "Could not connect to Flow wallet. Try entering your address manually below.",
-          variant: "destructive",
-        });
-        setShowManualInput(true);
-      }
-      setIsConnecting(false);
-    }
-  };
-
-  const handleDisconnect = async () => {
-    if (!isManual) {
-      await fcl.unauthenticate();
-    }
-    setWalletAddress(null);
-    setIsManual(false);
-    setShowManualInput(false);
-    setManualAddress("");
-    toast({ title: "Wallet Disconnected" });
-  };
-
-  const handleManualConnect = () => {
-    const trimmed = manualAddress.trim();
-    if (!trimmed) return;
-    setWalletAddress(trimmed);
-    setIsManual(true);
-    setShowManualInput(false);
-    connectWalletMutation.mutate(
-      { data: { walletAddress: trimmed } },
-      {
-        onSuccess: () => {
-          queryClient.invalidateQueries({ queryKey: getGetRewardsQueryKey() });
-          toast({ title: "Connected to Flow Testnet", description: "Manual address accepted." });
-        },
-      }
-    );
-  };
-
-  const handleDailyCheckIn = () => {
-    if (!walletAddress) return;
-    addReward.mutate(
-      { data: { activity: "Daily Check-in", points: 10, walletAddress } },
-      {
-        onSuccess: () => {
-          toast({ title: "Check-in Successful", description: "You earned 10 points!" });
-          queryClient.invalidateQueries({ queryKey: getGetRewardsQueryKey() });
-        },
-      }
-    );
-  };
+  const {
+    walletAddress,
+    isManual,
+    isConnecting,
+    showManualInput,
+    manualAddress,
+    rewards,
+    handleConnect,
+    handleDisconnect,
+    handleManualConnect,
+    setManualAddress,
+    setShowManualInput,
+  } = useWallet();
 
   const displayAddress = walletAddress
     ? `${walletAddress.substring(0, 6)}...${walletAddress.slice(-4)}`
     : null;
 
+  const flowBalance = "100,000";
+  const flowRewards = rewards?.totalPoints ?? 0;
+
   return (
     <header className="sticky top-0 z-40 bg-background/90 backdrop-blur-md border-b border-border">
-      <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-        <div className="flex items-center gap-2 text-primary">
-          <Leaf className="w-7 h-7" />
-          <h1 className="font-bold text-xl tracking-tight">Smart Fasal</h1>
+      <div className="container mx-auto px-4 flex items-center justify-between gap-2 h-16">
+        {/* Logo + badge */}
+        <div className="flex flex-col min-w-0">
+          <div className="flex items-center gap-2 text-primary">
+            <Leaf className="w-6 h-6 shrink-0" />
+            <span className="font-bold text-lg tracking-tight truncate">Smart Fasal</span>
+          </div>
+          <span className="text-[9px] font-semibold text-emerald-600 bg-emerald-50 border border-emerald-200 rounded-full px-2 py-px leading-tight w-fit">
+            ⛓ Powered by Flow Blockchain
+          </span>
         </div>
 
-        <div className="flex items-center gap-2">
-          {walletAddress && (
-            <>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={handleDailyCheckIn}
-                disabled={addReward.isPending}
-                title="Daily Check-in (+10 pts)"
-              >
-                <Gift className="w-5 h-5 text-amber-500" />
-              </Button>
-
+        {/* Right side */}
+        <div className="flex items-center gap-2 shrink-0">
+          {walletAddress ? (
+            <div className="flex flex-col items-end gap-1">
+              {/* Address row */}
               <div className="flex items-center gap-1.5 bg-primary/10 border border-primary/20 rounded-full px-3 py-1.5">
                 {isManual ? (
-                  <CheckCircle className="w-3.5 h-3.5 text-green-500" />
+                  <Wallet className="w-3.5 h-3.5 text-primary" />
                 ) : (
-                  <WifiIcon className="w-3.5 h-3.5 text-green-500" />
+                  <Wifi className="w-3.5 h-3.5 text-green-500" />
                 )}
                 <span className="text-xs font-semibold text-primary">{displayAddress}</span>
-                <span className="text-[10px] text-green-600 font-medium">Testnet</span>
-                {rewards?.totalPoints != null && (
-                  <span className="bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full text-[10px] font-bold">
-                    {rewards.totalPoints} pts
-                  </span>
-                )}
+                <span className="text-[10px] text-green-600 font-medium">Connected</span>
                 <button
                   onClick={handleDisconnect}
-                  className="ml-1 text-muted-foreground hover:text-destructive transition-colors"
+                  className="ml-0.5 text-muted-foreground hover:text-destructive transition-colors"
                   title="Logout"
                 >
                   <LogOut className="w-3 h-3" />
                 </button>
               </div>
-            </>
-          )}
 
-          {!walletAddress && !showManualInput && (
+              {/* Wallet info row */}
+              <div className="flex items-center gap-2 text-[10px] text-muted-foreground px-1">
+                <span className="font-medium text-foreground/70">Flow Testnet</span>
+                <span className="text-border">·</span>
+                <span>
+                  <span className="font-semibold text-foreground">{flowBalance}</span>
+                  <span className="ml-0.5 text-[9px]">FLOW</span>
+                </span>
+                <span className="text-border">·</span>
+                <span className="flex items-center gap-0.5">
+                  <Gift className="w-2.5 h-2.5 text-amber-500" />
+                  <span className="font-semibold text-amber-600">{flowRewards}</span>
+                  <span className="text-[9px] text-amber-500">FLOW</span>
+                </span>
+              </div>
+            </div>
+          ) : showManualInput ? (
+            <div className="flex items-center gap-1.5">
+              <Input
+                value={manualAddress}
+                onChange={(e) => setManualAddress(e.target.value)}
+                placeholder="0x... Flow address"
+                className="h-8 text-xs w-36"
+                onKeyDown={(e) => e.key === "Enter" && handleManualConnect()}
+                autoFocus
+              />
+              <Button size="sm" className="h-8 text-xs px-2.5" onClick={handleManualConnect}>
+                Go
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-8 text-xs px-2"
+                onClick={() => { setShowManualInput(false); setManualAddress(""); }}
+              >
+                ✕
+              </Button>
+            </div>
+          ) : (
             <div className="flex items-center gap-2">
               <Button
                 onClick={handleConnect}
@@ -168,7 +107,7 @@ export default function TopHeader() {
                 size="sm"
                 className="rounded-full font-semibold px-4"
               >
-                <Wallet className="w-4 h-4 mr-2" />
+                <Wallet className="w-4 h-4 mr-1.5" />
                 {isConnecting ? "Connecting..." : "Connect Flow"}
               </Button>
               <button
@@ -177,30 +116,6 @@ export default function TopHeader() {
               >
                 Manual
               </button>
-            </div>
-          )}
-
-          {!walletAddress && showManualInput && (
-            <div className="flex items-center gap-2">
-              <Input
-                value={manualAddress}
-                onChange={(e) => setManualAddress(e.target.value)}
-                placeholder="0x... Flow address"
-                className="h-8 text-xs w-44"
-                onKeyDown={(e) => e.key === "Enter" && handleManualConnect()}
-                autoFocus
-              />
-              <Button size="sm" className="h-8 text-xs px-3" onClick={handleManualConnect}>
-                Connect
-              </Button>
-              <Button
-                size="sm"
-                variant="ghost"
-                className="h-8 text-xs px-2"
-                onClick={() => { setShowManualInput(false); setManualAddress(""); }}
-              >
-                Cancel
-              </Button>
             </div>
           )}
         </div>
