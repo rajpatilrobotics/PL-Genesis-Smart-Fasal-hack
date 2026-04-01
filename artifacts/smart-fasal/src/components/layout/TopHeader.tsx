@@ -1,55 +1,69 @@
-import { useState } from "react";
-import { Leaf, Wallet, Gift } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Leaf, Wallet, Gift, LogOut } from "lucide-react";
 import { useConnectWallet, useGetRewards, getGetRewardsQueryKey, useAddRewardPoints } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
+import { fcl } from "@/lib/flow";
 
 export default function TopHeader() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [walletInput, setWalletInput] = useState("");
-  const [isOpen, setIsOpen] = useState(false);
+  const [walletAddress, setWalletAddress] = useState<string | null>(null);
+  const [isConnecting, setIsConnecting] = useState(false);
 
   const connectWallet = useConnectWallet();
   const addReward = useAddRewardPoints();
   const { data: rewards } = useGetRewards({
     query: {
       queryKey: getGetRewardsQueryKey(),
-      // In a real app we might pass the connected wallet address here
     }
   });
 
-  const handleConnect = () => {
-    if (!walletInput) return;
-    
-    connectWallet.mutate({ data: { walletAddress: walletInput } }, {
-      onSuccess: () => {
-        toast({
-          title: "Wallet Connected",
-          description: `Successfully connected Flow wallet ${walletInput.substring(0, 6)}...`,
+  useEffect(() => {
+    const unsub = fcl.currentUser.subscribe((user: { addr?: string; loggedIn?: boolean }) => {
+      if (user.loggedIn && user.addr) {
+        setWalletAddress(user.addr);
+        connectWallet.mutate({ data: { walletAddress: user.addr } }, {
+          onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: getGetRewardsQueryKey() });
+          }
         });
-        setIsOpen(false);
-        queryClient.invalidateQueries({ queryKey: getGetRewardsQueryKey() });
-      },
-      onError: () => {
-        toast({
-          title: "Connection Failed",
-          description: "Failed to connect wallet.",
-          variant: "destructive"
-        });
+      } else {
+        setWalletAddress(null);
       }
     });
+    return () => unsub();
+  }, []);
+
+  const handleConnect = async () => {
+    setIsConnecting(true);
+    try {
+      await fcl.authenticate();
+    } catch {
+      toast({
+        title: "Connection Failed",
+        description: "Could not connect to Flow Wallet.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsConnecting(false);
+    }
+  };
+
+  const handleDisconnect = async () => {
+    await fcl.unauthenticate();
+    setWalletAddress(null);
+    toast({ title: "Wallet Disconnected" });
   };
 
   const handleDailyCheckIn = () => {
+    if (!walletAddress) return;
     addReward.mutate({
       data: {
         activity: "Daily Check-in",
         points: 10,
-        walletAddress: rewards?.walletAddress
+        walletAddress,
       }
     }, {
       onSuccess: () => {
@@ -59,7 +73,9 @@ export default function TopHeader() {
     });
   };
 
-  const isConnected = rewards?.walletAddress;
+  const displayAddress = walletAddress
+    ? `${walletAddress.substring(0, 6)}...${walletAddress.slice(-4)}`
+    : null;
 
   return (
     <header className="sticky top-0 z-40 bg-background/90 backdrop-blur-md border-b border-border">
@@ -68,56 +84,50 @@ export default function TopHeader() {
           <Leaf className="w-7 h-7" />
           <h1 className="font-bold text-xl tracking-tight">Smart Fasal</h1>
         </div>
-        
+
         <div className="flex items-center gap-2">
-          {isConnected && (
-            <Button variant="ghost" size="icon" onClick={handleDailyCheckIn} disabled={addReward.isPending} data-testid="button-daily-checkin">
-              <Gift className="w-5 h-5 text-accent" />
+          {walletAddress && (
+            <>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleDailyCheckIn}
+                disabled={addReward.isPending}
+                title="Daily Check-in (+10 pts)"
+              >
+                <Gift className="w-5 h-5 text-amber-500" />
+              </Button>
+
+              <div className="flex items-center gap-1.5 bg-primary/10 border border-primary/20 rounded-full px-3 py-1.5">
+                <Wallet className="w-3.5 h-3.5 text-primary" />
+                <span className="text-xs font-semibold text-primary">{displayAddress}</span>
+                {rewards?.totalPoints != null && (
+                  <span className="bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full text-[10px] font-bold">
+                    {rewards.totalPoints} pts
+                  </span>
+                )}
+                <button
+                  onClick={handleDisconnect}
+                  className="ml-1 text-muted-foreground hover:text-destructive transition-colors"
+                  title="Disconnect"
+                >
+                  <LogOut className="w-3 h-3" />
+                </button>
+              </div>
+            </>
+          )}
+
+          {!walletAddress && (
+            <Button
+              onClick={handleConnect}
+              disabled={isConnecting}
+              size="sm"
+              className="rounded-full font-semibold px-4"
+            >
+              <Wallet className="w-4 h-4 mr-2" />
+              {isConnecting ? "Connecting..." : "Connect Flow"}
             </Button>
           )}
-          <Dialog open={isOpen} onOpenChange={setIsOpen}>
-            <DialogTrigger asChild>
-              <Button variant={isConnected ? "outline" : "default"} size="sm" className="rounded-full font-semibold px-4" data-testid="button-connect-wallet">
-                <Wallet className="w-4 h-4 mr-2" />
-                {isConnected ? (
-                  <span className="flex items-center gap-1.5">
-                    {rewards.walletAddress?.substring(0, 6)}...
-                    <span className="bg-accent text-accent-foreground px-1.5 py-0.5 rounded-full text-[10px]">
-                      {rewards.totalPoints} pts
-                    </span>
-                  </span>
-                ) : (
-                  "Connect Flow"
-                )}
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Connect Flow Wallet</DialogTitle>
-                <DialogDescription>
-                  Enter your Flow wallet address to earn Web3 rewards for sustainable farming practices.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4 pt-4">
-                <div className="space-y-2">
-                  <Input 
-                    placeholder="0x..." 
-                    value={walletInput} 
-                    onChange={(e) => setWalletInput(e.target.value)} 
-                    data-testid="input-wallet-address"
-                  />
-                </div>
-                <Button 
-                  onClick={handleConnect} 
-                  className="w-full" 
-                  disabled={connectWallet.isPending || !walletInput}
-                  data-testid="button-submit-wallet"
-                >
-                  {connectWallet.isPending ? "Connecting..." : "Connect Wallet"}
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
         </div>
       </div>
     </header>
