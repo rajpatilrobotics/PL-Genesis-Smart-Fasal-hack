@@ -1,8 +1,15 @@
-# Workspace
+# Smart Fasal — Smart Agriculture Platform
 
-## Overview
+## Project Overview
 
-pnpm workspace monorepo using TypeScript. Each package manages its own dependencies.
+Full-stack mobile-style web app for Indian farmers combining:
+- AI crop recommendations (OpenAI GPT)
+- IoT sensor data monitoring (NPK, pH, moisture)
+- Filecoin/IPFS storage simulation
+- Flow blockchain reward points
+- Parametric insurance risk assessment
+- P2P marketplace with live mandi prices
+- Community platform with expert Q&A and encrypted chat
 
 ## Stack
 
@@ -12,85 +19,101 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - **TypeScript version**: 5.9
 - **API framework**: Express 5
 - **Database**: PostgreSQL + Drizzle ORM
+- **Frontend**: React + Vite + Tailwind CSS + shadcn/ui
+- **Charts**: Recharts
+- **Data fetching**: React Query (TanStack Query)
 - **Validation**: Zod (`zod/v4`), `drizzle-zod`
 - **API codegen**: Orval (from OpenAPI spec)
-- **Build**: esbuild (CJS bundle)
+- **Build**: esbuild (for API), Vite (for frontend)
+- **AI**: OpenAI integration (via Replit AI proxy)
 
 ## Structure
 
 ```text
 artifacts-monorepo/
-├── artifacts/              # Deployable applications
-│   └── api-server/         # Express API server
-├── lib/                    # Shared libraries
+├── artifacts/
+│   ├── api-server/         # Express API server (port 8080)
+│   ├── smart-fasal/        # React + Vite frontend (main app)
+│   └── mockup-sandbox/     # Component preview server (design tool)
+├── lib/
 │   ├── api-spec/           # OpenAPI spec + Orval codegen config
 │   ├── api-client-react/   # Generated React Query hooks
 │   ├── api-zod/            # Generated Zod schemas from OpenAPI
 │   └── db/                 # Drizzle ORM schema + DB connection
-├── scripts/                # Utility scripts (single workspace package)
-│   └── src/                # Individual .ts scripts, run via `pnpm --filter @workspace/scripts run <script>`
-├── pnpm-workspace.yaml     # pnpm workspace (artifacts/*, lib/*, lib/integrations/*, scripts)
-├── tsconfig.base.json      # Shared TS options (composite, bundler resolution, es2022)
-├── tsconfig.json           # Root TS project references
-└── package.json            # Root package with hoisted devDeps
+├── scripts/                # Utility scripts
+├── pnpm-workspace.yaml
+├── tsconfig.base.json
+├── tsconfig.json
+└── package.json
 ```
+
+## API Routes
+
+All routes are prefixed with `/api`:
+
+| Route | Description |
+|-------|-------------|
+| `GET /api/health` | Health check |
+| `POST /api/sensor-data` | Submit IoT sensor reading |
+| `GET /api/sensor-data` | Get latest sensor reading |
+| `GET /api/sensor-data/history` | Get historical readings |
+| `POST /api/ai/recommendations` | AI crop recommendations (OpenAI) |
+| `POST /api/ai/disease-detect` | AI disease detection (OpenAI) |
+| `GET /api/weather` | Current weather (Punjab, India) |
+| `GET /api/insurance/risk` | Parametric risk assessment |
+| `POST /api/insurance/claims` | Submit insurance claim |
+| `GET /api/insurance/claims` | List claims |
+| `GET /api/market/prices` | Live mandi prices |
+| `GET /api/market/listings` | P2P listings |
+| `POST /api/market/listings` | Create listing |
+| `GET /api/market/recommendations` | AI product recommendations |
+| `GET /api/community/posts` | Community feed |
+| `POST /api/community/posts` | Create post |
+| `POST /api/community/posts/:id/like` | Like a post |
+| `GET /api/community/messages` | Encrypted chat messages |
+| `POST /api/community/messages` | Send chat message |
+| `GET /api/community/experts` | Expert directory |
+| `POST /api/community/experts/:id/ask` | Ask an expert |
+| `GET /api/filecoin/records` | IPFS/Filecoin storage records |
+| `POST /api/filecoin/store` | Store data on Filecoin (simulated) |
+| `GET /api/rewards` | Farmer rewards wallet |
+| `POST /api/rewards/connect-wallet` | Connect Flow wallet (+10 pts) |
+| `POST /api/rewards/checkin` | Daily check-in |
+| `GET /api/analytics/summary` | Analytics summary |
+| `GET /api/analytics/logs` | Event logs |
+
+## Frontend Pages
+
+| Page | Route | Description |
+|------|-------|-------------|
+| Home | `/` | Dashboard with live weather, NPK sensors, AI recommendations, Filecoin |
+| Analytics | `/analytics` | Historical NPK charts, system health, event logs |
+| AI Hub | `/ai` | Manual soil analysis + disease detection via OpenAI |
+| Insurance | `/insurance` | Parametric risk assessment + claims |
+| Market | `/market` | Mandi prices, P2P trade, Agri inputs |
+| Community | `/community` | Feed, Web3 encrypted chat, Expert Q&A |
+
+## Database Schema
+
+Tables: `sensor_readings`, `insurance_claims`, `market_listings`, `community_posts`, `community_messages`, `community_experts`, `filecoin_records`, `rewards_wallets`, `reward_transactions`, `event_logs`
+
+## Key Design Decisions
+
+- **Filecoin storage**: Simulated with SHA-256 CID generation + ipfs.io URLs
+- **Chat encryption**: Simulated with XOR cipher + base64
+- **Flow rewards**: +10 pts for wallet connect, +5 pts for posts, +50 pts for claims
+- **Weather**: Simulated data for Punjab, India with realistic variation
+- **Mandi prices**: Seeded with real-world Indian crop prices, dynamically fluctuated
+- **Insurance risk**: LOW/MEDIUM/HIGH based on moisture (<30%) and temperature (>35°C) thresholds
 
 ## TypeScript & Composite Projects
 
-Every package extends `tsconfig.base.json` which sets `composite: true`. The root `tsconfig.json` lists all packages as project references. This means:
+Every package extends `tsconfig.base.json` which sets `composite: true`. Always typecheck from root: `pnpm run typecheck`.
 
-- **Always typecheck from the root** — run `pnpm run typecheck` (which runs `tsc --build --emitDeclarationOnly`). This builds the full dependency graph so that cross-package imports resolve correctly. Running `tsc` inside a single package will fail if its dependencies haven't been built yet.
-- **`emitDeclarationOnly`** — we only emit `.d.ts` files during typecheck; actual JS bundling is handled by esbuild/tsx/vite...etc, not `tsc`.
-- **Project references** — when package A depends on package B, A's `tsconfig.json` must list B in its `references` array. `tsc --build` uses this to determine build order and skip up-to-date packages.
+## Development Commands
 
-## Root Scripts
-
-- `pnpm run build` — runs `typecheck` first, then recursively runs `build` in all packages that define it
-- `pnpm run typecheck` — runs `tsc --build --emitDeclarationOnly` using project references
-
-## Packages
-
-### `artifacts/api-server` (`@workspace/api-server`)
-
-Express 5 API server. Routes live in `src/routes/` and use `@workspace/api-zod` for request and response validation and `@workspace/db` for persistence.
-
-- Entry: `src/index.ts` — reads `PORT`, starts Express
-- App setup: `src/app.ts` — mounts CORS, JSON/urlencoded parsing, routes at `/api`
-- Routes: `src/routes/index.ts` mounts sub-routers; `src/routes/health.ts` exposes `GET /health` (full path: `/api/health`)
-- Depends on: `@workspace/db`, `@workspace/api-zod`
-- `pnpm --filter @workspace/api-server run dev` — run the dev server
-- `pnpm --filter @workspace/api-server run build` — production esbuild bundle (`dist/index.cjs`)
-- Build bundles an allowlist of deps (express, cors, pg, drizzle-orm, zod, etc.) and externalizes the rest
-
-### `lib/db` (`@workspace/db`)
-
-Database layer using Drizzle ORM with PostgreSQL. Exports a Drizzle client instance and schema models.
-
-- `src/index.ts` — creates a `Pool` + Drizzle instance, exports schema
-- `src/schema/index.ts` — barrel re-export of all models
-- `src/schema/<modelname>.ts` — table definitions with `drizzle-zod` insert schemas (no models definitions exist right now)
-- `drizzle.config.ts` — Drizzle Kit config (requires `DATABASE_URL`, automatically provided by Replit)
-- Exports: `.` (pool, db, schema), `./schema` (schema only)
-
-Production migrations are handled by Replit when publishing. In development, we just use `pnpm --filter @workspace/db run push`, and we fallback to `pnpm --filter @workspace/db run push-force`.
-
-### `lib/api-spec` (`@workspace/api-spec`)
-
-Owns the OpenAPI 3.1 spec (`openapi.yaml`) and the Orval config (`orval.config.ts`). Running codegen produces output into two sibling packages:
-
-1. `lib/api-client-react/src/generated/` — React Query hooks + fetch client
-2. `lib/api-zod/src/generated/` — Zod schemas
-
-Run codegen: `pnpm --filter @workspace/api-spec run codegen`
-
-### `lib/api-zod` (`@workspace/api-zod`)
-
-Generated Zod schemas from the OpenAPI spec (e.g. `HealthCheckResponse`). Used by `api-server` for response validation.
-
-### `lib/api-client-react` (`@workspace/api-client-react`)
-
-Generated React Query hooks and fetch client from the OpenAPI spec (e.g. `useHealthCheck`, `healthCheck`).
-
-### `scripts` (`@workspace/scripts`)
-
-Utility scripts package. Each script is a `.ts` file in `src/` with a corresponding npm script in `package.json`. Run scripts via `pnpm --filter @workspace/scripts run <script>`. Scripts can import any workspace package (e.g., `@workspace/db`) by adding it as a dependency in `scripts/package.json`.
+- `pnpm --filter @workspace/api-server run dev` — Run API server
+- `pnpm --filter @workspace/smart-fasal run dev` — Run frontend
+- `pnpm --filter @workspace/db run push` — Push DB schema changes
+- `pnpm --filter @workspace/api-spec run codegen` — Regenerate API client
+- `pnpm run typecheck` — Typecheck all packages

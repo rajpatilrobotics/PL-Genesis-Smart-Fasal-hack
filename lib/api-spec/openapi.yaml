@@ -1,22 +1,38 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Smart Fasal Agriculture Platform API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: sensor
+    description: IoT Sensor data operations
+  - name: ai
+    description: AI recommendation and analysis
+  - name: weather
+    description: Weather data
+  - name: insurance
+    description: Insurance and risk management
+  - name: market
+    description: Marketplace operations
+  - name: community
+    description: Community platform
+  - name: filecoin
+    description: Filecoin/IPFS storage
+  - name: rewards
+    description: Flow blockchain rewards
+  - name: analytics
+    description: Analytics and logs
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +40,527 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /sensor-data:
+    post:
+      operationId: submitSensorData
+      tags: [sensor]
+      summary: Submit IoT sensor data
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SensorDataInput"
+      responses:
+        "201":
+          description: Sensor data stored
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SensorData"
+    get:
+      operationId: getLatestSensorData
+      tags: [sensor]
+      summary: Get latest sensor data
+      responses:
+        "200":
+          description: Latest sensor reading
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SensorData"
+
+  /sensor-data/history:
+    get:
+      operationId: getSensorHistory
+      tags: [sensor]
+      summary: Get sensor data history
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: Sensor history
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SensorData"
+
+  /ai-recommendation:
+    post:
+      operationId: getAiRecommendation
+      tags: [ai]
+      summary: Get AI-powered crop recommendation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AiRecommendationInput"
+      responses:
+        "200":
+          description: AI recommendation result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AiRecommendation"
+
+  /ai-recommendations/history:
+    get:
+      operationId: getAiRecommendationHistory
+      tags: [ai]
+      summary: Get AI recommendation history
+      responses:
+        "200":
+          description: Recommendation history
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AiRecommendation"
+
+  /disease-detect:
+    post:
+      operationId: detectDisease
+      tags: [ai]
+      summary: Detect crop disease from image description
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DiseaseDetectInput"
+      responses:
+        "200":
+          description: Disease detection result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DiseaseDetectResult"
+
+  /weather:
+    get:
+      operationId: getWeather
+      tags: [weather]
+      summary: Get current weather data
+      parameters:
+        - name: lat
+          in: query
+          schema:
+            type: number
+        - name: lon
+          in: query
+          schema:
+            type: number
+      responses:
+        "200":
+          description: Weather data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WeatherData"
+
+  /insurance/risk:
+    get:
+      operationId: getInsuranceRisk
+      tags: [insurance]
+      summary: Get current insurance risk assessment
+      responses:
+        "200":
+          description: Risk assessment
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InsuranceRisk"
+
+  /insurance/claims:
+    get:
+      operationId: getInsuranceClaims
+      tags: [insurance]
+      summary: Get insurance claims
+      responses:
+        "200":
+          description: List of claims
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/InsuranceClaim"
+    post:
+      operationId: createInsuranceClaim
+      tags: [insurance]
+      summary: Submit an insurance claim
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateInsuranceClaimInput"
+      responses:
+        "201":
+          description: Claim submitted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InsuranceClaim"
+
+  /market/prices:
+    get:
+      operationId: getMarketPrices
+      tags: [market]
+      summary: Get live mandi prices
+      responses:
+        "200":
+          description: Market prices
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MarketPrice"
+
+  /market/listings:
+    get:
+      operationId: getMarketListings
+      tags: [market]
+      summary: Get P2P marketplace listings
+      responses:
+        "200":
+          description: Marketplace listings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MarketListing"
+    post:
+      operationId: createMarketListing
+      tags: [market]
+      summary: Create a P2P listing
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateMarketListingInput"
+      responses:
+        "201":
+          description: Listing created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MarketListing"
+
+  /market/listings/{id}/buy:
+    post:
+      operationId: buyMarketListing
+      tags: [market]
+      summary: Buy a marketplace listing
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Purchase recorded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MarketListing"
+
+  /market/recommendations:
+    get:
+      operationId: getProductRecommendations
+      tags: [market]
+      summary: Get AI-based product recommendations
+      responses:
+        "200":
+          description: Recommended products
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProductRecommendation"
+
+  /community/posts:
+    get:
+      operationId: getCommunityPosts
+      tags: [community]
+      summary: Get community feed posts
+      responses:
+        "200":
+          description: Community posts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CommunityPost"
+    post:
+      operationId: createCommunityPost
+      tags: [community]
+      summary: Create a community post
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCommunityPostInput"
+      responses:
+        "201":
+          description: Post created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommunityPost"
+
+  /community/posts/{id}/like:
+    post:
+      operationId: likeCommunityPost
+      tags: [community]
+      summary: Like a community post
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Post liked
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommunityPost"
+
+  /community/posts/{id}/comments:
+    post:
+      operationId: addCommentToPost
+      tags: [community]
+      summary: Add comment to post
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddCommentInput"
+      responses:
+        "201":
+          description: Comment added
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommunityPost"
+
+  /community/messages:
+    get:
+      operationId: getCommunityMessages
+      tags: [community]
+      summary: Get community chat messages
+      responses:
+        "200":
+          description: Chat messages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ChatMessage"
+    post:
+      operationId: sendCommunityMessage
+      tags: [community]
+      summary: Send an encrypted community message
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SendMessageInput"
+      responses:
+        "201":
+          description: Message sent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChatMessage"
+
+  /community/experts:
+    get:
+      operationId: getCommunityExperts
+      tags: [community]
+      summary: Get list of agricultural experts
+      responses:
+        "200":
+          description: Expert list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Expert"
+
+  /community/expert-questions:
+    get:
+      operationId: getExpertQuestions
+      tags: [community]
+      summary: Get questions asked to experts
+      responses:
+        "200":
+          description: Expert questions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ExpertQuestion"
+    post:
+      operationId: askExpertQuestion
+      tags: [community]
+      summary: Ask an expert a question
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AskExpertInput"
+      responses:
+        "201":
+          description: Question submitted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExpertQuestion"
+
+  /filecoin/store:
+    post:
+      operationId: storeOnFilecoin
+      tags: [filecoin]
+      summary: Store data on Filecoin/IPFS
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FilecoinStoreInput"
+      responses:
+        "200":
+          description: Data stored, returns CID
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FilecoinResult"
+
+  /filecoin/records:
+    get:
+      operationId: getFilecoinRecords
+      tags: [filecoin]
+      summary: Get stored Filecoin records
+      responses:
+        "200":
+          description: Filecoin storage records
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/FilecoinRecord"
+
+  /rewards:
+    get:
+      operationId: getRewards
+      tags: [rewards]
+      summary: Get user reward points and wallet info
+      responses:
+        "200":
+          description: Rewards info
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RewardsInfo"
+
+  /rewards/connect-wallet:
+    post:
+      operationId: connectWallet
+      tags: [rewards]
+      summary: Connect Flow blockchain wallet
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConnectWalletInput"
+      responses:
+        "200":
+          description: Wallet connected and reward info
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RewardsInfo"
+
+  /rewards/add:
+    post:
+      operationId: addRewardPoints
+      tags: [rewards]
+      summary: Add reward points for an activity
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddRewardInput"
+      responses:
+        "200":
+          description: Updated rewards
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RewardsInfo"
+
+  /analytics/summary:
+    get:
+      operationId: getAnalyticsSummary
+      tags: [analytics]
+      summary: Get analytics summary and logs
+      responses:
+        "200":
+          description: Analytics summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnalyticsSummary"
+
+  /analytics/logs:
+    get:
+      operationId: getAnalyticsLogs
+      tags: [analytics]
+      summary: Get system event logs
+      responses:
+        "200":
+          description: Event logs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/EventLog"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +571,725 @@ components:
       required:
         - status
 
+    SensorDataInput:
+      type: object
+      properties:
+        nitrogen:
+          type: number
+        phosphorus:
+          type: number
+        potassium:
+          type: number
+        ph:
+          type: number
+        moisture:
+          type: number
+        deviceId:
+          type: ["string", "null"]
+      required:
+        - nitrogen
+        - phosphorus
+        - potassium
+        - ph
+        - moisture
+
+    SensorData:
+      type: object
+      properties:
+        id:
+          type: integer
+        nitrogen:
+          type: number
+        phosphorus:
+          type: number
+        potassium:
+          type: number
+        ph:
+          type: number
+        moisture:
+          type: number
+        deviceId:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - nitrogen
+        - phosphorus
+        - potassium
+        - ph
+        - moisture
+        - createdAt
+
+    AiRecommendationInput:
+      type: object
+      properties:
+        nitrogen:
+          type: number
+        phosphorus:
+          type: number
+        potassium:
+          type: number
+        ph:
+          type: number
+        moisture:
+          type: number
+        temperature:
+          type: ["number", "null"]
+        humidity:
+          type: ["number", "null"]
+        rainfall:
+          type: ["number", "null"]
+      required:
+        - nitrogen
+        - phosphorus
+        - potassium
+        - ph
+        - moisture
+
+    AiRecommendation:
+      type: object
+      properties:
+        id:
+          type: integer
+        fertilizerAdvice:
+          type: string
+        irrigationSuggestion:
+          type: string
+        riskAnalysis:
+          type: string
+        cropHealthPercent:
+          type: number
+        riskLevel:
+          type: string
+        yieldPercent:
+          type: number
+        nitrogen:
+          type: number
+        phosphorus:
+          type: number
+        potassium:
+          type: number
+        ph:
+          type: number
+        moisture:
+          type: number
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - fertilizerAdvice
+        - irrigationSuggestion
+        - riskAnalysis
+        - cropHealthPercent
+        - riskLevel
+        - yieldPercent
+        - nitrogen
+        - phosphorus
+        - potassium
+        - ph
+        - moisture
+        - createdAt
+
+    DiseaseDetectInput:
+      type: object
+      properties:
+        imageDescription:
+          type: string
+        cropName:
+          type: ["string", "null"]
+      required:
+        - imageDescription
+
+    DiseaseDetectResult:
+      type: object
+      properties:
+        plantName:
+          type: string
+        diseaseName:
+          type: string
+        confidencePercent:
+          type: number
+        treatment:
+          type: string
+        severity:
+          type: string
+      required:
+        - plantName
+        - diseaseName
+        - confidencePercent
+        - treatment
+        - severity
+
+    WeatherData:
+      type: object
+      properties:
+        temperature:
+          type: number
+        humidity:
+          type: number
+        rainfall:
+          type: number
+        description:
+          type: string
+        location:
+          type: string
+        windSpeed:
+          type: number
+        feelsLike:
+          type: number
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - temperature
+        - humidity
+        - rainfall
+        - description
+        - location
+        - windSpeed
+        - feelsLike
+        - updatedAt
+
+    InsuranceRisk:
+      type: object
+      properties:
+        riskLevel:
+          type: string
+        riskScore:
+          type: number
+        eligibleForClaim:
+          type: boolean
+        reasons:
+          type: array
+          items:
+            type: string
+        recommendations:
+          type: array
+          items:
+            type: string
+      required:
+        - riskLevel
+        - riskScore
+        - eligibleForClaim
+        - reasons
+        - recommendations
+
+    InsuranceClaim:
+      type: object
+      properties:
+        id:
+          type: integer
+        claimType:
+          type: string
+        riskLevel:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+        rewardPoints:
+          type: integer
+        walletAddress:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - claimType
+        - riskLevel
+        - description
+        - status
+        - rewardPoints
+        - createdAt
+
+    CreateInsuranceClaimInput:
+      type: object
+      properties:
+        claimType:
+          type: string
+        description:
+          type: string
+        walletAddress:
+          type: ["string", "null"]
+      required:
+        - claimType
+        - description
+
+    MarketPrice:
+      type: object
+      properties:
+        id:
+          type: integer
+        crop:
+          type: string
+        price:
+          type: number
+        unit:
+          type: string
+        market:
+          type: string
+        state:
+          type: string
+        change:
+          type: number
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - crop
+        - price
+        - unit
+        - market
+        - state
+        - change
+        - updatedAt
+
+    MarketListing:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+        crop:
+          type: string
+        price:
+          type: number
+        quantity:
+          type: number
+        unit:
+          type: string
+        sellerName:
+          type: string
+        sellerWallet:
+          type: ["string", "null"]
+        location:
+          type: string
+        status:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - title
+        - description
+        - crop
+        - price
+        - quantity
+        - unit
+        - sellerName
+        - location
+        - status
+        - createdAt
+
+    CreateMarketListingInput:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        crop:
+          type: string
+        price:
+          type: number
+        quantity:
+          type: number
+        unit:
+          type: string
+        sellerName:
+          type: string
+        sellerWallet:
+          type: ["string", "null"]
+        location:
+          type: string
+      required:
+        - title
+        - description
+        - crop
+        - price
+        - quantity
+        - unit
+        - sellerName
+        - location
+
+    ProductRecommendation:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        category:
+          type: string
+        description:
+          type: string
+        price:
+          type: number
+        reason:
+          type: string
+        rating:
+          type: number
+      required:
+        - id
+        - name
+        - category
+        - description
+        - price
+        - reason
+        - rating
+
+    CommunityPost:
+      type: object
+      properties:
+        id:
+          type: integer
+        author:
+          type: string
+        walletAddress:
+          type: ["string", "null"]
+        content:
+          type: string
+        visibility:
+          type: string
+        likes:
+          type: integer
+        filecoinCid:
+          type: ["string", "null"]
+        badge:
+          type: ["string", "null"]
+        comments:
+          type: array
+          items:
+            $ref: "#/components/schemas/Comment"
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - author
+        - content
+        - visibility
+        - likes
+        - comments
+        - createdAt
+
+    Comment:
+      type: object
+      properties:
+        id:
+          type: integer
+        author:
+          type: string
+        content:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - author
+        - content
+        - createdAt
+
+    CreateCommunityPostInput:
+      type: object
+      properties:
+        author:
+          type: string
+        walletAddress:
+          type: ["string", "null"]
+        content:
+          type: string
+        visibility:
+          type: string
+          default: public
+        badge:
+          type: ["string", "null"]
+      required:
+        - author
+        - content
+
+    AddCommentInput:
+      type: object
+      properties:
+        author:
+          type: string
+        content:
+          type: string
+      required:
+        - author
+        - content
+
+    ChatMessage:
+      type: object
+      properties:
+        id:
+          type: integer
+        sender:
+          type: string
+        content:
+          type: string
+        encryptedContent:
+          type: string
+        isEncrypted:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - sender
+        - content
+        - encryptedContent
+        - isEncrypted
+        - createdAt
+
+    SendMessageInput:
+      type: object
+      properties:
+        sender:
+          type: string
+        content:
+          type: string
+      required:
+        - sender
+        - content
+
+    Expert:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        specialization:
+          type: string
+        experience:
+          type: string
+        rating:
+          type: number
+        questionsAnswered:
+          type: integer
+        badge:
+          type: string
+      required:
+        - id
+        - name
+        - specialization
+        - experience
+        - rating
+        - questionsAnswered
+        - badge
+
+    ExpertQuestion:
+      type: object
+      properties:
+        id:
+          type: integer
+        question:
+          type: string
+        askedBy:
+          type: string
+        expertId:
+          type: ["integer", "null"]
+        expertName:
+          type: ["string", "null"]
+        answer:
+          type: ["string", "null"]
+        status:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - question
+        - askedBy
+        - status
+        - createdAt
+
+    AskExpertInput:
+      type: object
+      properties:
+        question:
+          type: string
+        askedBy:
+          type: string
+        expertId:
+          type: ["integer", "null"]
+      required:
+        - question
+        - askedBy
+
+    FilecoinStoreInput:
+      type: object
+      properties:
+        dataType:
+          type: string
+        data:
+          type: object
+          additionalProperties: true
+      required:
+        - dataType
+        - data
+
+    FilecoinResult:
+      type: object
+      properties:
+        cid:
+          type: string
+        url:
+          type: string
+        dataType:
+          type: string
+        storedAt:
+          type: string
+          format: date-time
+      required:
+        - cid
+        - url
+        - dataType
+        - storedAt
+
+    FilecoinRecord:
+      type: object
+      properties:
+        id:
+          type: integer
+        cid:
+          type: string
+        url:
+          type: string
+        dataType:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - cid
+        - url
+        - dataType
+        - createdAt
+
+    RewardsInfo:
+      type: object
+      properties:
+        walletAddress:
+          type: ["string", "null"]
+        totalPoints:
+          type: integer
+        badges:
+          type: array
+          items:
+            type: string
+        transactions:
+          type: array
+          items:
+            $ref: "#/components/schemas/RewardTransaction"
+      required:
+        - totalPoints
+        - badges
+        - transactions
+
+    RewardTransaction:
+      type: object
+      properties:
+        id:
+          type: integer
+        activity:
+          type: string
+        points:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - activity
+        - points
+        - createdAt
+
+    ConnectWalletInput:
+      type: object
+      properties:
+        walletAddress:
+          type: string
+      required:
+        - walletAddress
+
+    AddRewardInput:
+      type: object
+      properties:
+        activity:
+          type: string
+        points:
+          type: integer
+        walletAddress:
+          type: ["string", "null"]
+      required:
+        - activity
+        - points
+
+    AnalyticsSummary:
+      type: object
+      properties:
+        totalSensorReadings:
+          type: integer
+        totalAiRecommendations:
+          type: integer
+        totalInsuranceClaims:
+          type: integer
+        totalCommunityPosts:
+          type: integer
+        totalMarketListings:
+          type: integer
+        avgCropHealth:
+          type: number
+        avgSoilPh:
+          type: number
+        avgMoisture:
+          type: number
+        recentLogs:
+          type: array
+          items:
+            $ref: "#/components/schemas/EventLog"
+      required:
+        - totalSensorReadings
+        - totalAiRecommendations
+        - totalInsuranceClaims
+        - totalCommunityPosts
+        - totalMarketListings
+        - avgCropHealth
+        - avgSoilPh
+        - avgMoisture
+        - recentLogs
+
+    EventLog:
+      type: object
+      properties:
+        id:
+          type: integer
+        eventType:
+          type: string
+        description:
+          type: string
+        metadata:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - eventType
+        - description
+        - createdAt

@@ -1,0 +1,236 @@
+Build a full-stack mobile-style web application called "Smart Fasal: Smart Agriculture Platform".
+
+This is a hackathon project combining:
+AI + IoT + Web3 + Community + Marketplace.
+
+IMPORTANT:
+- Build modular, clean, working code
+- Focus on functionality over perfection
+- All features must be interactive
+- Use real integrations where possible, fallback to mock but keep structure real
+
+-----------------------------------
+TECH STACK
+-----------------------------------
+Frontend:
+- React (mobile-first UI)
+- Tailwind CSS
+
+Backend:
+- Node.js + Express
+
+-----------------------------------
+APP STRUCTURE
+-----------------------------------
+Bottom Navigation:
+Home | Analytics | AI | Insurance | Market | Community
+
+-----------------------------------
+1. IOT DATA SYSTEM (REAL-TIME READY)
+-----------------------------------
+Backend API:
+POST /sensor-data
+
+Fields:
+- nitrogen
+- phosphorus
+- potassium
+- ph
+- moisture
+
+Frontend:
+- fetch data every 3 seconds
+- show:
+  "Live Data"
+  "Last updated time"
+
+-----------------------------------
+2. HOME DASHBOARD
+-----------------------------------
+Show:
+- Location + Weather (use real API if possible)
+- NPK values (bars)
+- pH + moisture
+
+AI Prediction Card:
+- Crop Health %
+- Risk Level
+- Yield %
+
+Buttons:
+- Get Recommendation
+- Store Data on Filecoin
+
+Show:
+- Flow reward points
+- wallet address
+
+-----------------------------------
+3. AI SYSTEM
+-----------------------------------
+API:
+POST /ai-recommendation
+
+Use OpenAI API:
+
+Input:
+- NPK + pH + moisture + weather
+
+Output:
+- fertilizer advice
+- irrigation suggestion
+- risk analysis
+
+-----------------------------------
+4. DISEASE DETECTION
+-----------------------------------
+- Upload image
+- Return:
+  plant name
+  disease name
+  confidence %
+  treatment
+
+-----------------------------------
+5. FILECOIN (REAL INTEGRATION)
+-----------------------------------
+Use web3.storage
+
+Backend:
+- upload JSON (sensor + AI data)
+- return CID
+
+Frontend:
+- show CID
+- "View Data" button:
+  https://ipfs.io/ipfs/{CID}
+
+-----------------------------------
+6. FLOW (IDENTITY + REWARDS)
+-----------------------------------
+- Connect wallet using Flow FCL
+- Store wallet address
+
+Rewards:
+- +10 for recommendation
+- +50 for insurance claim
+- +5 for community activity
+
+Persist rewards per user
+
+-----------------------------------
+7. WEATHER API
+-----------------------------------
+- Fetch temperature, humidity, rainfall
+- Display on dashboard
+- Use in AI + insurance logic
+
+-----------------------------------
+8. INSURANCE SYSTEM (REAL LOGIC)
+-----------------------------------
+Risk calculation:
+IF moisture < 30 AND temperature > 35 → HIGH RISK
+
+UI:
+- show risk level
+- show "Eligible for Claim"
+
+Button:
+- Claim → update rewards
+
+-----------------------------------
+9. MARKETPLACE (REAL + HYBRID)
+-----------------------------------
+Section 1:
+Live mandi prices (Agmarknet or similar API)
+
+Show:
+- crop
+- price
+- market
+- date
+
+Section 2:
+Farmer P2P marketplace
+
+- create listing
+- buy product
+
+Section 3:
+Recommended products based on AI
+
+-----------------------------------
+10. COMMUNITY (WEB3 ENABLED)
+-----------------------------------
+Tabs:
+Feed | Chat | Marketplace | Experts
+
+Feed:
+- create posts
+- store on Filecoin (CID)
+- show likes/comments
+
+Chat:
+- simple messaging
+- simulate encryption (Zama)
+- label: "Encrypted Chat"
+
+Marketplace:
+- farmer selling products
+
+Experts:
+- ask questions
+
+-----------------------------------
+WEB3 ADDITIONS
+-----------------------------------
+
+Lit Protocol (simulate):
+- post visibility:
+  public / private / expert
+
+Hypercerts:
+- show badges:
+  "Top Contributor"
+  "Sustainable Farmer"
+
+Zama:
+- simulate encryption before AI
+
+Starknet-style:
+- insurance trigger logic
+
+-----------------------------------
+11. ANALYTICS
+-----------------------------------
+- NPK graphs
+- logs:
+  sensor updates
+  AI actions
+  insurance events
+
+-----------------------------------
+UI DESIGN
+-----------------------------------
+- Mobile-first
+- Clean cards
+- Rounded UI
+- Soft shadows
+- Color coding:
+  green / yellow / red
+
+-----------------------------------
+GOAL
+-----------------------------------
+Build a working demo showing:
+
+- real-time IoT data flow
+- AI insights + prediction
+- disease detection
+- Filecoin storage (real CID)
+- Flow wallet + rewards
+- insurance logic
+- real marketplace data
+- community platform
+
+Everything must be interactive and demo-ready.
