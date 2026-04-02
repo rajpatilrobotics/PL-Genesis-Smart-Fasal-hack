@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import {
-  ec, hash, num, RpcProvider, Account, Contract,
+  ec, hash, num, stark, RpcProvider, Account, Contract,
   CallData, cairo, type Abi,
 } from "starknet";
 import { readFileSync, writeFileSync, existsSync } from "fs";
@@ -23,11 +23,21 @@ const SIERRA_PATH     = join(process.cwd(), "contracts/insurance.sierra.json");
 const CASM_PATH       = join(process.cwd(), "contracts/insurance.casm.json");
 const STARKSCAN_BASE  = "https://sepolia.starkscan.co";
 const NETWORK_NAME    = "Starknet Sepolia";
+const OZ_CLASS_HASH   = "0x061dac032f228abef9c6626f995015233097ae253a7f72d68552db02f2971b8f";
 
 const provider = new RpcProvider({ nodeUrl: STARKNET_RPC });
 
 function getAccount() {
   return new Account({ provider, address: WALLET_ADDR, signer: PRIV_KEY, cairoVersion: "1" });
+}
+
+async function isAccountDeployed(address: string): Promise<boolean> {
+  try {
+    await provider.getClassAt(address);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 // ─── Persisted state ────────────────────────────────────────────────────────
@@ -90,15 +100,61 @@ function getInsuranceContract(state: StarknetState) {
 router.get("/starknet/network-status", async (_req, res): Promise<void> => {
   const { blockNumber, blockHash, networkLive } = await getLiveBlock();
   const state = loadState();
+  const accountDeployed = await isAccountDeployed(WALLET_ADDR);
+  const pubKey = ec.starkCurve.getStarkKey(PRIV_KEY);
+  const ctorData = CallData.compile({ publicKey: pubKey });
+  const computedAddress = num.toHex(hash.calculateContractAddressFromHash(pubKey, OZ_CLASS_HASH, ctorData, 0));
   res.json({
     live: networkLive, blockNumber, blockHash,
     network: NETWORK_NAME,
     walletAddress: WALLET_ADDR,
+    walletAddressShort: WALLET_ADDR.slice(0, 10) + "…" + WALLET_ADDR.slice(-6),
+    accountDeployed,
+    computedAddress,
+    addressMatch: computedAddress.toLowerCase() === WALLET_ADDR.toLowerCase(),
     contractAddress: state.contractAddress,
     contractDeployed: !!state.contractAddress,
     deployTxHash: state.deployTxHash,
     explorerUrl: state.contractAddress ? `${STARKSCAN_BASE}/contract/${state.contractAddress}` : null,
+    accountExplorerUrl: `${STARKSCAN_BASE}/contract/${WALLET_ADDR}`,
+    faucetUrl: `https://faucet.starknet.io`,
   });
+});
+
+/** POST /api/starknet/deploy-account — Deploy the OZ account contract at WALLET_ADDR */
+router.post("/starknet/deploy-account", async (_req, res): Promise<void> => {
+  const alreadyDeployed = await isAccountDeployed(WALLET_ADDR);
+  if (alreadyDeployed) {
+    res.json({ alreadyDeployed: true, address: WALLET_ADDR, explorerUrl: `${STARKSCAN_BASE}/contract/${WALLET_ADDR}` });
+    return;
+  }
+  try {
+    const pubKey = ec.starkCurve.getStarkKey(PRIV_KEY);
+    const ctorData = CallData.compile({ publicKey: pubKey });
+    const account = getAccount();
+    const { transaction_hash, contract_address } = await account.deployAccount({
+      classHash: OZ_CLASS_HASH,
+      constructorCalldata: ctorData,
+      addressSalt: pubKey,
+    });
+    await provider.waitForTransaction(transaction_hash);
+    res.json({
+      success: true,
+      txHash: transaction_hash,
+      address: contract_address ?? WALLET_ADDR,
+      txUrl: `${STARKSCAN_BASE}/tx/${transaction_hash}`,
+      explorerUrl: `${STARKSCAN_BASE}/contract/${contract_address ?? WALLET_ADDR}`,
+    });
+  } catch (err: any) {
+    const msg: string = err?.message ?? String(err);
+    const isInsufficientFunds = /insufficient|balance|fee|fund/i.test(msg);
+    res.status(500).json({
+      error: isInsufficientFunds ? "Insufficient funds — need STRK for gas" : msg,
+      hint: isInsufficientFunds
+        ? `Fund ${WALLET_ADDR} with STRK at https://faucet.starknet.io then try again.`
+        : "Check that the private key matches the wallet address.",
+    });
+  }
 });
 
 /** POST /api/starknet/deploy — Deploy the insurance contract (one-time) */

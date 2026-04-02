@@ -1700,6 +1700,13 @@ type NetworkStatus = {
   contractDeployed: boolean;
   deployTxHash: string | null;
   explorerUrl: string | null;
+  walletAddress: string;
+  walletAddressShort: string;
+  accountDeployed: boolean;
+  computedAddress: string;
+  addressMatch: boolean;
+  accountExplorerUrl: string;
+  faucetUrl: string;
 };
 
 type OnChainClaim = {
@@ -1722,6 +1729,8 @@ function StarknetTab() {
   const [starkCredits, setStarkCredits] = useState<StarkCarbonCredit[]>([]);
   const [networkStatus, setNetworkStatus] = useState<NetworkStatus | null>(null);
   const [deploying, setDeploying] = useState(false);
+  const [deployingAccount, setDeployingAccount] = useState(false);
+  const [accountTxHash, setAccountTxHash] = useState<string | null>(null);
   const [registeringPolicy, setRegisteringPolicy] = useState(false);
   const [submittingClaim, setSubmittingClaim] = useState(false);
   const [onChainClaims, setOnChainClaims] = useState<OnChainClaim[]>([]);
@@ -1817,6 +1826,26 @@ function StarknetTab() {
       toast({ title: "Minting failed", description: String(err), variant: "destructive" });
     } finally {
       setMinting(false);
+    }
+  };
+
+  const handleDeployAccount = async () => {
+    setDeployingAccount(true);
+    try {
+      const r = await fetch("/api/starknet/deploy-account", { method: "POST" });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error ?? "Account deploy failed");
+      if (d.alreadyDeployed) {
+        toast({ title: "Account already deployed ✓", description: networkStatus?.walletAddressShort });
+      } else {
+        setAccountTxHash(d.txHash);
+        toast({ title: "Account deployed on Starknet Sepolia!", description: `TX: ${d.txHash?.slice(0, 18)}…` });
+      }
+      refreshStatus();
+    } catch (err: any) {
+      toast({ title: "Account deploy failed", description: err.message, variant: "destructive" });
+    } finally {
+      setDeployingAccount(false);
     }
   };
 
@@ -1924,12 +1953,53 @@ function StarknetTab() {
         </CardContent>
       </Card>
 
-      {/* Step 1 — Deploy Contract */}
-      <Card className={cn("border-2 transition-all", networkStatus?.contractDeployed ? "border-green-300 bg-green-50/30" : "border-rose-200")}>
+      {/* Step 1 — Deploy Account */}
+      <Card className={cn("border-2 transition-all", networkStatus?.accountDeployed ? "border-green-300 bg-green-50/30" : "border-rose-200")}>
+        <CardContent className="p-4">
+          <div className="flex items-start gap-3">
+            <div className={cn("w-7 h-7 rounded-full flex items-center justify-center text-xs font-black shrink-0 mt-0.5", networkStatus?.accountDeployed ? "bg-green-500 text-white" : "bg-rose-100 text-rose-700")}>
+              {networkStatus?.accountDeployed ? "✓" : "1"}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold text-sm">Deploy Starknet Account</p>
+              {networkStatus?.accountDeployed ? (
+                <>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">Account contract deployed at {networkStatus.walletAddressShort}</p>
+                  <a href={networkStatus.accountExplorerUrl} target="_blank" rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-[10px] text-blue-600 hover:underline mt-1">
+                    <ExternalLink className="w-2.5 h-2.5" /> View on Starkscan
+                  </a>
+                </>
+              ) : (
+                <>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">
+                    Your address <span className="font-mono">{networkStatus?.walletAddressShort ?? "loading…"}</span> is funded. Click Deploy to create the account contract on-chain.
+                  </p>
+                  {accountTxHash && (
+                    <p className="text-[10px] font-mono text-muted-foreground mt-1">TX: {accountTxHash.slice(0, 20)}…</p>
+                  )}
+                  <a href={networkStatus?.faucetUrl ?? "https://faucet.starknet.io"} target="_blank" rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-[10px] text-rose-600 hover:underline mt-1">
+                    <ExternalLink className="w-2.5 h-2.5" /> Need more STRK? Get from faucet
+                  </a>
+                </>
+              )}
+            </div>
+            {!networkStatus?.accountDeployed && (
+              <Button size="sm" className="h-8 bg-rose-600 hover:bg-rose-700 text-white shrink-0" onClick={handleDeployAccount} disabled={deployingAccount}>
+                {deployingAccount ? <Loader2 className="w-3 h-3 animate-spin" /> : "Deploy"}
+              </Button>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Step 2 — Deploy Contract */}
+      <Card className={cn("border-2 transition-all", !networkStatus?.accountDeployed ? "opacity-50 pointer-events-none border-muted" : networkStatus?.contractDeployed ? "border-green-300 bg-green-50/30" : "border-rose-200")}>
         <CardContent className="p-4">
           <div className="flex items-start gap-3">
             <div className={cn("w-7 h-7 rounded-full flex items-center justify-center text-xs font-black shrink-0 mt-0.5", networkStatus?.contractDeployed ? "bg-green-500 text-white" : "bg-rose-100 text-rose-700")}>
-              {networkStatus?.contractDeployed ? "✓" : "1"}
+              {networkStatus?.contractDeployed ? "✓" : "2"}
             </div>
             <div className="flex-1 min-w-0">
               <p className="font-semibold text-sm">Deploy Insurance Contract</p>
@@ -1951,7 +2021,7 @@ function StarknetTab() {
               )}
             </div>
             {!networkStatus?.contractDeployed && (
-              <Button size="sm" className="h-8 bg-rose-600 hover:bg-rose-700 text-white shrink-0" onClick={handleDeploy} disabled={deploying}>
+              <Button size="sm" className="h-8 bg-rose-600 hover:bg-rose-700 text-white shrink-0" onClick={handleDeploy} disabled={deploying || !networkStatus?.accountDeployed}>
                 {deploying ? <Loader2 className="w-3 h-3 animate-spin" /> : "Deploy"}
               </Button>
             )}
@@ -1964,7 +2034,7 @@ function StarknetTab() {
         <CardContent className="p-4">
           <div className="flex items-start gap-3">
             <div className={cn("w-7 h-7 rounded-full flex items-center justify-center text-xs font-black shrink-0 mt-0.5", policyRegistered ? "bg-green-500 text-white" : "bg-rose-100 text-rose-700")}>
-              {policyRegistered ? "✓" : "2"}
+              {policyRegistered ? "✓" : "3"}
             </div>
             <div className="flex-1 min-w-0">
               <p className="font-semibold text-sm">Register Insurance Policy</p>
@@ -1993,12 +2063,12 @@ function StarknetTab() {
         </CardContent>
       </Card>
 
-      {/* Step 3 — Submit Claim */}
+      {/* Step 4 — Submit Claim */}
       <Card className={cn("border-2 transition-all", !policyRegistered ? "opacity-50 pointer-events-none border-muted" : "border-rose-200")}>
         <CardContent className="p-4">
           <div className="flex items-start gap-3">
             <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-black shrink-0 mt-0.5 bg-rose-100 text-rose-700">
-              3
+              4
             </div>
             <div className="flex-1 min-w-0">
               <p className="font-semibold text-sm">Check Sensor Conditions & Claim</p>
