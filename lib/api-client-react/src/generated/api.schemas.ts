@@ -105,6 +105,13 @@ export interface InsuranceRisk {
   eligibleForClaim: boolean;
   reasons: string[];
   recommendations: string[];
+  weatherSummary?: {
+    totalRainfall7d: number;
+    avgRainfall7d: number;
+    maxTemp7d: number;
+    heatwaveDays: number;
+    source: string;
+  };
 }
 
 export interface InsuranceClaim {
@@ -116,6 +123,9 @@ export interface InsuranceClaim {
   rewardPoints: number;
   /** @nullable */
   walletAddress?: string | null;
+  weatherValidated?: boolean | null;
+  validationNote?: string | null;
+  payoutAmount?: number | null;
   createdAt: string;
 }
 

@@ -631,29 +631,147 @@ function LoansTab({ creditScore }: { creditScore: number }) {
 
 // ─── Insurance Tab ────────────────────────────────────────────────────────────
 
+// ─── Plan definitions (mirror server) ────────────────────────────────────────
+
+const INSURANCE_PLANS = [
+  {
+    id: "BASIC",
+    name: "Basic",
+    premium: 1200,
+    maxPayout: 25000,
+    events: ["DROUGHT"],
+    color: "border-amber-200 bg-amber-50",
+    badge: "bg-amber-100 text-amber-800",
+    icon: "☀️",
+  },
+  {
+    id: "STANDARD",
+    name: "Standard",
+    premium: 2800,
+    maxPayout: 75000,
+    events: ["DROUGHT", "FLOOD", "HEATWAVE"],
+    color: "border-blue-200 bg-blue-50",
+    badge: "bg-blue-100 text-blue-800",
+    icon: "🌦️",
+    popular: true,
+  },
+  {
+    id: "PREMIUM",
+    name: "Premium",
+    premium: 4500,
+    maxPayout: 200000,
+    events: ["DROUGHT", "FLOOD", "HEATWAVE", "DISEASE"],
+    color: "border-green-200 bg-green-50",
+    badge: "bg-green-100 text-green-800",
+    icon: "🛡️",
+  },
+];
+
+const EVENT_LABELS: Record<string, string> = {
+  DROUGHT: "Drought",
+  FLOOD: "Flood",
+  HEATWAVE: "Heatwave",
+  DISEASE: "Pest/Disease",
+};
+
 function InsuranceTab() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { walletAddress, addFlowReward } = useWallet();
   const [claimOpen, setClaimOpen] = useState(false);
   const [claimForm, setClaimForm] = useState({ type: "DROUGHT", description: "" });
+  const [claimResult, setClaimResult] = useState<any>(null);
+  const [policyOpen, setPolicyOpen] = useState(false);
+  const [policyForm, setPolicyForm] = useState({ plan: "STANDARD", acres: "", crop: "" });
+  const [purchasingPolicy, setPurchasingPolicy] = useState(false);
 
   const { data: risk, isLoading: loadingRisk } = useGetInsuranceRisk({ query: { queryKey: getGetInsuranceRiskQueryKey() } });
   const { data: claims, isLoading: loadingClaims } = useGetInsuranceClaims({ query: { queryKey: getGetInsuranceClaimsQueryKey() } });
   const createClaim = useCreateInsuranceClaim();
 
+  const { data: policies, isLoading: loadingPolicies, refetch: refetchPolicies } = useQuery<any[]>({
+    queryKey: ["insurancePolicies"],
+    queryFn: async () => {
+      const r = await fetch("/api/insurance/policies");
+      if (!r.ok) throw new Error("Failed");
+      return r.json();
+    },
+  });
+
+  const { data: weather } = useQuery({
+    queryKey: ["weatherOracle"],
+    queryFn: async () => {
+      const r = await fetch("/api/insurance/weather");
+      if (!r.ok) throw new Error("Failed");
+      return r.json();
+    },
+    staleTime: 1000 * 60 * 10, // cache 10 min
+  });
+
+  const activePolicy = policies?.find((p: any) => p.status === "active");
+  const coveredEvents: string[] = activePolicy
+    ? (typeof activePolicy.coveredEvents === "string"
+        ? JSON.parse(activePolicy.coveredEvents)
+        : activePolicy.coveredEvents)
+    : [];
+
   const handleClaimSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setClaimResult(null);
     createClaim.mutate({ data: { claimType: claimForm.type, description: claimForm.description } }, {
-      onSuccess: () => {
-        toast({ title: "Claim Submitted", description: "Your insurance claim has been registered." });
+      onSuccess: (data: any) => {
+        setClaimResult(data);
         setClaimOpen(false);
         setClaimForm({ type: "DROUGHT", description: "" });
         queryClient.invalidateQueries({ queryKey: getGetInsuranceClaimsQueryKey() });
         if (walletAddress) addFlowReward("Insurance Claim Filed", 50);
+        toast({
+          title: data.weatherValidated ? `Claim Auto-Approved — Payout: ${formatINR(data.payoutAmount)}` : "Claim Submitted — Pending Review",
+          description: data.validationNote?.slice(0, 80) + "...",
+        });
       },
-      onError: () => toast({ title: "Error", description: "Failed to submit claim.", variant: "destructive" }),
+      onError: (err: any) => {
+        const msg = err?.response?.data?.error || "Failed to submit claim.";
+        toast({ title: "Error", description: msg, variant: "destructive" });
+      },
     });
+  };
+
+  const handlePolicyPurchase = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!policyForm.acres || !policyForm.crop) {
+      toast({ title: "Please fill all fields", variant: "destructive" });
+      return;
+    }
+    setPurchasingPolicy(true);
+    try {
+      const r = await fetch("/api/insurance/policies", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          plan: policyForm.plan,
+          acresCovered: parseFloat(policyForm.acres),
+          cropType: policyForm.crop,
+          walletAddress: walletAddress || undefined,
+        }),
+      });
+      const data = await r.json();
+      if (!r.ok) {
+        toast({ title: "Purchase failed", description: data.error, variant: "destructive" });
+        return;
+      }
+      refetchPolicies();
+      setPolicyOpen(false);
+      setPolicyForm({ plan: "STANDARD", acres: "", crop: "" });
+      toast({
+        title: `${data.plan} Policy Activated!`,
+        description: data.ipfsCid ? `Policy stored on IPFS: ${data.ipfsCid.slice(0, 20)}...` : "Policy activated successfully.",
+      });
+    } catch {
+      toast({ title: "Network error", variant: "destructive" });
+    } finally {
+      setPurchasingPolicy(false);
+    }
   };
 
   const getRiskColor = (level: string) => {
@@ -663,20 +781,157 @@ function InsuranceTab() {
     return "text-gray-600 bg-gray-50 border-gray-200";
   };
 
+  const selectedPlan = INSURANCE_PLANS.find(p => p.id === policyForm.plan) ?? INSURANCE_PLANS[1];
+
   return (
     <div className="space-y-5">
-      <div>
-        <p className="text-sm text-muted-foreground">Automated parametric protection against climate risks</p>
-        {walletAddress && (
-          <div className="mt-2 flex items-center gap-1.5 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-1.5 w-fit">
-            <Zap className="w-3.5 h-3.5 text-amber-500" />
-            Filing a claim earns <strong>+50 FLOW</strong>
-          </div>
-        )}
-      </div>
 
+      {/* ── Oracle Banner ── */}
+      {weather && (
+        <div className="rounded-xl border border-sky-200 bg-sky-50 p-3 space-y-2">
+          <p className="text-xs font-semibold text-sky-800 flex items-center gap-1.5">
+            🌐 Live Weather Oracle
+            <span className="text-[10px] font-normal text-sky-600">· {weather.source}</span>
+          </p>
+          <div className="grid grid-cols-4 gap-1.5 text-center">
+            <div className="bg-white/70 rounded-lg p-1.5">
+              <p className="text-[10px] text-muted-foreground">Rain 7d</p>
+              <p className="text-sm font-bold text-sky-700">{weather.summary?.totalRainfall7d ?? "—"}mm</p>
+            </div>
+            <div className="bg-white/70 rounded-lg p-1.5">
+              <p className="text-[10px] text-muted-foreground">Avg/day</p>
+              <p className="text-sm font-bold text-sky-700">{weather.summary?.avgRainfall7d ?? "—"}mm</p>
+            </div>
+            <div className="bg-white/70 rounded-lg p-1.5">
+              <p className="text-[10px] text-muted-foreground">Peak Temp</p>
+              <p className="text-sm font-bold text-orange-600">{weather.summary?.maxTemp7d ?? "—"}°C</p>
+            </div>
+            <div className="bg-white/70 rounded-lg p-1.5">
+              <p className="text-[10px] text-muted-foreground">Heat Days</p>
+              <p className="text-sm font-bold text-red-600">{weather.summary?.heatwaveDays ?? "—"}</p>
+            </div>
+          </div>
+          <p className="text-[10px] text-sky-600 text-center">Oracle auto-validates claims · No paperwork needed</p>
+        </div>
+      )}
+
+      {/* ── Policy Card ── */}
+      {loadingPolicies ? (
+        <Skeleton className="h-28 w-full rounded-xl" />
+      ) : activePolicy ? (
+        <Card className="border-2 border-green-200 bg-gradient-to-br from-green-50 to-transparent">
+          <CardContent className="pt-4 pb-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-muted-foreground">Active Policy</p>
+                <p className="text-lg font-black text-green-700">{activePolicy.plan} Plan</p>
+              </div>
+              <div className="text-right">
+                <p className="text-xs text-muted-foreground">Max Payout</p>
+                <p className="text-xl font-black text-green-700">{formatINR(activePolicy.maxPayout)}</p>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-1">
+              {coveredEvents.map((ev: string) => (
+                <span key={ev} className="text-[10px] bg-green-100 text-green-800 rounded-full px-2 py-0.5 font-semibold">
+                  ✓ {EVENT_LABELS[ev] ?? ev}
+                </span>
+              ))}
+            </div>
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
+              <span>{activePolicy.acresCovered} acres · {activePolicy.cropType}</span>
+              <span>Valid till {new Date(activePolicy.endDate).toLocaleDateString("en-IN")}</span>
+            </div>
+            {activePolicy.ipfsCid && (
+              <ProtocolLabsBadge cid={activePolicy.ipfsCid} label="policy" />
+            )}
+          </CardContent>
+        </Card>
+      ) : (
+        <Card className="border-2 border-dashed border-amber-300 bg-amber-50/40">
+          <CardContent className="pt-4 pb-4 text-center space-y-3">
+            <ShieldCheck className="w-10 h-10 mx-auto text-amber-400" />
+            <p className="text-sm font-semibold">No active policy</p>
+            <p className="text-xs text-muted-foreground">Get covered before a disaster strikes. Claims are auto-validated by the weather oracle.</p>
+            <Button className="w-full" onClick={() => setPolicyOpen(true)}>
+              🛡️ Get Covered Now
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* ── Buy Policy Dialog ── */}
+      <Dialog open={policyOpen} onOpenChange={setPolicyOpen}>
+        <DialogContent className="max-w-sm max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Buy Crop Insurance</DialogTitle>
+            <DialogDescription>Policy stored on IPFS · Claims auto-validated by weather oracle</DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handlePolicyPurchase} className="space-y-4 pt-2">
+            <div className="space-y-2">
+              <Label className="text-xs">Choose Plan</Label>
+              <div className="space-y-2">
+                {INSURANCE_PLANS.map(plan => (
+                  <div key={plan.id}
+                    onClick={() => setPolicyForm(f => ({ ...f, plan: plan.id }))}
+                    className={`cursor-pointer rounded-xl border-2 p-3 transition-all ${
+                      policyForm.plan === plan.id ? "border-primary bg-primary/5" : "border-border hover:border-primary/40"
+                    }`}>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg">{plan.icon}</span>
+                        <div>
+                          <p className="text-sm font-bold">{plan.name}</p>
+                          <div className="flex gap-1 mt-0.5">
+                            {plan.events.map(ev => (
+                              <span key={ev} className={`text-[9px] px-1.5 py-0.5 rounded-full font-semibold ${plan.badge}`}>{EVENT_LABELS[ev]}</span>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-black">₹{plan.premium.toLocaleString()}/yr</p>
+                        <p className="text-[10px] text-muted-foreground">up to {formatINR(plan.maxPayout)}</p>
+                      </div>
+                    </div>
+                    {plan.popular && <p className="text-[10px] text-blue-600 font-semibold mt-1">⭐ Most Popular</p>}
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label className="text-xs">Acres to Cover</Label>
+                <Input type="number" step="0.1" min="0.1" placeholder="e.g. 2.5" className="h-9 text-sm"
+                  value={policyForm.acres} onChange={e => setPolicyForm(f => ({ ...f, acres: e.target.value }))} required />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Crop Type</Label>
+                <Input placeholder="e.g. Wheat" className="h-9 text-sm"
+                  value={policyForm.crop} onChange={e => setPolicyForm(f => ({ ...f, crop: e.target.value }))} required />
+              </div>
+            </div>
+            <div className="bg-muted/50 rounded-lg p-3 text-xs space-y-1">
+              <p className="font-semibold">Summary</p>
+              <div className="flex justify-between"><span>Annual Premium</span><span className="font-bold">₹{selectedPlan.premium.toLocaleString()}</span></div>
+              <div className="flex justify-between"><span>Max Claim Payout</span><span className="font-bold">{formatINR(selectedPlan.maxPayout)}</span></div>
+              <div className="flex justify-between"><span>Covered Events</span><span className="font-bold">{selectedPlan.events.length}</span></div>
+              <div className="flex justify-between"><span>Validation</span><span className="font-bold text-sky-700">Weather Oracle (auto)</span></div>
+            </div>
+            <div className="rounded-lg border border-blue-100 bg-blue-50 p-2 text-xs text-blue-700 flex items-start gap-1.5">
+              <Database className="w-3 h-3 mt-0.5 shrink-0" />
+              <span>Policy document stored permanently on <strong>IPFS</strong> via Lighthouse.</span>
+            </div>
+            <Button type="submit" className="w-full gap-2" disabled={purchasingPolicy}>
+              {purchasingPolicy ? "Uploading to IPFS..." : `⬡ Activate ${selectedPlan.name} Policy`}
+            </Button>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Risk Assessment ── */}
       <Card>
-        <CardHeader>
+        <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-base">
             <ShieldAlert className="w-5 h-5 text-primary" /> Current Risk Assessment
           </CardTitle>
@@ -726,12 +981,18 @@ function InsuranceTab() {
             <div className="text-center text-muted-foreground py-4">Risk data unavailable</div>
           )}
         </CardContent>
-        <CardFooter>
-          {risk?.eligibleForClaim && (
+        <CardFooter className="flex-col gap-3 items-stretch">
+          {walletAddress && (
+            <div className="flex items-center gap-1.5 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-1.5">
+              <Zap className="w-3.5 h-3.5 text-amber-500" />
+              Filing a claim earns <strong>+50 FLOW</strong>
+            </div>
+          )}
+          {risk?.eligibleForClaim ? (
             <Dialog open={claimOpen} onOpenChange={setClaimOpen}>
               <DialogTrigger asChild>
                 <Button className="w-full font-bold relative" size="lg" variant="destructive">
-                  Claim Insurance (Eligible)
+                  File Claim (Eligible)
                   {walletAddress && <span className="absolute right-4 text-[9px] bg-white/20 px-1.5 py-px rounded-full">+50 FLOW</span>}
                 </Button>
               </DialogTrigger>
@@ -739,22 +1000,33 @@ function InsuranceTab() {
                 <DialogHeader>
                   <DialogTitle>File Parametric Claim</DialogTitle>
                   <DialogDescription>
-                    Your farm conditions qualify for an automated payout.
+                    Weather oracle will auto-validate your claim against live data.
                     {walletAddress && <span className="text-amber-600 font-semibold"> Filing earns +50 FLOW.</span>}
                   </DialogDescription>
                 </DialogHeader>
-                <form onSubmit={handleClaimSubmit} className="space-y-4 pt-4">
+
+                {weather && (
+                  <div className="rounded-lg bg-sky-50 border border-sky-200 p-3 text-xs text-sky-800 space-y-1">
+                    <p className="font-semibold flex items-center gap-1">🌐 Oracle Data (Auto-Validates Claim)</p>
+                    <p>Rain 7d: <strong>{weather.summary?.totalRainfall7d}mm</strong> · Avg: <strong>{weather.summary?.avgRainfall7d}mm/day</strong></p>
+                    <p>Peak Temp: <strong>{weather.summary?.maxTemp7d}°C</strong> · Heat Days (≥40°C): <strong>{weather.summary?.heatwaveDays}</strong></p>
+                  </div>
+                )}
+
+                <form onSubmit={handleClaimSubmit} className="space-y-4 pt-2">
                   <div className="space-y-2">
                     <Label>Trigger Event</Label>
                     <Select value={claimForm.type} onValueChange={val => setClaimForm({ ...claimForm, type: val })}>
                       <SelectTrigger><SelectValue placeholder="Select type" /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="DROUGHT">Drought / Low Moisture</SelectItem>
-                        <SelectItem value="FLOOD">Excessive Rainfall</SelectItem>
-                        <SelectItem value="HEATWAVE">Extreme Heat</SelectItem>
-                        <SelectItem value="DISEASE">Pest/Disease Outbreak</SelectItem>
+                        {(coveredEvents.length > 0 ? coveredEvents : ["DROUGHT", "FLOOD", "HEATWAVE", "DISEASE"]).map(ev => (
+                          <SelectItem key={ev} value={ev}>{EVENT_LABELS[ev] ?? ev}</SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
+                    {coveredEvents.length > 0 && !coveredEvents.includes(claimForm.type) && (
+                      <p className="text-xs text-red-500">⚠ Your plan does not cover this event type</p>
+                    )}
                   </div>
                   <div className="space-y-2">
                     <Label>Additional Details</Label>
@@ -762,15 +1034,45 @@ function InsuranceTab() {
                       value={claimForm.description} onChange={e => setClaimForm({ ...claimForm, description: e.target.value })} required />
                   </div>
                   <Button type="submit" className="w-full" disabled={createClaim.isPending}>
-                    {createClaim.isPending ? "Submitting..." : "Submit Claim"}
+                    {createClaim.isPending ? "Validating with oracle..." : "Submit & Auto-Validate"}
                   </Button>
                 </form>
               </DialogContent>
             </Dialog>
+          ) : (
+            !activePolicy && (
+              <Button variant="outline" className="w-full" onClick={() => setPolicyOpen(true)}>
+                🛡️ Get Covered — Buy a Policy
+              </Button>
+            )
           )}
         </CardFooter>
       </Card>
 
+      {/* ── Claim Result ── */}
+      {claimResult && (
+        <Card className={claimResult.weatherValidated ? "border-green-200 bg-green-50" : "border-amber-200 bg-amber-50"}>
+          <CardContent className="pt-4 space-y-2">
+            <div className="flex items-center gap-2">
+              {claimResult.weatherValidated
+                ? <CheckCircle2 className="w-5 h-5 text-green-600" />
+                : <AlertCircle className="w-5 h-5 text-amber-600" />}
+              <p className={`font-bold text-sm ${claimResult.weatherValidated ? "text-green-700" : "text-amber-700"}`}>
+                {claimResult.weatherValidated ? "Claim Auto-Approved by Oracle" : "Claim Under Review"}
+              </p>
+            </div>
+            <p className="text-xs text-muted-foreground leading-relaxed">{claimResult.validationNote}</p>
+            {claimResult.payoutAmount && (
+              <div className="bg-white/60 rounded-lg p-2 flex justify-between items-center">
+                <span className="text-xs text-muted-foreground">Approved Payout</span>
+                <span className="font-black text-green-700 text-lg">{formatINR(claimResult.payoutAmount)}</span>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* ── Claims History ── */}
       <div>
         <h3 className="text-base font-bold mb-3 flex items-center gap-2"><FileText className="w-5 h-5" /> Claims History</h3>
         {loadingClaims ? (
@@ -779,20 +1081,38 @@ function InsuranceTab() {
           <div className="space-y-3">
             {claims.map((claim) => (
               <Card key={claim.id}>
-                <CardContent className="p-4">
-                  <div className="flex justify-between items-start mb-2">
+                <CardContent className="p-4 space-y-2">
+                  <div className="flex justify-between items-start">
                     <div>
-                      <p className="font-bold text-sm">{claim.claimType} EVENT</p>
-                      <p className="text-xs text-muted-foreground">{new Date(claim.createdAt).toLocaleDateString()}</p>
+                      <p className="font-bold text-sm">{EVENT_LABELS[claim.claimType] ?? claim.claimType} Event</p>
+                      <p className="text-xs text-muted-foreground">{new Date(claim.createdAt).toLocaleDateString("en-IN")}</p>
                     </div>
-                    <Badge variant={claim.status === "APPROVED" ? "default" : claim.status === "PENDING" ? "secondary" : "outline"}>
-                      {claim.status}
-                    </Badge>
+                    <div className="flex flex-col items-end gap-1">
+                      <Badge variant={
+                        claim.status === "approved" ? "default"
+                        : claim.status === "pending" ? "secondary"
+                        : "outline"
+                      }>
+                        {claim.status === "approved" ? "✓ Approved" : claim.status === "pending" ? "⏳ Pending" : claim.status}
+                      </Badge>
+                      {claim.weatherValidated && (
+                        <span className="text-[9px] text-sky-600 font-semibold bg-sky-50 rounded-full px-1.5 py-0.5">🌐 Oracle Verified</span>
+                      )}
+                    </div>
                   </div>
-                  <p className="text-sm text-muted-foreground line-clamp-2">{claim.description}</p>
-                  {claim.status === "APPROVED" && (
-                    <div className="mt-3 bg-accent/10 text-accent-foreground p-2 rounded text-xs font-semibold flex justify-between items-center">
-                      <span>Reward Payout</span>
+                  <p className="text-xs text-muted-foreground line-clamp-2">{claim.description}</p>
+                  {claim.validationNote && (
+                    <p className="text-xs text-muted-foreground line-clamp-2 italic">"{claim.validationNote}"</p>
+                  )}
+                  {claim.payoutAmount && (
+                    <div className="bg-green-50 rounded p-2 flex justify-between items-center text-xs font-semibold">
+                      <span>Payout</span>
+                      <span className="text-green-700 font-black">{formatINR(claim.payoutAmount)}</span>
+                    </div>
+                  )}
+                  {claim.status === "approved" && (
+                    <div className="bg-accent/10 text-accent-foreground p-2 rounded text-xs font-semibold flex justify-between items-center">
+                      <span>FLOW Reward</span>
                       <span className="flex items-center gap-1"><CheckCircle2 className="w-3 h-3" />+{claim.rewardPoints} FLOW</span>
                     </div>
                   )}
