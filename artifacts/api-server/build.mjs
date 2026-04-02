@@ -96,6 +96,8 @@ async function buildAll() {
       "wrangler",
       "zeromq",
       "zeromq-prebuilt",
+      "bls-eth-wasm",
+      "@lighthouse-web3/*",
       "playwright",
       "puppeteer",
       "puppeteer-core",
