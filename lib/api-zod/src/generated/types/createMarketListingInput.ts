@@ -17,4 +17,6 @@ export interface CreateMarketListingInput {
   /** @nullable */
   sellerWallet?: string | null;
   location: string;
+  /** @nullable */
+  imageBase64?: string | null;
 }

@@ -280,7 +280,32 @@ paths:
     post:
       operationId: buyMarketListing
       tags: [market]
-      summary: Buy a marketplace listing
+      summary: Buy a marketplace listing (creates escrow)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConfirmDeliveryInput"
+      responses:
+        "200":
+          description: Purchase recorded and funds placed in escrow
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MarketListing"
+
+  /market/listings/{id}/confirm-delivery:
+    post:
+      operationId: confirmDelivery
+      tags: [market]
+      summary: Confirm delivery and release escrow
       parameters:
         - name: id
           in: path
@@ -289,7 +314,7 @@ paths:
             type: integer
       responses:
         "200":
-          description: Purchase recorded
+          description: Delivery confirmed, Filecoin receipt stored
           content:
             application/json:
               schema:
@@ -1057,6 +1082,14 @@ components:
           type: string
         status:
           type: string
+        imageCid:
+          type: ["string", "null"]
+        receiptCid:
+          type: ["string", "null"]
+        escrowStatus:
+          type: string
+        buyerName:
+          type: ["string", "null"]
         createdAt:
           type: string
           format: date-time
@@ -1071,6 +1104,7 @@ components:
         - sellerName
         - location
         - status
+        - escrowStatus
         - createdAt
 
     CreateMarketListingInput:
@@ -1094,6 +1128,8 @@ components:
           type: ["string", "null"]
         location:
           type: string
+        imageBase64:
+          type: ["string", "null"]
       required:
         - title
         - description
@@ -1103,6 +1139,14 @@ components:
         - unit
         - sellerName
         - location
+
+    ConfirmDeliveryInput:
+      type: object
+      properties:
+        buyerName:
+          type: string
+      required:
+        - buyerName
 
     ProductRecommendation:
       type: object

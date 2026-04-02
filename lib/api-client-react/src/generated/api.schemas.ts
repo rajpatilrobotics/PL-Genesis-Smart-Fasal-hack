@@ -150,6 +150,13 @@ export interface MarketListing {
   sellerWallet?: string | null;
   location: string;
   status: string;
+  /** @nullable */
+  imageCid?: string | null;
+  /** @nullable */
+  receiptCid?: string | null;
+  escrowStatus: string;
+  /** @nullable */
+  buyerName?: string | null;
   createdAt: string;
 }
 
@@ -164,6 +171,12 @@ export interface CreateMarketListingInput {
   /** @nullable */
   sellerWallet?: string | null;
   location: string;
+  /** @nullable */
+  imageBase64?: string | null;
+}
+
+export interface ConfirmDeliveryInput {
+  buyerName: string;
 }
 
 export interface ProductRecommendation {

@@ -1,4 +1,4 @@
-import { pgTable, serial, text, real, integer, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, serial, text, real, timestamp } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
@@ -25,6 +25,10 @@ export const marketListingsTable = pgTable("market_listings", {
   sellerWallet: text("seller_wallet"),
   location: text("location").notNull(),
   status: text("status").notNull().default("available"),
+  imageCid: text("image_cid"),
+  receiptCid: text("receipt_cid"),
+  escrowStatus: text("escrow_status").notNull().default("none"),
+  buyerName: text("buyer_name"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

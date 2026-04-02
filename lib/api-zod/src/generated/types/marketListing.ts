@@ -19,5 +19,12 @@ export interface MarketListing {
   sellerWallet?: string | null;
   location: string;
   status: string;
+  /** @nullable */
+  imageCid?: string | null;
+  /** @nullable */
+  receiptCid?: string | null;
+  escrowStatus: string;
+  /** @nullable */
+  buyerName?: string | null;
   createdAt: Date;
 }

@@ -249,6 +249,10 @@ export const GetMarketListingsResponseItem = zod.object({
   sellerWallet: zod.string().nullish(),
   location: zod.string(),
   status: zod.string(),
+  imageCid: zod.string().nullish(),
+  receiptCid: zod.string().nullish(),
+  escrowStatus: zod.string(),
+  buyerName: zod.string().nullish(),
   createdAt: zod.coerce.date(),
 });
 export const GetMarketListingsResponse = zod.array(
@@ -268,13 +272,18 @@ export const CreateMarketListingBody = zod.object({
   sellerName: zod.string(),
   sellerWallet: zod.string().nullish(),
   location: zod.string(),
+  imageBase64: zod.string().nullish(),
 });
 
 /**
- * @summary Buy a marketplace listing
+ * @summary Buy a marketplace listing (creates escrow)
  */
 export const BuyMarketListingParams = zod.object({
   id: zod.coerce.number(),
+});
+
+export const BuyMarketListingBody = zod.object({
+  buyerName: zod.string(),
 });
 
 export const BuyMarketListingResponse = zod.object({
@@ -289,6 +298,36 @@ export const BuyMarketListingResponse = zod.object({
   sellerWallet: zod.string().nullish(),
   location: zod.string(),
   status: zod.string(),
+  imageCid: zod.string().nullish(),
+  receiptCid: zod.string().nullish(),
+  escrowStatus: zod.string(),
+  buyerName: zod.string().nullish(),
+  createdAt: zod.coerce.date(),
+});
+
+/**
+ * @summary Confirm delivery and release escrow
+ */
+export const ConfirmDeliveryParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const ConfirmDeliveryResponse = zod.object({
+  id: zod.number(),
+  title: zod.string(),
+  description: zod.string(),
+  crop: zod.string(),
+  price: zod.number(),
+  quantity: zod.number(),
+  unit: zod.string(),
+  sellerName: zod.string(),
+  sellerWallet: zod.string().nullish(),
+  location: zod.string(),
+  status: zod.string(),
+  imageCid: zod.string().nullish(),
+  receiptCid: zod.string().nullish(),
+  escrowStatus: zod.string(),
+  buyerName: zod.string().nullish(),
   createdAt: zod.coerce.date(),
 });
 
@@ -317,8 +356,6 @@ export const GetCommunityPostsResponseItem = zod.object({
   walletAddress: zod.string().nullish(),
   content: zod.string(),
   visibility: zod.string(),
-  category: zod.string().default("tip"),
-  imageUrl: zod.string().nullish(),
   likes: zod.number(),
   filecoinCid: zod.string().nullish(),
   badge: zod.string().nullish(),
@@ -346,8 +383,6 @@ export const CreateCommunityPostBody = zod.object({
   walletAddress: zod.string().nullish(),
   content: zod.string(),
   visibility: zod.string().default(createCommunityPostBodyVisibilityDefault),
-  category: zod.string().default("tip"),
-  imageUrl: zod.string().nullish(),
   badge: zod.string().nullish(),
 });
 
