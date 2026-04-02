@@ -25,6 +25,7 @@ import type {
   AskExpertInput,
   ChatMessage,
   CommunityPost,
+  ConfirmDeliveryInput,
   ConnectWalletInput,
   CreateCommunityPostInput,
   CreateInsuranceClaimInput,
@@ -1298,7 +1299,7 @@ export const useCreateMarketListing = <
 };
 
 /**
- * @summary Buy a marketplace listing
+ * @summary Buy a marketplace listing (creates escrow)
  */
 export const getBuyMarketListingUrl = (id: number) => {
   return `/api/market/listings/${id}/buy`;
@@ -1306,11 +1307,14 @@ export const getBuyMarketListingUrl = (id: number) => {
 
 export const buyMarketListing = async (
   id: number,
+  confirmDeliveryInput: ConfirmDeliveryInput,
   options?: RequestInit,
 ): Promise<MarketListing> => {
   return customFetch<MarketListing>(getBuyMarketListingUrl(id), {
     ...options,
     method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(confirmDeliveryInput),
   });
 };
 
@@ -1321,14 +1325,14 @@ export const getBuyMarketListingMutationOptions = <
   mutation?: UseMutationOptions<
     Awaited<ReturnType<typeof buyMarketListing>>,
     TError,
-    { id: number },
+    { id: number; data: BodyType<ConfirmDeliveryInput> },
     TContext
   >;
   request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
   Awaited<ReturnType<typeof buyMarketListing>>,
   TError,
-  { id: number },
+  { id: number; data: BodyType<ConfirmDeliveryInput> },
   TContext
 > => {
   const mutationKey = ["buyMarketListing"];
@@ -1342,11 +1346,11 @@ export const getBuyMarketListingMutationOptions = <
 
   const mutationFn: MutationFunction<
     Awaited<ReturnType<typeof buyMarketListing>>,
-    { id: number }
+    { id: number; data: BodyType<ConfirmDeliveryInput> }
   > = (props) => {
-    const { id } = props ?? {};
+    const { id, data } = props ?? {};
 
-    return buyMarketListing(id, requestOptions);
+    return buyMarketListing(id, data, requestOptions);
   };
 
   return { mutationFn, ...mutationOptions };
@@ -1355,11 +1359,11 @@ export const getBuyMarketListingMutationOptions = <
 export type BuyMarketListingMutationResult = NonNullable<
   Awaited<ReturnType<typeof buyMarketListing>>
 >;
-
+export type BuyMarketListingMutationBody = BodyType<ConfirmDeliveryInput>;
 export type BuyMarketListingMutationError = ErrorType<unknown>;
 
 /**
- * @summary Buy a marketplace listing
+ * @summary Buy a marketplace listing (creates escrow)
  */
 export const useBuyMarketListing = <
   TError = ErrorType<unknown>,
@@ -1368,17 +1372,101 @@ export const useBuyMarketListing = <
   mutation?: UseMutationOptions<
     Awaited<ReturnType<typeof buyMarketListing>>,
     TError,
-    { id: number },
+    { id: number; data: BodyType<ConfirmDeliveryInput> },
     TContext
   >;
   request?: SecondParameter<typeof customFetch>;
 }): UseMutationResult<
   Awaited<ReturnType<typeof buyMarketListing>>,
   TError,
-  { id: number },
+  { id: number; data: BodyType<ConfirmDeliveryInput> },
   TContext
 > => {
   return useMutation(getBuyMarketListingMutationOptions(options));
+};
+
+/**
+ * @summary Confirm delivery and release escrow
+ */
+export const getConfirmDeliveryUrl = (id: number) => {
+  return `/api/market/listings/${id}/confirm-delivery`;
+};
+
+export const confirmDelivery = async (
+  id: number,
+  options?: RequestInit,
+): Promise<MarketListing> => {
+  return customFetch<MarketListing>(getConfirmDeliveryUrl(id), {
+    ...options,
+    method: "POST",
+  });
+};
+
+export const getConfirmDeliveryMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof confirmDelivery>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof confirmDelivery>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  const mutationKey = ["confirmDelivery"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof confirmDelivery>>,
+    { id: number }
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return confirmDelivery(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type ConfirmDeliveryMutationResult = NonNullable<
+  Awaited<ReturnType<typeof confirmDelivery>>
+>;
+
+export type ConfirmDeliveryMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Confirm delivery and release escrow
+ */
+export const useConfirmDelivery = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof confirmDelivery>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof confirmDelivery>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  return useMutation(getConfirmDeliveryMutationOptions(options));
 };
 
 /**

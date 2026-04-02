@@ -15,6 +15,7 @@ export * from "./askExpertInput";
 export * from "./chatMessage";
 export * from "./comment";
 export * from "./communityPost";
+export * from "./confirmDeliveryInput";
 export * from "./connectWalletInput";
 export * from "./createCommunityPostInput";
 export * from "./createInsuranceClaimInput";
