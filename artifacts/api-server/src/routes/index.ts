@@ -13,6 +13,7 @@ import creditRouter from "./credit";
 import litRouter from "./lit";
 import diseaseIntelRouter from "./disease-intel";
 import fheRouter from "./fhe";
+import starknetRouter from "./starknet";
 
 const router: IRouter = Router();
 
@@ -30,5 +31,6 @@ router.use(creditRouter);
 router.use(litRouter);
 router.use(diseaseIntelRouter);
 router.use(fheRouter);
+router.use(starknetRouter);
 
 export default router;

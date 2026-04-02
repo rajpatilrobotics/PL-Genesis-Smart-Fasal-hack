@@ -65,6 +65,12 @@ export type ZKProof = {
   verified: boolean;
   generatedAt: string;
   starknetTx: string;
+  sigR?: string;
+  sigS?: string;
+  publicKey?: string;
+  blockNumber?: number;
+  networkLive?: boolean;
+  explorerUrl?: string;
 };
 
 type WalletContextType = {
