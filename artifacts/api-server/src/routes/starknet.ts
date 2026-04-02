@@ -225,14 +225,11 @@ router.post("/starknet/register-policy", async (req, res): Promise<void> => {
   }
 
   try {
-    const sierra = JSON.parse(readFileSync(SIERRA_PATH, "utf-8"));
-    const contract = new Contract(sierra.abi as Abi, state.contractAddress, account);
-
     const farmerIdFelt = cairo.felt(farmerId);
     const calldata = CallData.compile({
       farmer_id: farmerIdFelt,
-      drought_moisture_threshold: cairo.uint256(droughtThreshold),
-      heat_temp_threshold: cairo.uint256(heatThreshold),
+      drought_moisture_threshold: droughtThreshold,
+      heat_temp_threshold: heatThreshold,
     });
 
     const resp = await getAccount().execute({
@@ -312,8 +309,8 @@ router.post("/starknet/submit-claim", async (req, res): Promise<void> => {
       farmer_id:    farmerIdFelt,
       trigger:      triggerFelt,
       soil_data_hash: soilHashFelt,
-      moisture:     cairo.uint256(Math.round(moisture ?? 0)),
-      temperature:  cairo.uint256(Math.round(temperature ?? 0)),
+      moisture:     Math.round(moisture ?? 0),
+      temperature:  Math.round(temperature ?? 0),
     });
 
     const resp = await getAccount().execute({
