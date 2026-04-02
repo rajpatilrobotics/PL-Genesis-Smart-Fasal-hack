@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Home, Brain, Shield, ShoppingCart, Sparkles, UserCircle2, BadgeIndianRupee } from "lucide-react";
+import { Home, Brain, Shield, ShoppingCart, Sparkles, UserCircle2, BadgeIndianRupee, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function BottomNav() {
@@ -8,10 +8,11 @@ export default function BottomNav() {
   const links = [
     { href: "/", icon: Home, label: "Home" },
     { href: "/ai", icon: Brain, label: "AI Hub" },
-    { href: "/credit", icon: BadgeIndianRupee, label: "Credit" },
     { href: "/insurance", icon: Shield, label: "Insurance" },
     { href: "/market", icon: ShoppingCart, label: "Market" },
+    { href: "/community", icon: Users, label: "Community" },
     { href: "/web3", icon: Sparkles, label: "Web3" },
+    { href: "/credit", icon: BadgeIndianRupee, label: "Credit" },
     { href: "/profile", icon: UserCircle2, label: "Profile" },
   ];
 
@@ -34,10 +35,10 @@ export default function BottomNav() {
                 data-testid={`nav-${link.label.toLowerCase().replace(" ", "-")}`}
               >
                 <div className={cn(
-                  "p-1.5 rounded-full transition-all duration-300",
+                  "p-1 rounded-full transition-all duration-300",
                   isActive ? "bg-primary/10" : "bg-transparent"
                 )}>
-                  <Icon className="w-5 h-5" strokeWidth={isActive ? 2.5 : 2} />
+                  <Icon className="w-4 h-4" strokeWidth={isActive ? 2.5 : 2} />
                 </div>
                 <span className={cn(
                   "transition-all",
