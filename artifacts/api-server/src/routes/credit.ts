@@ -1,7 +1,7 @@
 import { Router, type IRouter } from "express";
 import { db, creditSeasonsTable } from "@workspace/db";
 import { eq, desc } from "drizzle-orm";
-import { openai } from "@workspace/integrations-openai-ai-server";
+import { generateCreditJSON, getProvider } from "../lib/ai-provider.js";
 import { logEvent } from "../lib/event-logger.js";
 import crypto from "crypto";
 
@@ -100,14 +100,7 @@ Return a JSON object with exactly:
   "summary": "2-3 sentence explanation for a bank officer about this farmer's creditworthiness"
 }`;
 
-    const completion = await openai.chat.completions.create({
-      model: "gpt-5.2",
-      max_completion_tokens: 512,
-      messages: [{ role: "user", content: prompt }],
-      response_format: { type: "json_object" },
-    });
-
-    const content = completion.choices[0]?.message?.content;
+    const content = await generateCreditJSON(prompt);
     if (content) {
       const result = JSON.parse(content);
       creditScore = Math.min(900, Math.max(300, Number(result.creditScore) || 600));
@@ -166,7 +159,7 @@ Return a JSON object with exactly:
 
   const [row] = await db.insert(creditSeasonsTable).values(record).returning();
 
-  await logEvent("credit", `Credit record: ${farmerId} | ${season} | ${cropGrown} | Score: ${creditScore} (${getRating(creditScore)}) | CID: ${cid}`);
+  await logEvent("credit", `Credit record via ${getProvider()}: ${farmerId} | ${season} | ${cropGrown} | Score: ${creditScore} (${getRating(creditScore)}) | CID: ${cid}`);
 
   res.json(row);
 });

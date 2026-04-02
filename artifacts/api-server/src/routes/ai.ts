@@ -9,7 +9,7 @@ import {
   DetectDiseaseBody,
   DetectDiseaseResponse,
 } from "@workspace/api-zod";
-import { openai } from "@workspace/integrations-openai-ai-server";
+import { generateJSON, generateVisionJSON, getProvider } from "../lib/ai-provider.js";
 import { logEvent } from "../lib/event-logger.js";
 
 const router: IRouter = Router();
@@ -53,14 +53,7 @@ Provide a JSON response with exactly these fields:
   "riskLevel": "LOW" | "MEDIUM" | "HIGH"
 }`;
 
-    const completion = await openai.chat.completions.create({
-      model: "gpt-5.2",
-      max_completion_tokens: 1024,
-      messages: [{ role: "user", content: prompt }],
-      response_format: { type: "json_object" },
-    });
-
-    const content = completion.choices[0]?.message?.content;
+    const content = await generateJSON(prompt);
     if (content) {
       const parsed_ai = JSON.parse(content);
       fertilizerAdvice = parsed_ai.fertilizerAdvice || "Apply balanced NPK fertilizer.";
@@ -71,7 +64,6 @@ Provide a JSON response with exactly these fields:
       riskLevel = parsed_ai.riskLevel || "MEDIUM";
     }
   } catch {
-    // fallback values
     fertilizerAdvice = `Based on N:${nitrogen}, P:${phosphorus}, K:${potassium} levels, apply a balanced NPK fertilizer with emphasis on ${nitrogen < 40 ? "nitrogen" : phosphorus < 25 ? "phosphorus" : "potassium"}.`;
     irrigationSuggestion = moisture < 40 ? "Soil moisture is low. Increase irrigation frequency by 20% and consider drip irrigation." : "Soil moisture is adequate. Maintain current irrigation schedule.";
     riskAnalysis = (temperature && temperature > 35 && moisture < 30) ? "HIGH RISK: High temperature combined with low moisture may lead to crop stress and yield loss." : "Moderate risk conditions. Monitor soil moisture and temperature regularly.";
@@ -94,7 +86,7 @@ Provide a JSON response with exactly these fields:
     moisture,
   }).returning();
 
-  await logEvent("ai", `AI recommendation generated: Health=${cropHealthPercent}% Risk=${riskLevel} Yield=${yieldPercent}%`);
+  await logEvent("ai", `AI recommendation generated via ${getProvider()}: Health=${cropHealthPercent}% Risk=${riskLevel} Yield=${yieldPercent}%`);
 
   res.json(GetAiRecommendationResponse.parse(row));
 });
@@ -142,41 +134,20 @@ Respond with a JSON object with exactly these fields:
   "severity": "Mild" | "Moderate" | "Severe"
 }`;
 
-    let messages: Parameters<typeof openai.chat.completions.create>[0]["messages"];
+    let content: string;
 
     if (imageBase64) {
-      const mimeType = (imageMimeType as `image/${string}`) || "image/jpeg";
-      messages = [
-        { role: "system", content: systemPrompt },
-        {
-          role: "user",
-          content: [
-            {
-              type: "image_url",
-              image_url: {
-                url: `data:${mimeType};base64,${imageBase64}`,
-                detail: "high",
-              },
-            },
-            { type: "text", text: userTextPrompt },
-          ],
-        },
-      ];
+      const mimeType = imageMimeType || "image/jpeg";
+      content = await generateVisionJSON({
+        imageBase64,
+        mimeType,
+        systemPrompt,
+        userPrompt: userTextPrompt,
+      });
     } else {
-      messages = [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userTextPrompt },
-      ];
+      content = await generateJSON(`${systemPrompt}\n\n${userTextPrompt}`);
     }
 
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o",
-      max_completion_tokens: 600,
-      messages,
-      response_format: { type: "json_object" },
-    });
-
-    const content = completion.choices[0]?.message?.content;
     if (content) {
       const result = JSON.parse(content);
       plantName = result.plantName || (cropName ?? "Unknown Plant");
@@ -194,7 +165,7 @@ Respond with a JSON object with exactly these fields:
     severity = "Moderate";
   }
 
-  await logEvent("ai", `Disease detection: ${plantName} - ${diseaseName} (${confidencePercent}% confidence)`);
+  await logEvent("ai", `Disease detection via ${getProvider()}: ${plantName} - ${diseaseName} (${confidencePercent}% confidence)`);
 
   res.json(DetectDiseaseResponse.parse({ plantName, diseaseName, confidencePercent, treatment, severity }));
 });
