@@ -317,6 +317,8 @@ export const GetCommunityPostsResponseItem = zod.object({
   walletAddress: zod.string().nullish(),
   content: zod.string(),
   visibility: zod.string(),
+  category: zod.string().default("tip"),
+  imageUrl: zod.string().nullish(),
   likes: zod.number(),
   filecoinCid: zod.string().nullish(),
   badge: zod.string().nullish(),
@@ -344,6 +346,8 @@ export const CreateCommunityPostBody = zod.object({
   walletAddress: zod.string().nullish(),
   content: zod.string(),
   visibility: zod.string().default(createCommunityPostBodyVisibilityDefault),
+  category: zod.string().default("tip"),
+  imageUrl: zod.string().nullish(),
   badge: zod.string().nullish(),
 });
 

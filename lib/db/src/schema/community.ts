@@ -8,6 +8,8 @@ export const communityPostsTable = pgTable("community_posts", {
   walletAddress: text("wallet_address"),
   content: text("content").notNull(),
   visibility: text("visibility").notNull().default("public"),
+  category: text("category").notNull().default("tip"),
+  imageUrl: text("image_url"),
   likes: integer("likes").notNull().default(0),
   filecoinCid: text("filecoin_cid"),
   badge: text("badge"),

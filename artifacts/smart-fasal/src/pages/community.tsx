@@ -149,7 +149,7 @@ const SEVERITY_CONFIG: Record<string, { color: string; bg: string; label: string
   medium: { color: "text-yellow-700", bg: "bg-yellow-50 border-yellow-300", label: "Medium" },
 };
 
-const ONLINE_COUNT = 127;
+const BASE_ONLINE_COUNT = 127;
 
 export default function Community() {
   const { toast } = useToast();
@@ -171,6 +171,7 @@ export default function Community() {
   const [filterCategory, setFilterCategory] = useState<string>("all");
   const [payingExpertId, setPayingExpertId] = useState<number | null>(null);
   const [paidTxIds, setPaidTxIds] = useState<Record<number, string>>({});
+  const [onlineCount, setOnlineCount] = useState(BASE_ONLINE_COUNT);
 
   const { data: posts, isLoading: loadingPosts } = useGetCommunityPosts({ query: { queryKey: getGetCommunityPostsQueryKey() } });
   const { data: messages, isLoading: loadingMessages } = useGetCommunityMessages({ query: { queryKey: getGetCommunityMessagesQueryKey() } });
@@ -196,8 +197,15 @@ export default function Community() {
     return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setOnlineCount(BASE_ONLINE_COUNT + Math.floor(Math.random() * 31) - 15);
+    }, 15000);
+    return () => clearInterval(interval);
+  }, []);
+
   const filteredPosts = posts?.filter(p =>
-    filterCategory === "all" || (p as any).category === filterCategory
+    filterCategory === "all" || p.category === filterCategory
   );
 
   const handleCreatePost = () => {
@@ -354,8 +362,8 @@ export default function Community() {
         <p className="text-muted-foreground text-sm flex items-center gap-2">
           Connect, learn, and grow together
           <span className="inline-flex items-center gap-1 text-green-600 font-medium text-xs">
-            <Circle className="w-2 h-2 fill-green-500 text-green-500" />
-            {ONLINE_COUNT} online
+            <Circle className="w-2 h-2 fill-green-500 text-green-500 animate-pulse" />
+            {onlineCount} online
           </span>
         </p>
       </div>
@@ -450,7 +458,7 @@ export default function Community() {
             {loadingPosts ? (
               Array(3).fill(0).map((_, i) => <Skeleton key={i} className="h-40 w-full rounded-xl" />)
             ) : filteredPosts?.map(post => {
-              const cat = (post as any).category as string ?? "tip";
+              const cat = post.category ?? "tip";
               const cfg = CATEGORY_CONFIG[cat] ?? CATEGORY_CONFIG.tip;
               const isTrending = post.likes >= 100;
               const isGroupBuy = cat === "group_buy";
@@ -496,13 +504,14 @@ export default function Community() {
                   <CardContent className="p-4 pt-2 space-y-3">
                     <p className="text-sm whitespace-pre-wrap leading-relaxed">{post.content}</p>
 
-                    {(post as any).imageUrl && (
+                    {post.imageUrl && (
                       <div className="rounded-lg overflow-hidden border border-border">
                         <img
-                          src={(post as any).imageUrl}
+                          src={post.imageUrl}
                           alt="Post image"
                           className="w-full h-48 object-cover"
                           loading="lazy"
+                          onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
                         />
                       </div>
                     )}
@@ -524,8 +533,8 @@ export default function Community() {
                           likedPosts.has(post.id) ? "text-rose-500" : "text-muted-foreground hover:text-rose-500"
                         )}
                       >
-                        <Heart className={cn("w-4 h-4", likedPosts.has(post.id) && "fill-rose-500")} />
-                        {post.likes + (likedPosts.has(post.id) ? 0 : 0)}
+                        <Heart className={cn("w-4 h-4 transition-transform", likedPosts.has(post.id) && "fill-rose-500 scale-125")} />
+                        {post.likes + (likedPosts.has(post.id) ? 1 : 0)}
                       </button>
                       <button
                         onClick={() => setActiveCommentPost(activeCommentPost === post.id ? null : post.id)}
