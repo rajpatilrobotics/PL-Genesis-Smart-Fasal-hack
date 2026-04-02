@@ -655,7 +655,7 @@ export default function Community() {
             </span>
             <span className="flex items-center gap-1 text-green-600 font-medium">
               <Users className="w-3 h-3" />
-              {ONLINE_COUNT} online
+              {onlineCount} online
             </span>
           </div>
 
