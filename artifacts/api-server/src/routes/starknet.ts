@@ -27,7 +27,7 @@ const NETWORK_NAME    = "Starknet Sepolia";
 const provider = new RpcProvider({ nodeUrl: STARKNET_RPC });
 
 function getAccount() {
-  return new Account({ provider, address: WALLET_ADDR, signer: PRIV_KEY });
+  return new Account({ provider, address: WALLET_ADDR, signer: PRIV_KEY, cairoVersion: "1" });
 }
 
 // ─── Persisted state ────────────────────────────────────────────────────────
@@ -142,7 +142,19 @@ router.post("/starknet/deploy", async (_req, res): Promise<void> => {
     });
   } catch (err: any) {
     console.error("[Starknet] Deploy error:", err);
-    res.status(500).json({ error: err?.message ?? String(err), hint: "Make sure the wallet has Starknet Sepolia ETH from https://faucet.starknet.io/" });
+    const msg: string = err?.message ?? String(err);
+    const isNotDeployed = msg.includes("is not deployed") || msg.includes("Contract not found");
+    const isInsufficientFunds = msg.includes("insufficient") || msg.includes("Insufficient") || msg.includes("balance");
+    let userError = msg;
+    let hint = "Make sure the wallet has Starknet Sepolia ETH from https://faucet.starknet.io/";
+    if (isNotDeployed) {
+      userError = "Wallet account is not deployed on Starknet Sepolia";
+      hint = "The wallet address must be a deployed Argent X or Braavos account on Starknet Sepolia. Visit https://www.starknet.io/en/ecosystem/wallets to create and fund one, then update STARKNET_WALLET_ADDRESS and STARKNET_PRIVATE_KEY in environment variables.";
+    } else if (isInsufficientFunds) {
+      userError = "Insufficient Starknet Sepolia ETH for gas fees";
+      hint = "Fund your Starknet Sepolia wallet at https://faucet.starknet.io/ and try again.";
+    }
+    res.status(500).json({ error: userError, hint });
   }
 });
 
