@@ -79,13 +79,30 @@ async function withRetry<T>(fn: () => Promise<T>, retries = 3, delayMs = 3000): 
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
+function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>(resolve => setTimeout(() => resolve(fallback), ms)),
+  ]);
+}
+
 async function getLiveBlock() {
+  const TIMEOUT_MS = 8000;
   try {
-    const blockNumber = await provider.getBlockNumber();
+    const blockNumber = await withTimeout(
+      provider.getBlockNumber(),
+      TIMEOUT_MS,
+      0,
+    );
+    if (blockNumber === 0) return { blockNumber: 0, blockHash: "", networkLive: false };
     let blockHash = "";
     try {
-      const block = await provider.getBlock(blockNumber);
-      blockHash = (block as any).block_hash ?? (block as any).blockHash ?? "";
+      const block = await withTimeout(
+        provider.getBlock(blockNumber) as Promise<any>,
+        3000,
+        null,
+      );
+      blockHash = block?.block_hash ?? block?.blockHash ?? "";
     } catch { /* block hash is optional */ }
     return { blockNumber, blockHash, networkLive: true };
   } catch (e) {

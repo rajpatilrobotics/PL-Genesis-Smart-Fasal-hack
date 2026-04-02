@@ -2135,12 +2135,14 @@ function StarknetTab() {
         </div>
       )}
 
-      {/* ZK Proof Generator */}
+      {/* Soil Attestation Generator */}
       <div>
         <h3 className="text-sm font-bold mb-1 flex items-center gap-1.5">
-          <BadgeCheck className="w-4 h-4 text-rose-500" /> Generate ZK Soil Proofs
+          <BadgeCheck className="w-4 h-4 text-rose-500" /> Soil Attestations
         </h3>
-        <p className="text-xs text-muted-foreground mb-3">Real Pedersen hash + STARK signature computed from live IoT sensor readings. Earns +25 FLOW per verified proof.</p>
+        <p className="text-xs text-muted-foreground mb-3">
+          Pedersen commitment + STARK curve ECDSA — real cryptographic attestation of your IoT soil conditions. Not ZK (we don't hide inputs), but tamper-proof: the hash ties your sensor reading to a specific Starknet block. Earns +25 FLOW per verified attestation.
+        </p>
         <div className="space-y-2">
           {proofTypes.map(pt => (
             <Card key={pt.id}>
@@ -2148,11 +2150,11 @@ function StarknetTab() {
                 <pt.icon className={cn("w-7 h-7 shrink-0", pt.color)} strokeWidth={1.5} />
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-semibold leading-snug">{pt.label}</p>
-                  <p className="text-[10px] text-muted-foreground mt-0.5">Pedersen hash · STARK curve · Sepolia</p>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">Pedersen hash · STARK curve ECDSA · Sepolia</p>
                 </div>
                 <Button size="sm" variant="outline" className="shrink-0 text-[10px] h-7 px-2 border-rose-300 text-rose-700"
                   onClick={() => handleGenerateProof(pt)} disabled={generating}>
-                  {generating && generatingId === pt.id ? <Loader2 className="w-3 h-3 animate-spin" /> : "Prove"}
+                  {generating && generatingId === pt.id ? <Loader2 className="w-3 h-3 animate-spin" /> : "Attest"}
                 </Button>
               </CardContent>
             </Card>
@@ -2160,10 +2162,10 @@ function StarknetTab() {
         </div>
       </div>
 
-      {/* ZK Proof History */}
+      {/* Attestation History */}
       {zkProofs.length > 0 && (
         <div>
-          <h3 className="text-sm font-bold mb-2">ZK Proof History</h3>
+          <h3 className="text-sm font-bold mb-2">Attestation History</h3>
           <div className="space-y-2">
             {zkProofs.map(p => (
               <Card key={p.id} className={p.verified ? "border-green-300" : "border-red-200"}>
@@ -2208,13 +2210,13 @@ function StarknetTab() {
       <Card className="bg-gradient-to-br from-emerald-50 to-green-50 border-emerald-200">
         <CardHeader className="pb-2">
           <CardTitle className="text-sm flex items-center gap-2">
-            <Leaf className="w-4 h-4 text-emerald-600" /> Mint Carbon Credit via ZK Proof
+            <Leaf className="w-4 h-4 text-emerald-600" /> Mint Carbon Credit
             <Badge className="ml-auto text-[10px] bg-emerald-100 text-emerald-700 border-emerald-300">Starknet Sepolia</Badge>
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           <p className="text-xs text-muted-foreground">
-            IoT soil readings → Pedersen commitment → STARK signature → Carbon Credit Certificate. Healthy soil sequesters CO₂ — proven on-chain, tradeable on any DEX.
+            IoT soil readings → Pedersen commitment → STARK curve ECDSA → on-chain registration in the Cairo parametric insurance contract. Each credit is a real Starknet Sepolia event with a verifiable tx hash on Starkscan.
           </p>
           <div className="grid grid-cols-3 gap-2 text-center text-[10px] text-muted-foreground">
             <div className="bg-white/70 rounded-lg p-2">
@@ -2233,7 +2235,7 @@ function StarknetTab() {
           <Button className="w-full bg-emerald-600 hover:bg-emerald-700 text-white h-9 text-sm"
             onClick={handleMintCarbonCredit} disabled={minting || !walletAddress}>
             {minting
-              ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Computing ZK proof & minting…</>
+              ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Signing & recording on-chain…</>
               : <><Leaf className="w-4 h-4 mr-2" /> Mint Carbon Credit on Starknet</>
             }
           </Button>
@@ -2258,8 +2260,8 @@ function StarknetTab() {
                       <p className="text-[10px] text-muted-foreground font-mono">Token #{c.tokenId}</p>
                     </div>
                   </div>
-                  <Badge className={cn("text-[10px]", c.networkLive ? "bg-green-600" : "bg-gray-400")}>
-                    {c.networkLive ? "● Live Sepolia" : "● Signed"}
+                  <Badge className={cn("text-[10px]", c.onChain ? "bg-emerald-600" : c.networkLive ? "bg-green-600" : "bg-gray-400")}>
+                    {c.onChain ? "● On-Chain" : c.networkLive ? "● Signed" : "● Offline"}
                   </Badge>
                 </div>
                 <div className="grid grid-cols-3 gap-2 text-center">
@@ -2277,15 +2279,23 @@ function StarknetTab() {
                   </div>
                 </div>
                 <div className="bg-muted/40 rounded-lg p-2 space-y-1">
-                  <p className="text-[9px] font-mono text-muted-foreground break-all">Hash: {shortHash(c.proofHash)}</p>
+                  <p className="text-[9px] font-mono text-muted-foreground break-all">Pedersen hash: {shortHash(c.proofHash)}</p>
                   <p className="text-[9px] font-mono text-muted-foreground break-all">r: {c.sigR?.slice(0, 22)}…</p>
                   <p className="text-[9px] font-mono text-muted-foreground break-all">s: {c.sigS?.slice(0, 22)}…</p>
                   {c.blockNumber > 0 && <p className="text-[9px] text-muted-foreground">Block #{c.blockNumber}</p>}
+                  {c.txHash && <p className="text-[9px] font-mono text-emerald-700 break-all">TX: {c.txHash.slice(0, 26)}…</p>}
                 </div>
-                <a href={c.explorerUrl} target="_blank" rel="noopener noreferrer"
-                  className="flex items-center gap-1 text-[10px] text-blue-600 hover:underline">
-                  <ExternalLink className="w-3 h-3" /> View signer on Starkscan
-                </a>
+                {c.txUrl ? (
+                  <a href={c.txUrl} target="_blank" rel="noopener noreferrer"
+                    className="flex items-center gap-1 text-[10px] text-blue-600 hover:underline font-semibold">
+                    <ExternalLink className="w-3 h-3" /> View on-chain TX on Starkscan ↗
+                  </a>
+                ) : (
+                  <a href={c.explorerUrl} target="_blank" rel="noopener noreferrer"
+                    className="flex items-center gap-1 text-[10px] text-blue-600 hover:underline">
+                    <ExternalLink className="w-3 h-3" /> View signer on Starkscan
+                  </a>
+                )}
               </div>
             ))}
           </div>
