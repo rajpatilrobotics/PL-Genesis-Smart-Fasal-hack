@@ -14,6 +14,7 @@ import litRouter from "./lit";
 import diseaseIntelRouter from "./disease-intel";
 import fheRouter from "./fhe";
 import starknetRouter from "./starknet";
+import hypercertsRouter from "./hypercerts";
 
 const router: IRouter = Router();
 
@@ -32,5 +33,6 @@ router.use(litRouter);
 router.use(diseaseIntelRouter);
 router.use(fheRouter);
 router.use(starknetRouter);
+router.use(hypercertsRouter);
 
 export default router;

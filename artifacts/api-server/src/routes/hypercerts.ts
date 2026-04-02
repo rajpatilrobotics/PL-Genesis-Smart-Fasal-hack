@@ -2,6 +2,8 @@ import { Router, type IRouter } from "express";
 import { ethers } from "ethers";
 import crypto from "crypto";
 import { logEvent } from "../lib/event-logger.js";
+import { db, hyperCertsTable } from "@workspace/db";
+import { desc } from "drizzle-orm";
 
 const router: IRouter = Router();
 
@@ -161,13 +163,40 @@ router.post("/hypercerts/mint", async (req, res): Promise<void> => {
       }
     } catch (_) {}
 
+    const tokenIdHex = "0x" + tokenId.toString(16).padStart(40, "0");
+    const explorerUrl = txHash
+      ? `https://sepolia-optimism.etherscan.io/tx/${txHash}`
+      : `https://testnet.hypercerts.org/hypercerts/${11155420}-${HYPERCERT_CONTRACT_OPTIMISM_SEPOLIA}-${tokenId}`;
+    const hypercertUrl = `https://testnet.hypercerts.org/hypercerts/${11155420}-${HYPERCERT_CONTRACT_OPTIMISM_SEPOLIA}-${tokenId.toString()}`;
+
     await logEvent(
       "hypercerts",
       `Hypercert ${minted ? "MINTED" : "prepared"} — ${activity} | ${tonnes}t CO₂ | CID: ${metadataCid.substring(0, 16)} | funded=${!fundingNeeded}`
     );
 
+    await db.insert(hyperCertsTable).values({
+      activity,
+      season,
+      tonnes,
+      waterSaved: waterSaved ?? 0,
+      impactScore: impactScore ?? 0,
+      farmerAddress: farmerAddress || ETH_WALLET_ADDRESS,
+      metadataCid,
+      metadataUrl,
+      tokenId: tokenIdHex,
+      txHash,
+      minted,
+      fundingNeeded,
+      explorerUrl,
+      hypercertUrl,
+      ipfsReal,
+      soilPh: soilData?.ph ?? null,
+      soilNitrogen: soilData?.nitrogen ?? null,
+      soilMoisture: soilData?.moisture ?? null,
+    });
+
     res.json({
-      tokenId: "0x" + tokenId.toString(16).padStart(40, "0"),
+      tokenId: tokenIdHex,
       metadataCid,
       metadataUrl,
       ipfsReal,
@@ -175,12 +204,11 @@ router.post("/hypercerts/mint", async (req, res): Promise<void> => {
       calldataFull: calldata,
       contract: HYPERCERT_CONTRACT_OPTIMISM_SEPOLIA,
       network: "Optimism Sepolia",
-      explorerUrl: txHash
-        ? `https://sepolia-optimism.etherscan.io/tx/${txHash}`
-        : `https://testnet.hypercerts.org/hypercerts/${11155420}-${HYPERCERT_CONTRACT_OPTIMISM_SEPOLIA}-${tokenId}`,
-      hypercertUrl: `https://testnet.hypercerts.org/hypercerts/${11155420}-${HYPERCERT_CONTRACT_OPTIMISM_SEPOLIA}-${tokenId.toString()}`,
+      explorerUrl,
+      hypercertUrl,
       walletAddress: wallet.address,
       activity,
+      season,
       tonnes,
       waterSaved,
       impactScore,
@@ -219,6 +247,20 @@ router.get("/hypercerts/wallet", async (_req, res): Promise<void> => {
       faucetUrl: "https://app.optimism.io/faucet",
     });
   } catch (err) {
+    res.status(500).json({ error: String(err) });
+  }
+});
+
+router.get("/hypercerts/list", async (_req, res): Promise<void> => {
+  try {
+    const certs = await db
+      .select()
+      .from(hyperCertsTable)
+      .orderBy(desc(hyperCertsTable.createdAt))
+      .limit(50);
+    res.json({ certs });
+  } catch (err) {
+    console.error("[Hypercerts] list error:", err);
     res.status(500).json({ error: String(err) });
   }
 });
