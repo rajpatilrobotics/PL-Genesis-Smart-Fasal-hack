@@ -11,6 +11,8 @@ export const communityPostsTable = pgTable("community_posts", {
   likes: integer("likes").notNull().default(0),
   filecoinCid: text("filecoin_cid"),
   badge: text("badge"),
+  category: text("category").default("tip"),
+  imageUrl: text("image_url"),
   comments: jsonb("comments").notNull().default([]),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
@@ -32,6 +34,7 @@ export const expertsTable = pgTable("experts", {
   rating: real("rating").notNull().default(4.5),
   questionsAnswered: integer("questions_answered").notNull().default(0),
   badge: text("badge").notNull().default("Verified Expert"),
+  isOnline: boolean("is_online").notNull().default(false),
 });
 
 export const expertQuestionsTable = pgTable("expert_questions", {

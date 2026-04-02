@@ -19,6 +19,10 @@ export interface CommunityPost {
   filecoinCid?: string | null;
   /** @nullable */
   badge?: string | null;
+  /** @nullable */
+  category?: string | null;
+  /** @nullable */
+  imageUrl?: string | null;
   comments: Comment[];
   createdAt: Date;
 }

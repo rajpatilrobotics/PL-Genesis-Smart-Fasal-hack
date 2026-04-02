@@ -320,6 +320,8 @@ export const GetCommunityPostsResponseItem = zod.object({
   likes: zod.number(),
   filecoinCid: zod.string().nullish(),
   badge: zod.string().nullish(),
+  category: zod.string().nullish(),
+  imageUrl: zod.string().nullish(),
   comments: zod.array(
     zod.object({
       id: zod.number(),
@@ -345,6 +347,8 @@ export const CreateCommunityPostBody = zod.object({
   content: zod.string(),
   visibility: zod.string().default(createCommunityPostBodyVisibilityDefault),
   badge: zod.string().nullish(),
+  category: zod.string().nullish(),
+  imageUrl: zod.string().nullish(),
 });
 
 /**
@@ -363,6 +367,8 @@ export const LikeCommunityPostResponse = zod.object({
   likes: zod.number(),
   filecoinCid: zod.string().nullish(),
   badge: zod.string().nullish(),
+  category: zod.string().nullish(),
+  imageUrl: zod.string().nullish(),
   comments: zod.array(
     zod.object({
       id: zod.number(),
@@ -420,6 +426,7 @@ export const GetCommunityExpertsResponseItem = zod.object({
   rating: zod.number(),
   questionsAnswered: zod.number(),
   badge: zod.string(),
+  isOnline: zod.boolean(),
 });
 export const GetCommunityExpertsResponse = zod.array(
   GetCommunityExpertsResponseItem,

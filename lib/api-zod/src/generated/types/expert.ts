@@ -14,4 +14,5 @@ export interface Expert {
   rating: number;
   questionsAnswered: number;
   badge: string;
+  isOnline: boolean;
 }
