@@ -43,11 +43,17 @@ import type {
   FilecoinStoreInput,
   GetCreditProfileParams,
   GetCreditSeasonsParams,
+  GetLitVaultRecordsParams,
   GetSensorHistoryParams,
   GetWeatherParams,
   HealthStatus,
   InsuranceClaim,
   InsuranceRisk,
+  LitDecryptInput,
+  LitDecryptResult,
+  LitEncryptInput,
+  LitGrantInput,
+  LitVaultRecord,
   MarketListing,
   MarketPrice,
   ProductRecommendation,
@@ -2344,6 +2350,361 @@ export function useGetFilecoinRecords<
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+/**
+ * @summary Get encrypted farm data records for a wallet
+ */
+export const getGetLitVaultRecordsUrl = (params: GetLitVaultRecordsParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/lit/records?${stringifiedParams}`
+    : `/api/lit/records`;
+};
+
+export const getLitVaultRecords = async (
+  params: GetLitVaultRecordsParams,
+  options?: RequestInit,
+): Promise<LitVaultRecord[]> => {
+  return customFetch<LitVaultRecord[]>(getGetLitVaultRecordsUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetLitVaultRecordsQueryKey = (
+  params?: GetLitVaultRecordsParams,
+) => {
+  return [`/api/lit/records`, ...(params ? [params] : [])] as const;
+};
+
+export const getGetLitVaultRecordsQueryOptions = <
+  TData = Awaited<ReturnType<typeof getLitVaultRecords>>,
+  TError = ErrorType<unknown>,
+>(
+  params: GetLitVaultRecordsParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getLitVaultRecords>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetLitVaultRecordsQueryKey(params);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getLitVaultRecords>>
+  > = ({ signal }) => getLitVaultRecords(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getLitVaultRecords>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetLitVaultRecordsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getLitVaultRecords>>
+>;
+export type GetLitVaultRecordsQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Get encrypted farm data records for a wallet
+ */
+
+export function useGetLitVaultRecords<
+  TData = Awaited<ReturnType<typeof getLitVaultRecords>>,
+  TError = ErrorType<unknown>,
+>(
+  params: GetLitVaultRecordsParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getLitVaultRecords>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetLitVaultRecordsQueryOptions(params, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Encrypt farm data and store on Filecoin
+ */
+export const getLitEncryptFarmDataUrl = () => {
+  return `/api/lit/encrypt`;
+};
+
+export const litEncryptFarmData = async (
+  litEncryptInput: LitEncryptInput,
+  options?: RequestInit,
+): Promise<LitVaultRecord> => {
+  return customFetch<LitVaultRecord>(getLitEncryptFarmDataUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(litEncryptInput),
+  });
+};
+
+export const getLitEncryptFarmDataMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof litEncryptFarmData>>,
+    TError,
+    { data: BodyType<LitEncryptInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof litEncryptFarmData>>,
+  TError,
+  { data: BodyType<LitEncryptInput> },
+  TContext
+> => {
+  const mutationKey = ["litEncryptFarmData"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof litEncryptFarmData>>,
+    { data: BodyType<LitEncryptInput> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return litEncryptFarmData(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type LitEncryptFarmDataMutationResult = NonNullable<
+  Awaited<ReturnType<typeof litEncryptFarmData>>
+>;
+export type LitEncryptFarmDataMutationBody = BodyType<LitEncryptInput>;
+export type LitEncryptFarmDataMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Encrypt farm data and store on Filecoin
+ */
+export const useLitEncryptFarmData = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof litEncryptFarmData>>,
+    TError,
+    { data: BodyType<LitEncryptInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof litEncryptFarmData>>,
+  TError,
+  { data: BodyType<LitEncryptInput> },
+  TContext
+> => {
+  return useMutation(getLitEncryptFarmDataMutationOptions(options));
+};
+
+/**
+ * @summary Grant a wallet address access to decrypt a vault record
+ */
+export const getLitGrantAccessUrl = () => {
+  return `/api/lit/grant`;
+};
+
+export const litGrantAccess = async (
+  litGrantInput: LitGrantInput,
+  options?: RequestInit,
+): Promise<LitVaultRecord> => {
+  return customFetch<LitVaultRecord>(getLitGrantAccessUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(litGrantInput),
+  });
+};
+
+export const getLitGrantAccessMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof litGrantAccess>>,
+    TError,
+    { data: BodyType<LitGrantInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof litGrantAccess>>,
+  TError,
+  { data: BodyType<LitGrantInput> },
+  TContext
+> => {
+  const mutationKey = ["litGrantAccess"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof litGrantAccess>>,
+    { data: BodyType<LitGrantInput> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return litGrantAccess(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type LitGrantAccessMutationResult = NonNullable<
+  Awaited<ReturnType<typeof litGrantAccess>>
+>;
+export type LitGrantAccessMutationBody = BodyType<LitGrantInput>;
+export type LitGrantAccessMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Grant a wallet address access to decrypt a vault record
+ */
+export const useLitGrantAccess = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof litGrantAccess>>,
+    TError,
+    { data: BodyType<LitGrantInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof litGrantAccess>>,
+  TError,
+  { data: BodyType<LitGrantInput> },
+  TContext
+> => {
+  return useMutation(getLitGrantAccessMutationOptions(options));
+};
+
+/**
+ * @summary Decrypt farm data by proving wallet ownership via signed challenge
+ */
+export const getLitDecryptFarmDataUrl = () => {
+  return `/api/lit/decrypt`;
+};
+
+export const litDecryptFarmData = async (
+  litDecryptInput: LitDecryptInput,
+  options?: RequestInit,
+): Promise<LitDecryptResult> => {
+  return customFetch<LitDecryptResult>(getLitDecryptFarmDataUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(litDecryptInput),
+  });
+};
+
+export const getLitDecryptFarmDataMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof litDecryptFarmData>>,
+    TError,
+    { data: BodyType<LitDecryptInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof litDecryptFarmData>>,
+  TError,
+  { data: BodyType<LitDecryptInput> },
+  TContext
+> => {
+  const mutationKey = ["litDecryptFarmData"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof litDecryptFarmData>>,
+    { data: BodyType<LitDecryptInput> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return litDecryptFarmData(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type LitDecryptFarmDataMutationResult = NonNullable<
+  Awaited<ReturnType<typeof litDecryptFarmData>>
+>;
+export type LitDecryptFarmDataMutationBody = BodyType<LitDecryptInput>;
+export type LitDecryptFarmDataMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Decrypt farm data by proving wallet ownership via signed challenge
+ */
+export const useLitDecryptFarmData = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof litDecryptFarmData>>,
+    TError,
+    { data: BodyType<LitDecryptInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof litDecryptFarmData>>,
+  TError,
+  { data: BodyType<LitDecryptInput> },
+  TContext
+> => {
+  return useMutation(getLitDecryptFarmDataMutationOptions(options));
+};
 
 /**
  * @summary Get user reward points and wallet info

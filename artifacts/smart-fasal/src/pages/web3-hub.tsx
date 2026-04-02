@@ -413,212 +413,326 @@ function FilecoinTab() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// LIT PROTOCOL TAB — Token-gated Access & Encrypted Vault
+// LIT PROTOCOL TAB — Private Farm Data Vault with Selective Access
 // ─────────────────────────────────────────────────────────────────────────────
 function LitTab() {
   const { toast } = useToast();
-  const { walletAddress, flowRewards } = useWallet();
-  const [unlocking, setUnlocking] = useState<string | null>(null);
-  const [unlocked, setUnlocked] = useState<Map<string, string>>(new Map());
-  const [litStatus, setLitStatus] = useState<"idle" | "connecting" | "ready" | "error">("idle");
-  const [litNodeCount, setLitNodeCount] = useState(0);
+  const { walletAddress } = useWallet();
   const [ephemeralAddr, setEphemeralAddr] = useState("");
-  const [encrypted, setEncrypted] = useState<Map<string, LitEncryptResult>>(new Map());
-  const initRef = useRef(false);
+  const [grantTarget, setGrantTarget] = useState<Record<number, { wallet: string; label: string }>>({});
+  const [grantingId, setGrantingId] = useState<number | null>(null);
+  const [decryptingId, setDecryptingId] = useState<number | null>(null);
+  const [decrypted, setDecrypted] = useState<Record<number, string>>({});
+  const [encryptType, setEncryptType] = useState<"disease-scan" | "soil-analysis">("disease-scan");
 
-  const vault = [
-    { id: "v1", title: "Premium Fertilizer Schedule 2025", minFlow: 30, type: "PDF Report",
-      secret: "ACCESS-FERT-2025 | NPK ratio: 4-2-1 for Kharif. Apply 120kg Urea/acre in 3 splits. Download: ipfs://bafy...fert2025" },
-    { id: "v2", title: "District Mandi Price Predictions", minFlow: 60, type: "Data Report",
-      secret: "MANDI-FORECAST-30D | Wheat +8%, Rice -3%, Cotton +12%, Soybean +5%. Punjab avg Rs.2,240/quintal Wheat." },
-    { id: "v3", title: "Climate Risk Atlas — Maharashtra", minFlow: 100, type: "Research Paper",
-      secret: "CLIMATE-MH-2025 | Vidarbha: HIGH drought risk. Marathwada: MEDIUM. Konkan: Flood risk July-Aug. ICAR verified." },
-  ];
-
-  const sessions = [
-    { id: "s1", expert: "Dr. Rajesh Kumar", specialty: "Soil Science & Agronomy", minFlow: 50, duration: "30 min", badge: "Verified Expert",
-      secret: "SESSION-RK-001 | Zoom: meet.lit.farm/rajesh-kumar | Token: 8X2K-AGRO | Slot: Thu 3PM IST" },
-    { id: "s2", expert: "Priya Singh", specialty: "Organic Farming & IPM", minFlow: 80, duration: "45 min", badge: "Top Rated",
-      secret: "SESSION-PS-002 | Zoom: meet.lit.farm/priya-ipm | Token: 5T9L-ORG | Slot: Fri 11AM IST" },
-    { id: "s3", expert: "Dr. ICAR Panel", specialty: "Crop Disease Diagnosis", minFlow: 120, duration: "60 min", badge: "Government",
-      secret: "SESSION-ICAR-003 | Zoom: meet.lit.farm/icar-panel | Token: 2P7R-GOV | Slot: Sat 10AM IST" },
-  ];
-
-  const allItems = [...vault, ...sessions];
+  const effectiveWallet = walletAddress || ephemeralAddr;
 
   useEffect(() => {
-    if (initRef.current) return;
-    initRef.current = true;
-
-    (async () => {
-      try {
-        setLitStatus("connecting");
-        await getLitClient();
-        const wallet = getEphemeralWallet();
-        setEphemeralAddr(wallet.address);
-        setLitNodeCount(7);
-        setLitStatus("ready");
-
-        const encMap = new Map<string, LitEncryptResult>();
-        for (const item of allItems) {
-          const result = await litEncrypt(item.secret);
-          encMap.set(item.id, result);
-        }
-        setEncrypted(new Map(encMap));
-      } catch (err) {
-        console.error("Lit init error:", err);
-        setLitStatus("error");
-      }
-    })();
+    const w = getEphemeralWallet();
+    setEphemeralAddr(w.address);
   }, []);
 
-  const handleUnlock = async (id: string, minFlow: number, label: string) => {
-    if (!walletAddress) { toast({ title: "Connect wallet first", variant: "destructive" }); return; }
-    if (flowRewards < minFlow) {
-      toast({ title: `Need ${minFlow} FLOW to unlock`, description: `You have ${flowRewards} FLOW. Earn more by running farm analyses.`, variant: "destructive" });
-      return;
-    }
-    if (litStatus !== "ready") {
-      toast({ title: "Lit nodes not ready yet", description: "Please wait a moment and try again.", variant: "destructive" });
-      return;
-    }
-    const enc = encrypted.get(id);
-    if (!enc) {
-      toast({ title: "Content not yet encrypted", description: "Please wait for Lit encryption to complete.", variant: "destructive" });
-      return;
-    }
-    setUnlocking(id);
+  const recordsQuery = useGetLitVaultRecords(
+    { farmerWallet: effectiveWallet },
+    { query: { enabled: !!effectiveWallet, refetchInterval: 8000 } }
+  );
+
+  const encryptMutation = useLitEncryptFarmData();
+  const grantMutation = useLitGrantAccess();
+  const decryptMutation = useLitDecryptFarmData();
+
+  const handleEncrypt = async () => {
+    if (!effectiveWallet) return;
     try {
-      const plaintext = await litDecrypt(enc.ciphertext, enc.dataToEncryptHash, enc.walletAddress);
-      setUnlocked(p => new Map([...p, [id, plaintext]]));
-      toast({ title: "✅ Decrypted via Lit DatilDev!", description: `Session sigs verified across ${litNodeCount} nodes. ${label} unlocked.` });
+      await encryptMutation.mutateAsync({
+        data: { farmerWallet: effectiveWallet, dataType: encryptType },
+      });
+      recordsQuery.refetch();
+      toast({
+        title: "Farm data encrypted & stored on Filecoin!",
+        description: "AES-256-GCM encrypted. Access controlled by Lit Protocol.",
+      });
     } catch (err) {
-      console.error("Lit decrypt error:", err);
-      toast({ title: "Lit decryption failed", description: String(err), variant: "destructive" });
-    } finally {
-      setUnlocking(null);
+      toast({ title: "Encryption failed", description: String(err), variant: "destructive" });
     }
   };
 
+  const handleGrant = async (recordId: number) => {
+    const target = grantTarget[recordId];
+    if (!target?.wallet) {
+      toast({ title: "Enter a wallet address to grant access", variant: "destructive" });
+      return;
+    }
+    setGrantingId(recordId);
+    try {
+      await grantMutation.mutateAsync({
+        data: { recordId, farmerWallet: effectiveWallet, granteeWallet: target.wallet, granteeLabel: target.label || undefined },
+      });
+      recordsQuery.refetch();
+      setGrantTarget(p => ({ ...p, [recordId]: { wallet: "", label: "" } }));
+      toast({
+        title: "Access granted!",
+        description: `${target.label || target.wallet.slice(0, 10) + "…"} can now decrypt this report.`,
+      });
+    } catch (err) {
+      toast({ title: "Grant failed", description: String(err), variant: "destructive" });
+    } finally {
+      setGrantingId(null);
+    }
+  };
+
+  const handleDecrypt = async (recordId: number) => {
+    setDecryptingId(recordId);
+    try {
+      const wallet = getEphemeralWallet();
+      const message = `SmartFasal Lit Vault Access — record #${recordId} — ${Date.now()}`;
+      const signedMessage = await wallet.signMessage(message);
+      const result = await decryptMutation.mutateAsync({
+        data: { recordId, walletAddress: wallet.address, signedMessage, originalMessage: message },
+      });
+      let display: string;
+      try {
+        const parsed = JSON.parse(result.decrypted);
+        display = JSON.stringify(parsed, null, 2);
+      } catch {
+        display = result.decrypted;
+      }
+      setDecrypted(p => ({ ...p, [recordId]: display }));
+      toast({ title: "Decrypted via Lit access control!", description: "Wallet signature verified server-side." });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      toast({ title: "Decryption failed", description: msg.includes("Access denied") ? "Your wallet is not in the access list for this record." : msg, variant: "destructive" });
+    } finally {
+      setDecryptingId(null);
+    }
+  };
+
+  const records = recordsQuery.data ?? [];
+
+  const GRANTEE_PRESETS = [
+    { label: "Punjab National Bank", wallet: "0xBank0000000000000000000000000000000000001" },
+    { label: "LIC Crop Insurance", wallet: "0xInsure000000000000000000000000000000000002" },
+    { label: "ICAR Agronomist", wallet: "0xICar0000000000000000000000000000000000003" },
+  ];
+
   return (
     <div className="space-y-4">
+      {/* Header */}
       <Card className="bg-gradient-to-br from-orange-50 to-amber-50 border-orange-200">
         <CardContent className="p-4 space-y-2">
           <div className="flex items-center gap-2">
             <Lock className="w-5 h-5 text-orange-600" />
-            <span className="font-bold text-orange-800">Lit Protocol Access Control</span>
-            <Badge className={
-              litStatus === "ready" ? "bg-green-600 text-[10px] ml-auto" :
-              litStatus === "connecting" ? "bg-yellow-500 text-[10px] ml-auto" :
-              litStatus === "error" ? "bg-red-500 text-[10px] ml-auto" :
-              "bg-gray-400 text-[10px] ml-auto"
-            }>
-              {litStatus === "ready" ? `✓ DatilDev · ${litNodeCount} nodes` :
-               litStatus === "connecting" ? "Connecting…" :
-               litStatus === "error" ? "Node error" : "Idle"}
-            </Badge>
+            <span className="font-bold text-orange-800">Lit Protocol — Private Farm Vault</span>
+            <Badge className="bg-orange-600 text-[10px] ml-auto">AES-256-GCM</Badge>
           </div>
           <p className="text-xs text-muted-foreground">
-            Content is threshold-encrypted on Lit DatilDev. Real session sigs are generated to decrypt.
+            Encrypt your disease scan & soil reports. Only wallets you explicitly approve can decrypt.
+            Encrypted blobs are stored on <strong>Filecoin</strong> — decryption requires a wallet signature verified by the server.
           </p>
           {ephemeralAddr && (
             <div className="text-[10px] font-mono bg-white/60 rounded px-2 py-1 break-all text-muted-foreground">
-              Lit wallet: {ephemeralAddr.substring(0, 10)}…{ephemeralAddr.substring(36)}
+              Your vault key: {ephemeralAddr.slice(0, 12)}…{ephemeralAddr.slice(-8)}
             </div>
           )}
-          <p className="text-xs">Your FLOW balance: <strong className="text-orange-700">{flowRewards} FLOW</strong></p>
+          <div className="grid grid-cols-3 gap-2 text-center pt-1">
+            <div className="bg-white/70 rounded-xl p-2">
+              <p className="text-xl font-black text-orange-700">{records.length}</p>
+              <p className="text-[10px] text-muted-foreground uppercase">Encrypted</p>
+            </div>
+            <div className="bg-white/70 rounded-xl p-2">
+              <p className="text-xl font-black text-orange-700">
+                {records.filter(r => r.filecoinCid).length}
+              </p>
+              <p className="text-[10px] text-muted-foreground uppercase">On Filecoin</p>
+            </div>
+            <div className="bg-white/70 rounded-xl p-2">
+              <p className="text-xl font-black text-orange-700">
+                {records.reduce((s, r) => s + Math.max(0, r.allowedWallets.length - 1), 0)}
+              </p>
+              <p className="text-[10px] text-muted-foreground uppercase">Access Given</p>
+            </div>
+          </div>
         </CardContent>
       </Card>
 
-      {/* Expert Sessions */}
+      {/* Encrypt new record */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm flex items-center gap-2">
+            <Shield className="w-4 h-4 text-orange-500" />
+            Encrypt Farm Report
+          </CardTitle>
+          <p className="text-xs text-muted-foreground">
+            Fetch your latest scan from DB, encrypt with AES-256-GCM, and pin to Filecoin.
+          </p>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              variant={encryptType === "disease-scan" ? "default" : "outline"}
+              className="flex-1 h-8 text-xs"
+              onClick={() => setEncryptType("disease-scan")}
+            >
+              Disease Scan
+            </Button>
+            <Button
+              size="sm"
+              variant={encryptType === "soil-analysis" ? "default" : "outline"}
+              className="flex-1 h-8 text-xs"
+              onClick={() => setEncryptType("soil-analysis")}
+            >
+              Soil Analysis
+            </Button>
+          </div>
+          <Button
+            className="w-full"
+            onClick={handleEncrypt}
+            disabled={encryptMutation.isPending || !effectiveWallet}
+          >
+            {encryptMutation.isPending ? (
+              <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Encrypting & uploading…</>
+            ) : (
+              <><Lock className="w-4 h-4 mr-2" />Encrypt & Store on Filecoin</>
+            )}
+          </Button>
+        </CardContent>
+      </Card>
+
+      {/* Vault records */}
       <div>
         <h3 className="text-sm font-bold mb-2 flex items-center gap-1.5">
-          <Eye className="w-4 h-4 text-orange-500" /> Token-gated Expert Sessions
+          <Database className="w-4 h-4 text-orange-500" /> My Encrypted Vault
+          {recordsQuery.isFetching && <Loader2 className="w-3 h-3 animate-spin text-muted-foreground" />}
         </h3>
-        <div className="space-y-2">
-          {sessions.map(s => {
-            const canUnlock = flowRewards >= s.minFlow;
-            const decryptedText = unlocked.get(s.id);
-            const enc = encrypted.get(s.id);
+
+        {records.length === 0 && !recordsQuery.isFetching && (
+          <Card>
+            <CardContent className="p-4 text-center text-sm text-muted-foreground">
+              No encrypted records yet. Encrypt a farm report above to get started.
+            </CardContent>
+          </Card>
+        )}
+
+        <div className="space-y-3">
+          {records.map(record => {
+            const isDecrypted = !!decrypted[record.id];
+            const isDecrypting = decryptingId === record.id;
+            const isGranting = grantingId === record.id;
+            const gt = grantTarget[record.id] ?? { wallet: "", label: "" };
+            const hasAccess = record.allowedWallets.map(w => w.toLowerCase()).includes(ephemeralAddr.toLowerCase());
+
             return (
-              <Card key={s.id} className={decryptedText ? "border-green-300 bg-green-50/50" : ""}>
-                <CardContent className="p-3">
-                  <div className="flex justify-between items-start mb-2">
-                    <div>
-                      <div className="flex items-center gap-1.5 mb-0.5">
-                        <p className="text-xs font-bold">{s.expert}</p>
-                        <Badge variant="outline" className="text-[10px] py-0">{s.badge}</Badge>
+              <Card key={record.id} className={isDecrypted ? "border-green-300 bg-green-50/30" : ""}>
+                <CardContent className="p-3 space-y-2">
+                  {/* Top row */}
+                  <div className="flex justify-between items-start gap-2">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
+                        <Badge variant="secondary" className="text-[10px]">
+                          {record.dataType === "disease-scan" ? "Disease Scan" : "Soil Analysis"}
+                        </Badge>
+                        {isDecrypted && <Badge className="bg-green-600 text-[10px]">Decrypted</Badge>}
                       </div>
-                      <p className="text-[10px] text-muted-foreground">{s.specialty} · {s.duration}</p>
-                      {enc && !decryptedText && (
-                        <p className="text-[9px] font-mono text-orange-400 mt-0.5">🔐 {shortCipher(enc.ciphertext)}</p>
-                      )}
+                      <p className="text-xs font-semibold truncate">{record.dataPreview}</p>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">
+                        {new Date(record.createdAt).toLocaleString("en-IN", { dateStyle: "short", timeStyle: "short" })}
+                      </p>
                     </div>
-                    <div className="text-right shrink-0 ml-2">
-                      <p className="text-sm font-bold text-orange-600">{s.minFlow} FLOW</p>
+                    <div className="shrink-0 text-right">
+                      {record.filecoinCid && (
+                        <a
+                          href={record.filecoinUrl ?? `https://gateway.lighthouse.storage/ipfs/${record.filecoinCid}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-[10px] text-blue-500 hover:underline flex items-center gap-0.5 justify-end"
+                        >
+                          <ExternalLink className="w-2.5 h-2.5" />
+                          Filecoin
+                        </a>
+                      )}
+                      <p className="text-[9px] font-mono text-orange-400 mt-0.5">
+                        🔐 {record.filecoinCid ? record.filecoinCid.slice(0, 10) + "…" : "pinning…"}
+                      </p>
                     </div>
                   </div>
-                  {decryptedText ? (
-                    <div className="text-[10px] text-green-800 bg-green-100 rounded-lg px-2 py-1.5 font-mono break-all">
-                      <div className="flex items-center gap-1 mb-1 font-sans font-semibold text-green-700">
-                        <CheckCircle2 className="w-3 h-3" /> Decrypted via Lit DatilDev ✓
+
+                  {/* Access list */}
+                  <div className="bg-orange-50 rounded-lg px-2 py-1.5">
+                    <p className="text-[10px] text-orange-700 font-semibold mb-1">
+                      Access granted to {record.allowedWallets.length} wallet{record.allowedWallets.length !== 1 ? "s" : ""}:
+                    </p>
+                    <div className="flex flex-wrap gap-1">
+                      {record.allowedWallets.map((w, i) => (
+                        <span key={i} className="text-[9px] font-mono bg-white border border-orange-200 rounded px-1 py-0.5">
+                          {i === 0 ? "You (owner)" : w.slice(0, 8) + "…" + w.slice(-5)}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Grant access */}
+                  <div className="space-y-1.5">
+                    <p className="text-[10px] font-semibold text-muted-foreground">Grant access to:</p>
+                    <div className="flex flex-wrap gap-1 mb-1">
+                      {GRANTEE_PRESETS.map(preset => (
+                        <Button
+                          key={preset.label}
+                          size="sm"
+                          variant="outline"
+                          className="text-[10px] h-6 px-2 py-0"
+                          onClick={() => setGrantTarget(p => ({ ...p, [record.id]: { wallet: preset.wallet, label: preset.label } }))}
+                        >
+                          {preset.label}
+                        </Button>
+                      ))}
+                    </div>
+                    <div className="flex gap-1.5">
+                      <input
+                        type="text"
+                        placeholder="0x… wallet address"
+                        className="flex-1 text-[10px] px-2 py-1 border rounded-md min-w-0 font-mono"
+                        value={gt.wallet}
+                        onChange={e => setGrantTarget(p => ({ ...p, [record.id]: { ...gt, wallet: e.target.value } }))}
+                      />
+                      <Button
+                        size="sm"
+                        className="text-[10px] h-7 px-2 shrink-0"
+                        disabled={isGranting || !gt.wallet}
+                        onClick={() => handleGrant(record.id)}
+                      >
+                        {isGranting ? <Loader2 className="w-3 h-3 animate-spin" /> : <><BadgeCheck className="w-3 h-3 mr-1" />Grant</>}
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Decrypt */}
+                  {isDecrypted ? (
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-2">
+                      <div className="flex items-center gap-1.5 mb-1 text-green-700 text-xs font-semibold">
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        Decrypted — Lit access control verified
                       </div>
-                      {decryptedText}
+                      <pre className="text-[9px] font-mono text-green-900 whitespace-pre-wrap break-all overflow-auto max-h-40">
+                        {decrypted[record.id]}
+                      </pre>
                     </div>
                   ) : (
-                    <Button size="sm" className="w-full h-7 text-xs" variant={canUnlock ? "default" : "outline"}
-                      disabled={!!unlocking || !canUnlock || litStatus !== "ready"} onClick={() => handleUnlock(s.id, s.minFlow, s.expert)}>
-                      {unlocking === s.id ? <><Loader2 className="w-3 h-3 mr-1 animate-spin" />Getting session sigs…</> :
-                       canUnlock ? <><Lock className="w-3 h-3 mr-1" />Decrypt with Lit</> :
-                       <><Lock className="w-3 h-3 mr-1" />Need {s.minFlow} FLOW</>}
-                    </Button>
-                  )}
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Encrypted Vault */}
-      <div>
-        <h3 className="text-sm font-bold mb-2 flex items-center gap-1.5">
-          <Database className="w-4 h-4 text-orange-500" /> Encrypted Knowledge Vault
-        </h3>
-        <div className="space-y-2">
-          {vault.map(v => {
-            const canUnlock = flowRewards >= v.minFlow;
-            const decryptedText = unlocked.get(v.id);
-            const enc = encrypted.get(v.id);
-            return (
-              <Card key={v.id} className={decryptedText ? "border-green-300 bg-green-50/50" : ""}>
-                <CardContent className="p-3">
-                  <div className="flex justify-between items-start gap-2 mb-1.5">
-                    <div className="flex-1">
-                      <p className="text-xs font-semibold">{v.title}</p>
-                      <div className="flex items-center gap-2 mt-0.5">
-                        <Badge variant="secondary" className="text-[10px]">{v.type}</Badge>
-                        {enc && !decryptedText && (
-                          <span className="text-[9px] font-mono text-orange-400">🔐 {shortCipher(enc.ciphertext)}</span>
-                        )}
-                      </div>
-                    </div>
-                    <div className="shrink-0">
-                      {!decryptedText && (
-                        <Button size="sm" variant={canUnlock ? "default" : "outline"} className="text-[10px] h-7 px-2"
-                          disabled={!!unlocking || !canUnlock || litStatus !== "ready"} onClick={() => handleUnlock(v.id, v.minFlow, v.title)}>
-                          {unlocking === v.id ? <Loader2 className="w-3 h-3 animate-spin" /> : `${v.minFlow} FLOW`}
-                        </Button>
+                    <Button
+                      size="sm"
+                      variant={hasAccess ? "default" : "outline"}
+                      className="w-full h-7 text-xs"
+                      disabled={isDecrypting}
+                      onClick={() => handleDecrypt(record.id)}
+                    >
+                      {isDecrypting ? (
+                        <><Loader2 className="w-3 h-3 mr-1 animate-spin" />Signing & verifying…</>
+                      ) : hasAccess ? (
+                        <><Eye className="w-3 h-3 mr-1" />Decrypt with wallet signature</>
+                      ) : (
+                        <><Lock className="w-3 h-3 mr-1" />Try decrypt (need access)</>
                       )}
-                    </div>
-                  </div>
-                  {decryptedText && (
-                    <div className="text-[10px] text-green-800 bg-green-100 rounded-lg px-2 py-1.5 font-mono break-all mt-1">
-                      <div className="flex items-center gap-1 mb-1 font-sans font-semibold text-green-700">
-                        <CheckCircle2 className="w-3 h-3" /> Lit node threshold met ✓
-                      </div>
-                      {decryptedText}
-                    </div>
+                    </Button>
                   )}
                 </CardContent>
               </Card>

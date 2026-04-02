@@ -8,3 +8,4 @@ export * from "./rewards";
 export * from "./event-logs";
 export * from "./credit";
 export * from "./disease-scans";
+export * from "./lit-vault";

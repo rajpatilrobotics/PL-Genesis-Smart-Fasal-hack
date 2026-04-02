@@ -10,6 +10,7 @@ import filecoinRouter from "./filecoin";
 import rewardsRouter from "./rewards";
 import analyticsRouter from "./analytics";
 import creditRouter from "./credit";
+import litRouter from "./lit";
 
 const router: IRouter = Router();
 
@@ -24,5 +25,6 @@ router.use(filecoinRouter);
 router.use(rewardsRouter);
 router.use(analyticsRouter);
 router.use(creditRouter);
+router.use(litRouter);
 
 export default router;

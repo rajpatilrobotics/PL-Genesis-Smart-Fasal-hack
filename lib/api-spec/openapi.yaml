@@ -27,6 +27,8 @@ tags:
     description: Flow blockchain rewards
   - name: analytics
     description: Analytics and logs
+  - name: lit
+    description: Lit Protocol private farm data vault
 paths:
   /healthz:
     get:
@@ -496,6 +498,84 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/FilecoinRecord"
+
+  /lit/records:
+    get:
+      operationId: getLitVaultRecords
+      tags: [lit]
+      summary: Get encrypted farm data records for a wallet
+      parameters:
+        - name: farmerWallet
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of encrypted vault records
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/LitVaultRecord"
+
+  /lit/encrypt:
+    post:
+      operationId: litEncryptFarmData
+      tags: [lit]
+      summary: Encrypt farm data and store on Filecoin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LitEncryptInput"
+      responses:
+        "200":
+          description: Encrypted and stored successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LitVaultRecord"
+
+  /lit/grant:
+    post:
+      operationId: litGrantAccess
+      tags: [lit]
+      summary: Grant a wallet address access to decrypt a vault record
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LitGrantInput"
+      responses:
+        "200":
+          description: Access granted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LitVaultRecord"
+
+  /lit/decrypt:
+    post:
+      operationId: litDecryptFarmData
+      tags: [lit]
+      summary: Decrypt farm data by proving wallet ownership via signed challenge
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LitDecryptInput"
+      responses:
+        "200":
+          description: Decrypted farm data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LitDecryptResult"
 
   /rewards:
     get:
@@ -1588,3 +1668,100 @@ components:
         - seasons
         - trend
         - loanEligibility
+
+    LitVaultRecord:
+      type: object
+      properties:
+        id:
+          type: integer
+        farmerWallet:
+          type: string
+        dataType:
+          type: string
+        dataPreview:
+          type: string
+        filecoinCid:
+          type: string
+          nullable: true
+        filecoinUrl:
+          type: string
+          nullable: true
+        allowedWallets:
+          type: array
+          items:
+            type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - farmerWallet
+        - dataType
+        - dataPreview
+        - allowedWallets
+        - createdAt
+
+    LitEncryptInput:
+      type: object
+      properties:
+        farmerWallet:
+          type: string
+        dataType:
+          type: string
+        scanId:
+          type: integer
+          nullable: true
+        plaintext:
+          type: string
+          nullable: true
+      required:
+        - farmerWallet
+        - dataType
+
+    LitGrantInput:
+      type: object
+      properties:
+        recordId:
+          type: integer
+        farmerWallet:
+          type: string
+        granteeWallet:
+          type: string
+        granteeLabel:
+          type: string
+          nullable: true
+      required:
+        - recordId
+        - farmerWallet
+        - granteeWallet
+
+    LitDecryptInput:
+      type: object
+      properties:
+        recordId:
+          type: integer
+        walletAddress:
+          type: string
+        signedMessage:
+          type: string
+        originalMessage:
+          type: string
+      required:
+        - recordId
+        - walletAddress
+        - signedMessage
+        - originalMessage
+
+    LitDecryptResult:
+      type: object
+      properties:
+        decrypted:
+          type: string
+        recordId:
+          type: integer
+        dataType:
+          type: string
+      required:
+        - decrypted
+        - recordId
+        - dataType

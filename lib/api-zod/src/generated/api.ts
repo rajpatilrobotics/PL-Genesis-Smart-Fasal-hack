@@ -481,6 +481,85 @@ export const GetFilecoinRecordsResponse = zod.array(
 );
 
 /**
+ * @summary Get encrypted farm data records for a wallet
+ */
+export const GetLitVaultRecordsQueryParams = zod.object({
+  farmerWallet: zod.coerce.string(),
+});
+
+export const GetLitVaultRecordsResponseItem = zod.object({
+  id: zod.number(),
+  farmerWallet: zod.string(),
+  dataType: zod.string(),
+  dataPreview: zod.string(),
+  filecoinCid: zod.string().nullish(),
+  filecoinUrl: zod.string().nullish(),
+  allowedWallets: zod.array(zod.string()),
+  createdAt: zod.coerce.date(),
+});
+export const GetLitVaultRecordsResponse = zod.array(
+  GetLitVaultRecordsResponseItem,
+);
+
+/**
+ * @summary Encrypt farm data and store on Filecoin
+ */
+export const LitEncryptFarmDataBody = zod.object({
+  farmerWallet: zod.string(),
+  dataType: zod.string(),
+  scanId: zod.number().nullish(),
+  plaintext: zod.string().nullish(),
+});
+
+export const LitEncryptFarmDataResponse = zod.object({
+  id: zod.number(),
+  farmerWallet: zod.string(),
+  dataType: zod.string(),
+  dataPreview: zod.string(),
+  filecoinCid: zod.string().nullish(),
+  filecoinUrl: zod.string().nullish(),
+  allowedWallets: zod.array(zod.string()),
+  createdAt: zod.coerce.date(),
+});
+
+/**
+ * @summary Grant a wallet address access to decrypt a vault record
+ */
+export const LitGrantAccessBody = zod.object({
+  recordId: zod.number(),
+  farmerWallet: zod.string(),
+  granteeWallet: zod.string(),
+  granteeLabel: zod.string().nullish(),
+});
+
+export const LitGrantAccessResponse = zod.object({
+  id: zod.number(),
+  farmerWallet: zod.string(),
+  dataType: zod.string(),
+  dataPreview: zod.string(),
+  filecoinCid: zod.string().nullish(),
+  filecoinUrl: zod.string().nullish(),
+  allowedWallets: zod.array(zod.string()),
+  createdAt: zod.coerce.date(),
+});
+
+/**
+ * @summary Decrypt farm data by proving wallet ownership via signed challenge
+ */
+export const LitDecryptFarmDataBody = zod.object({
+  recordId: zod.number(),
+  walletAddress: zod.string(),
+  signedMessage: zod.string(),
+  originalMessage: zod.string(),
+});
+
+export const LitDecryptFarmDataResponse = zod.object({
+  decrypted: zod.string(),
+  recordId: zod.number(),
+  dataType: zod.string(),
+});
+
+/**
  * @summary Get user reward points and wallet info
  */
 export const GetRewardsResponse = zod.object({

@@ -419,6 +419,44 @@ export interface CreditProfile {
   loanEligibility: string;
 }
 
+export interface LitVaultRecord {
+  id: number;
+  farmerWallet: string;
+  dataType: string;
+  dataPreview: string;
+  filecoinCid?: string | null;
+  filecoinUrl?: string | null;
+  allowedWallets: string[];
+  createdAt: string;
+}
+
+export interface LitEncryptInput {
+  farmerWallet: string;
+  dataType: string;
+  scanId?: number | null;
+  plaintext?: string | null;
+}
+
+export interface LitGrantInput {
+  recordId: number;
+  farmerWallet: string;
+  granteeWallet: string;
+  granteeLabel?: string | null;
+}
+
+export interface LitDecryptInput {
+  recordId: number;
+  walletAddress: string;
+  signedMessage: string;
+  originalMessage: string;
+}
+
+export interface LitDecryptResult {
+  decrypted: string;
+  recordId: number;
+  dataType: string;
+}
+
 export type GetSensorHistoryParams = {
   limit?: number;
 };
@@ -426,6 +464,10 @@ export type GetSensorHistoryParams = {
 export type GetWeatherParams = {
   lat?: number;
   lon?: number;
+};
+
+export type GetLitVaultRecordsParams = {
+  farmerWallet: string;
 };
 
 export type GetCreditSeasonsParams = {
