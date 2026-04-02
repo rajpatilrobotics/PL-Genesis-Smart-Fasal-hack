@@ -229,6 +229,51 @@ paths:
               schema:
                 $ref: "#/components/schemas/InsuranceClaim"
 
+  /insurance/policies:
+    get:
+      operationId: getInsurancePolicies
+      tags: [insurance]
+      summary: Get all insurance policies
+      responses:
+        "200":
+          description: List of policies
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/InsurancePolicy"
+    post:
+      operationId: createInsurancePolicy
+      tags: [insurance]
+      summary: Purchase a new insurance policy
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateInsurancePolicyInput"
+      responses:
+        "201":
+          description: Policy created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InsurancePolicy"
+
+  /insurance/weather:
+    get:
+      operationId: getInsuranceWeather
+      tags: [insurance]
+      summary: Get live weather oracle data used for claim validation
+      responses:
+        "200":
+          description: Weather oracle data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WeatherOracle"
+
   /market/prices:
     get:
       operationId: getMarketPrices
@@ -978,6 +1023,20 @@ components:
           type: array
           items:
             type: string
+        weatherSummary:
+          type: object
+          nullable: true
+          properties:
+            totalRainfall7d:
+              type: number
+            avgRainfall7d:
+              type: number
+            maxTemp7d:
+              type: number
+            heatwaveDays:
+              type: number
+            source:
+              type: string
       required:
         - riskLevel
         - riskScore
@@ -1002,6 +1061,14 @@ components:
           type: integer
         walletAddress:
           type: ["string", "null"]
+        weatherValidated:
+          type: ["boolean", "null"]
+        validationNote:
+          type: ["string", "null"]
+        payoutAmount:
+          type: ["number", "null"]
+        weatherData:
+          type: ["string", "null"]
         createdAt:
           type: string
           format: date-time
@@ -1023,9 +1090,120 @@ components:
           type: string
         walletAddress:
           type: ["string", "null"]
+        acresCovered:
+          type: ["number", "null"]
+        cropValuePerAcre:
+          type: ["number", "null"]
       required:
         - claimType
         - description
+
+    InsurancePolicy:
+      type: object
+      properties:
+        id:
+          type: integer
+        plan:
+          type: string
+        coveredEvents:
+          type: string
+        premiumAnnual:
+          type: number
+        maxPayout:
+          type: number
+        acresCovered:
+          type: string
+        cropType:
+          type: string
+        status:
+          type: string
+        ipfsCid:
+          type: ["string", "null"]
+        ipfsUrl:
+          type: ["string", "null"]
+        walletAddress:
+          type: ["string", "null"]
+        startDate:
+          type: string
+          format: date-time
+        endDate:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - plan
+        - coveredEvents
+        - premiumAnnual
+        - maxPayout
+        - acresCovered
+        - cropType
+        - status
+        - createdAt
+
+    CreateInsurancePolicyInput:
+      type: object
+      properties:
+        plan:
+          type: string
+        acresCovered:
+          type: number
+        cropType:
+          type: string
+        walletAddress:
+          type: ["string", "null"]
+      required:
+        - plan
+        - acresCovered
+        - cropType
+
+    WeatherOracle:
+      type: object
+      properties:
+        source:
+          type: string
+        location:
+          type: ["string", "null"]
+        fetchedAt:
+          type: string
+        past7Days:
+          type: array
+          items:
+            type: object
+            properties:
+              date:
+                type: string
+              rainfall:
+                type: number
+              maxTemp:
+                type: number
+              minTemp:
+                type: number
+        summary:
+          type: object
+          properties:
+            totalRainfall7d:
+              type: number
+            avgRainfall7d:
+              type: number
+            maxSingleDayRain:
+              type: number
+            maxTemp7d:
+              type: number
+            heatwaveDays:
+              type: number
+          required:
+            - totalRainfall7d
+            - avgRainfall7d
+            - maxSingleDayRain
+            - maxTemp7d
+            - heatwaveDays
+      required:
+        - source
+        - fetchedAt
+        - summary
 
     MarketPrice:
       type: object

@@ -191,13 +191,15 @@ export const GetInsuranceRiskResponse = zod.object({
   eligibleForClaim: zod.boolean(),
   reasons: zod.array(zod.string()),
   recommendations: zod.array(zod.string()),
-  weatherSummary: zod.object({
-    totalRainfall7d: zod.number(),
-    avgRainfall7d: zod.number(),
-    maxTemp7d: zod.number(),
-    heatwaveDays: zod.number(),
-    source: zod.string(),
-  }).optional(),
+  weatherSummary: zod
+    .object({
+      totalRainfall7d: zod.number().optional(),
+      avgRainfall7d: zod.number().optional(),
+      maxTemp7d: zod.number().optional(),
+      heatwaveDays: zod.number().optional(),
+      source: zod.string().optional(),
+    })
+    .nullish(),
 });
 
 /**
@@ -211,6 +213,10 @@ export const GetInsuranceClaimsResponseItem = zod.object({
   status: zod.string(),
   rewardPoints: zod.number(),
   walletAddress: zod.string().nullish(),
+  weatherValidated: zod.boolean().nullish(),
+  validationNote: zod.string().nullish(),
+  payoutAmount: zod.number().nullish(),
+  weatherData: zod.string().nullish(),
   createdAt: zod.coerce.date(),
 });
 export const GetInsuranceClaimsResponse = zod.array(
@@ -224,6 +230,67 @@ export const CreateInsuranceClaimBody = zod.object({
   claimType: zod.string(),
   description: zod.string(),
   walletAddress: zod.string().nullish(),
+  acresCovered: zod.number().nullish(),
+  cropValuePerAcre: zod.number().nullish(),
+});
+
+/**
+ * @summary Get all insurance policies
+ */
+export const GetInsurancePoliciesResponseItem = zod.object({
+  id: zod.number(),
+  plan: zod.string(),
+  coveredEvents: zod.string(),
+  premiumAnnual: zod.number(),
+  maxPayout: zod.number(),
+  acresCovered: zod.string(),
+  cropType: zod.string(),
+  status: zod.string(),
+  ipfsCid: zod.string().nullish(),
+  ipfsUrl: zod.string().nullish(),
+  walletAddress: zod.string().nullish(),
+  startDate: zod.coerce.date().optional(),
+  endDate: zod.coerce.date().optional(),
+  createdAt: zod.coerce.date(),
+});
+export const GetInsurancePoliciesResponse = zod.array(
+  GetInsurancePoliciesResponseItem,
+);
+
+/**
+ * @summary Purchase a new insurance policy
+ */
+export const CreateInsurancePolicyBody = zod.object({
+  plan: zod.string(),
+  acresCovered: zod.number(),
+  cropType: zod.string(),
+  walletAddress: zod.string().nullish(),
+});
+
+/**
+ * @summary Get live weather oracle data used for claim validation
+ */
+export const GetInsuranceWeatherResponse = zod.object({
+  source: zod.string(),
+  location: zod.string().nullish(),
+  fetchedAt: zod.string(),
+  past7Days: zod
+    .array(
+      zod.object({
+        date: zod.string().optional(),
+        rainfall: zod.number().optional(),
+        maxTemp: zod.number().optional(),
+        minTemp: zod.number().optional(),
+      }),
+    )
+    .optional(),
+  summary: zod.object({
+    totalRainfall7d: zod.number(),
+    avgRainfall7d: zod.number(),
+    maxSingleDayRain: zod.number(),
+    maxTemp7d: zod.number(),
+    heatwaveDays: zod.number(),
+  }),
 });
 
 /**
