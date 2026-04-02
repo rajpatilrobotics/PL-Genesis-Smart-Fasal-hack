@@ -13,6 +13,7 @@ import Community from "@/pages/community";
 import Profile from "@/pages/profile";
 import Web3Hub from "@/pages/web3-hub";
 import Credit from "@/pages/credit";
+import FinanceTrade from "@/pages/finance-trade";
 import NotFound from "@/pages/not-found";
 import { WalletProvider } from "@/lib/wallet-context";
 
@@ -30,6 +31,7 @@ function Router() {
       <Route path="/profile" component={Profile} />
       <Route path="/web3" component={Web3Hub} />
       <Route path="/credit" component={Credit} />
+      <Route path="/finance" component={FinanceTrade} />
       <Route component={NotFound} />
     </Switch>
   );
