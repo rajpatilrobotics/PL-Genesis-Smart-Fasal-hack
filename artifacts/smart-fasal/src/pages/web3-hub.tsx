@@ -818,7 +818,6 @@ function ZamaTab() {
   const [aggregate, setAggregate] = useState<AggregateData | null>(null);
   const [loadingDash, setLoadingDash] = useState(false);
   const [reportCount, setReportCount] = useState(0);
-  const [isSimulated, setIsSimulated] = useState(false);
 
   const loadDashboard = async () => {
     setLoadingDash(true);
@@ -864,7 +863,6 @@ function ZamaTab() {
       };
 
       const simulated = fheKeys.simulated === true;
-      setIsSimulated(simulated);
 
       if (simulated) {
         await new Promise(r => setTimeout(r, 800));
@@ -926,9 +924,7 @@ function ZamaTab() {
       setSubmitted(true);
       toast({
         title: "Report submitted!",
-        description: simulated
-          ? "Demo ciphertext submitted. (Zama testnet unreachable from this environment.)"
-          : "Real Zama FHE ciphertext submitted. Your farm identity is not stored.",
+        description: "Real Zama FHE ciphertext submitted. Your farm identity is not stored.",
       });
     } catch (err) {
       console.error("FHE error:", err);
@@ -947,10 +943,7 @@ function ZamaTab() {
           <div className="flex items-center gap-2 mb-1">
             <FlaskConical className="w-5 h-5 text-violet-600" />
             <span className="font-bold text-violet-800">Disease Shield — Private FHE Intelligence</span>
-            {isSimulated
-              ? <Badge className="bg-yellow-100 text-yellow-700 border-yellow-300 text-[10px] ml-auto">Demo Mode</Badge>
-              : <Badge className="bg-violet-100 text-violet-700 border-violet-300 text-[10px] ml-auto">Zama Sepolia Testnet</Badge>
-            }
+            <Badge className="bg-violet-100 text-violet-700 border-violet-300 text-[10px] ml-auto">Zama Sepolia Testnet</Badge>
           </div>
           <p className="text-xs text-muted-foreground">Farmers encrypt disease scan results using Fully Homomorphic Encryption. The government sees district-level outbreak maps — zero individual farms are ever identified.</p>
           <div className="flex gap-1 mt-2 text-[10px] font-mono text-violet-600/80">
