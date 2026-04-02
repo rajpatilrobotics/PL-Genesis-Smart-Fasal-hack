@@ -10,6 +10,7 @@ export const marketPricesTable = pgTable("market_prices", {
   market: text("market").notNull(),
   state: text("state").notNull(),
   change: real("change").notNull().default(0),
+  category: text("category").notNull().default("Other"),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
@@ -26,9 +27,12 @@ export const marketListingsTable = pgTable("market_listings", {
   location: text("location").notNull(),
   status: text("status").notNull().default("available"),
   imageCid: text("image_cid"),
+  imageUrl: text("image_url"),
   receiptCid: text("receipt_cid"),
   escrowStatus: text("escrow_status").notNull().default("none"),
   buyerName: text("buyer_name"),
+  rating: real("rating").default(4.2),
+  category: text("category").notNull().default("Produce"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

@@ -22,9 +22,15 @@ export interface MarketListing {
   /** @nullable */
   imageCid?: string | null;
   /** @nullable */
+  imageUrl?: string | null;
+  /** @nullable */
   receiptCid?: string | null;
   escrowStatus: string;
   /** @nullable */
   buyerName?: string | null;
+  /** @nullable */
+  rating?: number | null;
+  /** @nullable */
+  category?: string | null;
   createdAt: Date;
 }
