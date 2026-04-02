@@ -106,7 +106,151 @@ const BASE_PRICES = [
   { crop: "Banana", price: 1800, unit: "per quintal", market: "Jalgaon", state: "Maharashtra", change: -1.0, category: "Fruits" },
 ];
 
+// ─── data.gov.in / AGMARKNET Live Price Integration ──────────────────────────
+
+// Maps data.gov.in commodity names → our standardised crop names
+const AGMARKNET_NAME_MAP: Record<string, string> = {
+  "Wheat": "Wheat",
+  "Rice": "Rice (Common)",
+  "Paddy(Dhan)(Common)": "Rice (Common)",
+  "Paddy(Dhan)(Basmati)": "Rice (Basmati)",
+  "Maize": "Maize",
+  "Jowar(Sorghum)": "Jowar",
+  "Bajra(Pearl Millet/Cumbu)": "Bajra",
+  "Moong(Green Gram)": "Moong Dal",
+  "Moong Dal": "Moong Dal",
+  "Urad Dal (Black Gram)(Whole)": "Urad Dal",
+  "Urad Dal": "Urad Dal",
+  "Bengal Gram(Chana)(Whole)": "Chana",
+  "Chick Pea(Gram)(Whole)": "Chana",
+  "Arhar (Tur/Red Gram)(Whole)": "Arhar (Tur)",
+  "Arhar Dal": "Arhar (Tur)",
+  "Tomato": "Tomato",
+  "Onion": "Onion",
+  "Potato": "Potato",
+  "Garlic": "Garlic",
+  "Ginger(Dry)": "Ginger",
+  "Ginger(Green)": "Ginger",
+  "Mustard": "Mustard",
+  "Soyabean": "Soybean",
+  "Groundnut": "Groundnut",
+  "Cotton": "Cotton",
+  "Sugarcane": "Sugarcane",
+  "Mango": "Mango (Alphonso)",
+  "Banana": "Banana",
+  "Banana - Green": "Banana",
+};
+
+interface AgmarknetRecord {
+  commodity?: string;
+  commodity_name?: string;
+  market?: string;
+  market_centre?: string;
+  state?: string;
+  state_name?: string;
+  modal_price?: string | number;
+  min_price?: string | number;
+  max_price?: string | number;
+  arrival_date?: string;
+}
+
 let lastPriceRefresh = 0;
+let pricesSource: "live" | "simulated" = "simulated";
+let pricesLastFetched: string | null = null;
+let pricesArrivalDate: string | null = null;
+
+async function fetchLivePricesFromAgmarknet(): Promise<boolean> {
+  const apiKey = process.env.DATA_GOV_IN_API_KEY;
+  if (!apiKey) return false;
+
+  // Fetch from both vegetable resource and general commodities resource
+  const resources = [
+    "9ef84268-d588-465a-a308-a864a43d0070", // Vegetables
+    "35985678-0d79-46b4-9ed6-6f13308a1d24", // All commodities (cereals, pulses, oilseeds)
+  ];
+
+  const allRecords: AgmarknetRecord[] = [];
+
+  for (const resourceId of resources) {
+    try {
+      const url = `https://api.data.gov.in/resource/${resourceId}?api-key=${apiKey}&format=json&limit=200`;
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
+      const res = await fetch(url, { signal: controller.signal });
+      clearTimeout(timeoutId);
+
+      if (!res.ok) {
+        console.error(`[AGMARKNET] Resource ${resourceId} returned HTTP ${res.status}`);
+        continue;
+      }
+
+      const json = (await res.json()) as { records?: AgmarknetRecord[]; count?: number };
+      if (json.records && json.records.length > 0) {
+        allRecords.push(...json.records);
+        console.log(`[AGMARKNET] Fetched ${json.records.length} records from resource ${resourceId}`);
+      }
+    } catch (err) {
+      console.error(`[AGMARKNET] Failed to fetch resource ${resourceId}:`, (err as Error).message);
+    }
+  }
+
+  if (allRecords.length === 0) return false;
+
+  // Aggregate by crop name — use modal price, pick the record with highest volume/best match
+  const cropPriceMap = new Map<string, { price: number; market: string; state: string; arrivalDate: string }>();
+
+  for (const rec of allRecords) {
+    const rawName = rec.commodity ?? rec.commodity_name ?? "";
+    const ourCrop = AGMARKNET_NAME_MAP[rawName];
+    if (!ourCrop) continue;
+
+    const modalPrice = parseFloat(String(rec.modal_price ?? "0"));
+    if (!modalPrice || modalPrice <= 0) continue;
+
+    // Keep the most recent / highest-price entry per crop (more data points = more accurate)
+    if (!cropPriceMap.has(ourCrop) || modalPrice > (cropPriceMap.get(ourCrop)?.price ?? 0)) {
+      cropPriceMap.set(ourCrop, {
+        price: Math.round(modalPrice),
+        market: String(rec.market ?? rec.market_centre ?? ""),
+        state: String(rec.state ?? rec.state_name ?? ""),
+        arrivalDate: String(rec.arrival_date ?? ""),
+      });
+    }
+  }
+
+  if (cropPriceMap.size === 0) return false;
+
+  // Update DB prices with live data
+  const dbRows = await db.select().from(marketPricesTable);
+  let updatedCount = 0;
+
+  for (const row of dbRows) {
+    const live = cropPriceMap.get(row.crop);
+    if (!live) continue;
+
+    const prev = row.price;
+    const change = prev > 0 ? parseFloat(((live.price - prev) / prev * 100).toFixed(1)) : 0;
+
+    await db.update(marketPricesTable)
+      .set({
+        price: live.price,
+        change,
+        market: live.market || row.market,
+        state: live.state || row.state,
+        updatedAt: new Date(),
+      })
+      .where(eq(marketPricesTable.id, row.id));
+
+    updatedCount++;
+  }
+
+  const arrivalDate = allRecords[0]?.arrival_date ?? new Date().toLocaleDateString("en-IN");
+  console.log(`[AGMARKNET] ✅ Updated ${updatedCount} crops with live data. Arrival date: ${arrivalDate}`);
+  pricesSource = "live";
+  pricesLastFetched = new Date().toISOString();
+  pricesArrivalDate = arrivalDate ?? null;
+  return true;
+}
 
 async function getOrRefreshPrices() {
   const existing = await db.select().from(marketPricesTable).limit(1);
@@ -116,18 +260,26 @@ async function getOrRefreshPrices() {
     for (const p of BASE_PRICES) {
       await db.insert(marketPricesTable).values(p);
     }
-  } else if (now - lastPriceRefresh > 60_000) {
+  } else if (now - lastPriceRefresh > 3_600_000) {
+    // Refresh every hour — try live AGMARKNET first, fall back to simulation
     lastPriceRefresh = now;
-    const all = await db.select().from(marketPricesTable);
-    for (const row of all) {
-      const drift = (Math.random() - 0.5) * 0.04;
-      const base = BASE_PRICES.find(b => b.crop === row.crop)?.price ?? row.price;
-      const newPrice = Math.round(base * (1 + drift));
-      const newChange = parseFloat((drift * 100).toFixed(1));
-      await db
-        .update(marketPricesTable)
-        .set({ price: newPrice, change: newChange, updatedAt: new Date() })
-        .where(eq(marketPricesTable.id, row.id));
+
+    const gotLive = await fetchLivePricesFromAgmarknet();
+
+    if (!gotLive) {
+      // Fallback: realistic ±2% drift simulation
+      pricesSource = "simulated";
+      const all = await db.select().from(marketPricesTable);
+      for (const row of all) {
+        const drift = (Math.random() - 0.5) * 0.04;
+        const base = BASE_PRICES.find(b => b.crop === row.crop)?.price ?? row.price;
+        const newPrice = Math.round(base * (1 + drift));
+        const newChange = parseFloat((drift * 100).toFixed(1));
+        await db
+          .update(marketPricesTable)
+          .set({ price: newPrice, change: newChange, updatedAt: new Date() })
+          .where(eq(marketPricesTable.id, row.id));
+      }
     }
   }
 
@@ -351,6 +503,17 @@ const PRODUCT_RECOMMENDATIONS = [
 router.get("/market/prices", async (_req, res): Promise<void> => {
   const rows = await getOrRefreshPrices();
   res.json(GetMarketPricesResponse.parse(rows));
+});
+
+router.get("/market/prices/status", (_req, res): void => {
+  res.json({
+    source: pricesSource,
+    isLive: pricesSource === "live",
+    lastFetched: pricesLastFetched,
+    arrivalDate: pricesArrivalDate,
+    apiConfigured: !!process.env.DATA_GOV_IN_API_KEY,
+    refreshIntervalMinutes: 60,
+  });
 });
 
 router.get("/market/listings", async (_req, res): Promise<void> => {

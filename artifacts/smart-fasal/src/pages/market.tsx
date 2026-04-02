@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -345,6 +345,20 @@ export default function Market() {
     title: "", description: "", crop: "", price: "", quantity: "",
     unit: "kg", sellerName: "", location: "", imageBase64: "",
   });
+  const [priceStatus, setPriceStatus] = useState<{
+    isLive: boolean;
+    source: string;
+    lastFetched: string | null;
+    arrivalDate: string | null;
+    apiConfigured: boolean;
+  } | null>(null);
+
+  useEffect(() => {
+    fetch("/api/market/prices/status")
+      .then(r => r.json())
+      .then(data => setPriceStatus(data as typeof priceStatus))
+      .catch(() => {});
+  }, []);
 
   const { data: prices, isLoading: loadingPrices, refetch: refetchPrices } = useGetMarketPrices({
     query: { queryKey: getGetMarketPricesQueryKey() }
@@ -467,7 +481,26 @@ export default function Market() {
         {/* ── MANDI PRICES ─────────────────────────────────────────────────── */}
         <TabsContent value="mandi" className="space-y-4 mt-4">
           <div className="flex justify-between items-center">
-            <p className="text-xs text-muted-foreground">eNAM / AGMARKNET sourced · updates every 60s</p>
+            <div className="flex items-center gap-2 flex-wrap">
+              {priceStatus?.isLive ? (
+                <span className="inline-flex items-center gap-1 text-[10px] font-bold bg-green-100 text-green-700 border border-green-300 px-2 py-0.5 rounded-full">
+                  <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse inline-block" />
+                  LIVE · AGMARKNET
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1 text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full">
+                  <span className="w-1.5 h-1.5 bg-amber-400 rounded-full inline-block" />
+                  Simulated
+                </span>
+              )}
+              <p className="text-[10px] text-muted-foreground">
+                {priceStatus?.isLive
+                  ? `Arrival date: ${priceStatus.arrivalDate ?? "today"} · data.gov.in`
+                  : priceStatus?.apiConfigured === false
+                    ? "Add DATA_GOV_IN_API_KEY to go live"
+                    : "Realistic base prices · ±2% drift · hourly refresh"}
+              </p>
+            </div>
             <Button
               variant="ghost" size="sm" className="h-7 text-xs gap-1"
               onClick={() => { queryClient.invalidateQueries({ queryKey: getGetMarketPricesQueryKey() }); refetchPrices(); }}
