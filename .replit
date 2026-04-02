@@ -36,3 +36,4 @@ STARKNET_PUBLIC_KEY = "0x5647cc4b9b494bfeb21175eb4f148f88bf59acd6d642099e32f0249
 OPTIMISM_RPC_URL = "https://sepolia.optimism.io"
 STARKNET_RPC_URL = "https://starknet-sepolia.public.blastapi.io/rpc/v0_7"
 GOOGLE_API_KEY = "AIzaSyA6ycIXrKtVwyc1AScdf2Tk7Y1UU51vbtM"
+LIGHTHOUSE_API_KEY = "223c00b4.ccc6a5abae6a4f65bf9391950236e7aa"
