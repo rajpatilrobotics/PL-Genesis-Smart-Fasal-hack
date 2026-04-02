@@ -43,7 +43,97 @@ async function ensureExperts() {
   }
 }
 
+// Seed demo posts and chat messages if empty
+async function ensureCommunitySeeded() {
+  const existingPosts = await db.select().from(communityPostsTable).limit(1);
+  if (existingPosts.length === 0) {
+    await db.insert(communityPostsTable).values([
+      {
+        author: "Gurpreet Singh",
+        walletAddress: "0x1a2b3c4d",
+        content: "Followed the AI soil analysis advice last week — bumped up potassium levels and already seeing healthier wheat shoots. Highly recommend running the soil scan before planting season!",
+        visibility: "public",
+        badge: "Verified Farmer",
+        likes: 31,
+        comments: [
+          { id: 1, author: "Harjit Kaur", content: "Which fertilizer did you use for K levels?", createdAt: new Date(Date.now() - 3600000).toISOString() },
+          { id: 2, author: "Gurpreet Singh", content: "SOP (Sulphate of Potash) — got it from the Ludhiana mandi at ₹2100/bag", createdAt: new Date(Date.now() - 1800000).toISOString() },
+        ],
+        filecoinCid: "QmXoypizjW3WknFiJnKLwHCnL72vedxjQkDDP1mXWo6uco",
+      },
+      {
+        author: "Ramesh Verma",
+        walletAddress: "0x5e6f7a8b",
+        content: "🛒 GROUP BUY REQUEST\nItem: DAP Fertilizer (50kg bags)\nPrice: ₹1,240/bag (vs ₹1,450 retail)\nFarmers needed: 8 more\n\nInterested? Reply to join this group purchase and get bulk discount pricing!",
+        visibility: "public",
+        badge: "GROUP_BUY",
+        likes: 14,
+        comments: [
+          { id: 1, author: "Sukhwinder", content: "I'm in! Need 10 bags.", createdAt: new Date(Date.now() - 7200000).toISOString() },
+          { id: 2, author: "Balwant Kumar", content: "Count me in for 5 bags", createdAt: new Date(Date.now() - 5400000).toISOString() },
+        ],
+      },
+      {
+        author: "Dr. Priya Sharma",
+        walletAddress: undefined,
+        content: "⚠️ Alert for Ludhiana & Amritsar farmers: Early signs of yellow rust (Puccinia striiformis) spotted in 3 fields this week. If you see yellow-orange stripes on wheat leaves, report anonymously on the Disease Alerts tab immediately. Early collective action prevents district-wide spread.",
+        visibility: "public",
+        badge: "Plant Pathologist",
+        likes: 58,
+        comments: [
+          { id: 1, author: "Harpreet", content: "Saw something similar near Doraha — reporting now", createdAt: new Date(Date.now() - 900000).toISOString() },
+        ],
+        filecoinCid: "QmYwAPJzv5CZsnA625s3Xf2nemtYgPpHdWEz79ojWnPbdG",
+      },
+      {
+        author: "Sukhwinder Gill",
+        walletAddress: "0xc9d0e1f2",
+        content: "First harvest using the parametric insurance this season — filed a claim after the hailstorm last month and got approved within 48 hours. No paperwork, no agent visit. This is the future of farm insurance. 🙏",
+        visibility: "public",
+        badge: "Verified Farmer",
+        likes: 44,
+        comments: [],
+        filecoinCid: "QmZTR5am6jkJoAx2QEbVxQVqDgHRkCkCGnPLpNz9QRYTKE",
+      },
+      {
+        author: "Balwant Kumar",
+        walletAddress: "0xd3e4f506",
+        content: "🛒 GROUP BUY REQUEST\nItem: Urea (45kg bags)\nPrice: ₹240/bag (saving ₹60 vs market)\nFarmers needed: 12 more\n\nInterested? Reply to join this group purchase and get bulk discount pricing!",
+        visibility: "public",
+        badge: "GROUP_BUY",
+        likes: 9,
+        comments: [
+          { id: 1, author: "Manjit Singh", content: "Need 20 bags, adding myself", createdAt: new Date(Date.now() - 10800000).toISOString() },
+        ],
+      },
+    ]);
+  }
+
+  const existingMessages = await db.select().from(chatMessagesTable).limit(1);
+  if (existingMessages.length === 0) {
+    const msgs = [
+      { sender: "Harjit Kaur", content: "Sat Sri Akal everyone! Wheat looking good this week in Ludhiana 🌾" },
+      { sender: "Sukhwinder", content: "Koi mandi bhav pata? Amritsar mein kya chal raha hai aajkal?" },
+      { sender: "Gurpreet Singh", content: "Ludhiana mandi: Wheat ₹2,185/quintal, Rice ₹1,940/quintal yesterday" },
+      { sender: "Ramesh Verma", content: "Thanks bhai. Anyone joining the DAP group buy I posted?" },
+      { sender: "Harjit Kaur", content: "Yes I saw it, need 8 bags — will join!" },
+      { sender: "Balwant Kumar", content: "Rain forecast this weekend in Punjab — anyone holding off on spraying?" },
+      { sender: "Gurpreet Singh", content: "Yes holding off until Tuesday. AI weather tab showed 70% rainfall chance Sat-Sun" },
+    ];
+
+    for (const msg of msgs) {
+      await db.insert(chatMessagesTable).values({
+        sender: msg.sender,
+        content: msg.content,
+        encryptedContent: simulateEncrypt(msg.content),
+        isEncrypted: true,
+      });
+    }
+  }
+}
+
 router.get("/community/posts", async (_req, res): Promise<void> => {
+  await ensureCommunitySeeded();
   const rows = await db
     .select()
     .from(communityPostsTable)

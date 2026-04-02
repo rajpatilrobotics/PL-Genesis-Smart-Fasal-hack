@@ -97,6 +97,7 @@ export default function Community() {
   const { data: diseaseData, isLoading: loadingDisease, refetch: refetchDisease } = useQuery({
     queryKey: ["disease-aggregate"],
     queryFn: fetchDiseaseAggregate,
+    refetchInterval: 30000,
   });
 
   // Mutations
@@ -119,7 +120,7 @@ export default function Community() {
     if (!content.trim()) return;
 
     createPost.mutate(
-      { data: { author: "Current Farmer", content, visibility: postVisibility } },
+      { data: { author: "Current Farmer", content, visibility: postVisibility, badge: postMode === "groupbuy" ? "GROUP_BUY" : undefined } },
       {
         onSuccess: () => {
           setPostContent("");
@@ -202,7 +203,8 @@ export default function Community() {
     }
   };
 
-  const isGroupBuyPost = (content: string) => content.startsWith("🛒 GROUP BUY REQUEST");
+  const isGroupBuyPost = (badge?: string, content?: string) =>
+    badge === "GROUP_BUY" || (content?.startsWith("🛒 GROUP BUY REQUEST") ?? false);
 
   return (
     <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500 flex flex-col h-[calc(100vh-8rem)]">
@@ -290,7 +292,7 @@ export default function Community() {
           {loadingPosts
             ? Array(3).fill(0).map((_, i) => <Skeleton key={i} className="h-36 w-full" />)
             : posts?.map((post) => {
-                const isGroupBuy = isGroupBuyPost(post.content);
+                const isGroupBuy = isGroupBuyPost(post.badge, post.content);
                 return (
                   <Card key={post.id} className={`overflow-hidden ${isGroupBuy ? "border-orange-200 bg-orange-50/30" : ""}`}>
                     <CardHeader className="p-4 pb-2 flex flex-row items-start gap-3 space-y-0">
@@ -302,7 +304,7 @@ export default function Community() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="font-bold text-sm">{post.author}</span>
-                          {post.badge && (
+                          {post.badge && post.badge !== "GROUP_BUY" && (
                             <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 bg-accent/20 border-0">
                               {post.badge}
                             </Badge>
