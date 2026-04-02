@@ -14,4 +14,8 @@ export interface CreateCommunityPostInput {
   visibility?: string;
   /** @nullable */
   badge?: string | null;
+  /** @nullable */
+  category?: string | null;
+  /** @nullable */
+  imageUrl?: string | null;
 }

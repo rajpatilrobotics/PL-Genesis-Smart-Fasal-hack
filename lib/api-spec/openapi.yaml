@@ -1149,6 +1149,10 @@ components:
           type: ["string", "null"]
         badge:
           type: ["string", "null"]
+        category:
+          type: ["string", "null"]
+        imageUrl:
+          type: ["string", "null"]
         comments:
           type: array
           items:
@@ -1196,6 +1200,10 @@ components:
           type: string
           default: public
         badge:
+          type: ["string", "null"]
+        category:
+          type: ["string", "null"]
+        imageUrl:
           type: ["string", "null"]
       required:
         - author
@@ -1264,6 +1272,8 @@ components:
           type: integer
         badge:
           type: string
+        isOnline:
+          type: boolean
       required:
         - id
         - name
@@ -1272,6 +1282,7 @@ components:
         - rating
         - questionsAnswered
         - badge
+        - isOnline
 
     ExpertQuestion:
       type: object

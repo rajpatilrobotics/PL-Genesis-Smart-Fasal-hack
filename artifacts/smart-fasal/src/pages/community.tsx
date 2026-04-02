@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -10,9 +10,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  MessageSquare, Heart, Lock, Globe, Award, Send, Flame, ShoppingCart,
-  CloudRain, TrendingUp, HelpCircle, Leaf, Bell, Users, AlertTriangle,
-  CheckCircle2, Clock, Star, Shield
+  MessageSquare, Heart, Lock, Globe, Award, Send, TrendingUp,
+  Sprout, ShoppingCart, DollarSign, HelpCircle, CloudRain,
+  AlertTriangle, Bug, Wind, RefreshCw, Users, Circle
 } from "lucide-react";
 import {
   useGetCommunityPosts, getGetCommunityPostsQueryKey,
@@ -26,69 +26,150 @@ import {
   useAskExpertQuestion
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
+import { cn } from "@/lib/utils";
 
-const BADGE_CONFIG: Record<string, { label: string; icon: React.ReactNode; color: string; bg: string }> = {
-  CROP_TIP:    { label: "Crop Tip",    icon: <Leaf className="w-3 h-3" />,          color: "text-green-700",  bg: "bg-green-50 border-green-200" },
-  GROUP_BUY:   { label: "Group Buy",   icon: <ShoppingCart className="w-3 h-3" />,   color: "text-orange-700", bg: "bg-orange-50 border-orange-200" },
-  ALERT:       { label: "Alert",       icon: <AlertTriangle className="w-3 h-3" />,  color: "text-red-700",    bg: "bg-red-50 border-red-200" },
-  PRICE_ALERT: { label: "Price Alert", icon: <TrendingUp className="w-3 h-3" />,     color: "text-blue-700",   bg: "bg-blue-50 border-blue-200" },
-  QUESTION:    { label: "Question",    icon: <HelpCircle className="w-3 h-3" />,     color: "text-purple-700", bg: "bg-purple-50 border-purple-200" },
-  WEATHER:     { label: "Weather",     icon: <CloudRain className="w-3 h-3" />,      color: "text-sky-700",    bg: "bg-sky-50 border-sky-200" },
+type Category = "tip" | "group_buy" | "price_alert" | "question" | "weather";
+
+const CATEGORY_CONFIG: Record<string, { label: string; icon: React.ReactNode; color: string; bg: string; border: string }> = {
+  tip: {
+    label: "Tip",
+    icon: <Sprout className="w-3 h-3" />,
+    color: "text-green-700",
+    bg: "bg-green-50",
+    border: "border-green-200",
+  },
+  group_buy: {
+    label: "Group Buy",
+    icon: <ShoppingCart className="w-3 h-3" />,
+    color: "text-amber-700",
+    bg: "bg-amber-50",
+    border: "border-amber-300",
+  },
+  price_alert: {
+    label: "Price Alert",
+    icon: <DollarSign className="w-3 h-3" />,
+    color: "text-blue-700",
+    bg: "bg-blue-50",
+    border: "border-blue-200",
+  },
+  question: {
+    label: "Question",
+    icon: <HelpCircle className="w-3 h-3" />,
+    color: "text-purple-700",
+    bg: "bg-purple-50",
+    border: "border-purple-200",
+  },
+  weather: {
+    label: "Weather",
+    icon: <CloudRain className="w-3 h-3" />,
+    color: "text-sky-700",
+    bg: "bg-sky-50",
+    border: "border-sky-200",
+  },
 };
 
-const AVATAR_COLORS = [
-  "bg-green-100 text-green-700", "bg-blue-100 text-blue-700", "bg-orange-100 text-orange-700",
-  "bg-purple-100 text-purple-700", "bg-rose-100 text-rose-700", "bg-teal-100 text-teal-700",
-];
-
-function getAvatarColor(name: string) {
-  const idx = name.split("").reduce((a, c) => a + c.charCodeAt(0), 0) % AVATAR_COLORS.length;
-  return AVATAR_COLORS[idx];
+function CategoryBadge({ category }: { category?: string | null }) {
+  const cfg = CATEGORY_CONFIG[category ?? "tip"] ?? CATEGORY_CONFIG.tip;
+  return (
+    <span className={cn("inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border", cfg.color, cfg.bg, cfg.border)}>
+      {cfg.icon}
+      {cfg.label}
+    </span>
+  );
 }
 
-function timeAgo(dateStr: string) {
-  const diff = (Date.now() - new Date(dateStr).getTime()) / 1000;
+function timeAgo(date: Date | string): string {
+  const now = Date.now();
+  const d = new Date(date).getTime();
+  const diff = Math.floor((now - d) / 1000);
   if (diff < 60) return "just now";
   if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
   if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
   return `${Math.floor(diff / 86400)}d ago`;
 }
 
-const DISEASE_ALERTS = [
-  { district: "Ludhiana",   risk: "HIGH",   disease: "Yellow Rust",     cases: 12, trend: "rising" },
-  { district: "Amritsar",   risk: "MEDIUM", disease: "Powdery Mildew",  cases: 5,  trend: "stable" },
-  { district: "Patiala",    risk: "LOW",    disease: "Leaf Blight",     cases: 2,  trend: "falling" },
-  { district: "Jalandhar",  risk: "MEDIUM", disease: "Stem Rot",        cases: 7,  trend: "rising" },
-  { district: "Ferozpur",   risk: "LOW",    disease: "None detected",   cases: 0,  trend: "stable" },
-  { district: "Bathinda",   risk: "HIGH",   disease: "Brown Rust",      cases: 18, trend: "rising" },
-  { district: "Sangrur",    risk: "MEDIUM", disease: "Sheath Blight",   cases: 4,  trend: "stable" },
-  { district: "Hoshiarpur", risk: "LOW",    disease: "None detected",   cases: 1,  trend: "falling" },
+function formatTime(date: Date | string): string {
+  return new Date(date).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" });
+}
+
+const MOCK_ALERTS = [
+  {
+    id: 1,
+    type: "disease",
+    title: "Late Blight Outbreak — Nashik District",
+    detail: "Phytophthora infestans detected across 12 farms. High humidity (92%) accelerating spread. Spray Metalaxyl + Mancozeb immediately.",
+    severity: "high",
+    regions: ["Nashik", "Niphad", "Sinnar"],
+    time: new Date(Date.now() - 2 * 3600000),
+  },
+  {
+    id: 2,
+    type: "weather",
+    title: "Cyclone Advisory — Odisha Coast",
+    detail: "Depression intensifying. Expected landfall in 36 hours. Coastal farmers advised to harvest standing crops immediately.",
+    severity: "critical",
+    regions: ["Puri", "Bhubaneswar", "Cuttack"],
+    time: new Date(Date.now() - 45 * 60000),
+  },
+  {
+    id: 3,
+    type: "disease",
+    title: "Yellow Rust Alert — Punjab Wheat Belt",
+    detail: "Stripe rust (Puccinia striiformis) spreading rapidly. Cool temperatures favoring fungal growth. Apply Propiconazole 25 EC.",
+    severity: "medium",
+    regions: ["Ludhiana", "Patiala", "Amritsar"],
+    time: new Date(Date.now() - 5 * 3600000),
+  },
+  {
+    id: 4,
+    type: "weather",
+    title: "Frost Warning — Himachal Pradesh",
+    detail: "Temperature dropping to -2°C tonight. Apple and vegetable growers must cover crops with frost cloth or straw mulch.",
+    severity: "medium",
+    regions: ["Shimla", "Kullu", "Manali"],
+    time: new Date(Date.now() - 30 * 60000),
+  },
+  {
+    id: 5,
+    type: "disease",
+    title: "Rice Brown Planthopper — Kerala",
+    detail: "BPH infestation reported in Kuttanad region. Avoid excessive nitrogen fertilization. Use recommended insecticides only.",
+    severity: "high",
+    regions: ["Kuttanad", "Alappuzha", "Kottayam"],
+    time: new Date(Date.now() - 8 * 3600000),
+  },
 ];
 
-const RISK_STYLE: Record<string, { bar: string; badge: string; text: string }> = {
-  HIGH:   { bar: "bg-red-500",    badge: "bg-red-100 text-red-700 border-red-200",    text: "text-red-700" },
-  MEDIUM: { bar: "bg-yellow-500", badge: "bg-yellow-100 text-yellow-700 border-yellow-200", text: "text-yellow-700" },
-  LOW:    { bar: "bg-green-500",  badge: "bg-green-100 text-green-700 border-green-200",  text: "text-green-700" },
+const SEVERITY_CONFIG: Record<string, { color: string; bg: string; label: string }> = {
+  critical: { color: "text-red-700", bg: "bg-red-50 border-red-300", label: "Critical" },
+  high: { color: "text-orange-700", bg: "bg-orange-50 border-orange-300", label: "High" },
+  medium: { color: "text-yellow-700", bg: "bg-yellow-50 border-yellow-300", label: "Medium" },
 };
+
+const ONLINE_COUNT = 127;
 
 export default function Community() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const chatBottomRef = useRef<HTMLDivElement>(null);
 
   const [postContent, setPostContent] = useState("");
   const [postVisibility, setPostVisibility] = useState("PUBLIC");
-  const [postCategory, setPostCategory] = useState("CROP_TIP");
-  const [commentText, setCommentText] = useState<Record<number, string>>({});
+  const [postCategory, setPostCategory] = useState<Category>("tip");
+  const [commentText, setCommentText] = useState<{ [key: number]: string }>({});
   const [activeCommentPost, setActiveCommentPost] = useState<number | null>(null);
+  const [likedPosts, setLikedPosts] = useState<Set<number>>(new Set());
   const [chatMessage, setChatMessage] = useState("");
   const [askExpertId, setAskExpertId] = useState<number | null>(null);
   const [questionText, setQuestionText] = useState("");
-  const [likedPosts, setLikedPosts] = useState<Set<number>>(new Set());
+  const [alertsLastRefresh, setAlertsLastRefresh] = useState(new Date());
+  const [alertsPulse, setAlertsPulse] = useState(false);
+  const [filterCategory, setFilterCategory] = useState<string>("all");
 
   const { data: posts, isLoading: loadingPosts } = useGetCommunityPosts({ query: { queryKey: getGetCommunityPostsQueryKey() } });
   const { data: messages, isLoading: loadingMessages } = useGetCommunityMessages({ query: { queryKey: getGetCommunityMessagesQueryKey() } });
   const { data: experts, isLoading: loadingExperts } = useGetCommunityExperts({ query: { queryKey: getGetCommunityExpertsQueryKey() } });
-  const { data: expertQuestions } = useGetExpertQuestions({ query: { queryKey: getGetExpertQuestionsQueryKey() } });
+  const { data: expertQuestions, isLoading: loadingQuestions } = useGetExpertQuestions({ query: { queryKey: getGetExpertQuestionsQueryKey() } });
 
   const createPost = useCreateCommunityPost();
   const likePost = useLikeCommunityPost();
@@ -96,34 +177,61 @@ export default function Community() {
   const sendMessage = useSendCommunityMessage();
   const askExpert = useAskExpertQuestion();
 
+  useEffect(() => {
+    chatBottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setAlertsPulse(true);
+      setAlertsLastRefresh(new Date());
+      setTimeout(() => setAlertsPulse(false), 1000);
+    }, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const filteredPosts = posts?.filter(p =>
+    filterCategory === "all" || (p as any).category === filterCategory
+  );
+
   const handleCreatePost = () => {
     if (!postContent.trim()) return;
     createPost.mutate({
-      data: { author: "Current Farmer", content: postContent, visibility: postVisibility, badge: postCategory }
+      data: {
+        author: "Current Farmer",
+        content: postContent,
+        visibility: postVisibility,
+        category: postCategory,
+      } as any
     }, {
       onSuccess: () => {
         setPostContent("");
         queryClient.invalidateQueries({ queryKey: getGetCommunityPostsQueryKey() });
-        toast({ title: "Posted to community! 🌾" });
+        toast({ title: "Posted to community ✓" });
       }
     });
   };
 
   const handleLike = (id: number) => {
     if (likedPosts.has(id)) return;
-    setLikedPosts(prev => new Set(prev).add(id));
-    likePost.mutate({ id }, { onSuccess: () => queryClient.invalidateQueries({ queryKey: getGetCommunityPostsQueryKey() }) });
+    setLikedPosts(prev => new Set([...prev, id]));
+    likePost.mutate({ id }, {
+      onSuccess: () => queryClient.invalidateQueries({ queryKey: getGetCommunityPostsQueryKey() })
+    });
   };
 
   const handleComment = (postId: number) => {
     const text = commentText[postId];
     if (!text?.trim()) return;
-    addComment.mutate({ id: postId, data: { author: "Current Farmer", content: text } }, {
+    addComment.mutate({
+      id: postId,
+      data: { author: "Current Farmer", content: text }
+    }, {
       onSuccess: () => {
         setCommentText({ ...commentText, [postId]: "" });
         setActiveCommentPost(null);
         queryClient.invalidateQueries({ queryKey: getGetCommunityPostsQueryKey() });
-        toast({ title: "Comment added!" });
+        toast({ title: "Comment added" });
       }
     });
   };
@@ -131,7 +239,9 @@ export default function Community() {
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
     if (!chatMessage.trim()) return;
-    sendMessage.mutate({ data: { sender: "Current Farmer", content: chatMessage } }, {
+    sendMessage.mutate({
+      data: { sender: "Current Farmer", content: chatMessage }
+    }, {
       onSuccess: () => {
         setChatMessage("");
         queryClient.invalidateQueries({ queryKey: getGetCommunityMessagesQueryKey() });
@@ -141,319 +251,290 @@ export default function Community() {
 
   const handleAskExpert = (expertId: number) => {
     if (!questionText.trim()) return;
-    askExpert.mutate({ data: { question: questionText, askedBy: "Current Farmer", expertId } }, {
+    askExpert.mutate({
+      data: { question: questionText, askedBy: "Current Farmer", expertId }
+    }, {
       onSuccess: () => {
         setQuestionText("");
         setAskExpertId(null);
         queryClient.invalidateQueries({ queryKey: getGetExpertQuestionsQueryKey() });
-        toast({ title: "Question sent to expert!" });
+        toast({ title: "Question sent to expert" });
       }
     });
   };
 
-  const onlineCount = 47;
-
   return (
-    <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight">Community</h2>
-          <p className="text-muted-foreground text-sm">Connect, learn, and grow together</p>
-        </div>
-        <div className="flex items-center gap-1.5 bg-green-50 border border-green-200 rounded-full px-3 py-1">
-          <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-          <span className="text-xs font-medium text-green-700">{onlineCount} online</span>
-        </div>
+    <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500 flex flex-col h-[calc(100vh-8rem)]">
+      <div>
+        <h2 className="text-2xl font-bold tracking-tight">Community</h2>
+        <p className="text-muted-foreground text-sm flex items-center gap-2">
+          Connect, learn, and grow together
+          <span className="inline-flex items-center gap-1 text-green-600 font-medium text-xs">
+            <Circle className="w-2 h-2 fill-green-500 text-green-500" />
+            {ONLINE_COUNT} online
+          </span>
+        </p>
       </div>
 
-      <Tabs defaultValue="feed">
-        <TabsList className="grid w-full grid-cols-4 mb-3">
-          <TabsTrigger value="feed" className="text-xs">
-            <Globe className="w-3.5 h-3.5 mr-1" />Feed
+      <Tabs defaultValue="feed" className="flex-1 flex flex-col min-h-0">
+        <TabsList className="grid w-full grid-cols-4 mb-4 h-10">
+          <TabsTrigger value="feed" className="text-xs">📢 Feed</TabsTrigger>
+          <TabsTrigger value="alerts" className="text-xs relative">
+            🚨 Alerts
+            <span className={cn(
+              "absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-red-500 transition-all",
+              alertsPulse && "scale-150 opacity-0"
+            )} />
           </TabsTrigger>
-          <TabsTrigger value="chat" className="text-xs">
-            <Lock className="w-3.5 h-3.5 mr-1" />Chat
-          </TabsTrigger>
-          <TabsTrigger value="experts" className="text-xs">
-            <Award className="w-3.5 h-3.5 mr-1" />Experts
-          </TabsTrigger>
-          <TabsTrigger value="alerts" className="text-xs">
-            <Bell className="w-3.5 h-3.5 mr-1" />Alerts
-          </TabsTrigger>
+          <TabsTrigger value="chat" className="text-xs">💬 Chat</TabsTrigger>
+          <TabsTrigger value="experts" className="text-xs">🎓 Experts</TabsTrigger>
         </TabsList>
 
-        {/* ─── FEED TAB ─── */}
-        <TabsContent value="feed" className="space-y-4">
+        {/* ─────────── FEED TAB ─────────── */}
+        <TabsContent value="feed" className="flex-1 overflow-y-auto pb-4 space-y-3 pr-1">
           {/* Create Post */}
           <Card className="border-primary/20 shadow-sm">
             <CardContent className="p-4 space-y-3">
               <Textarea
-                placeholder="Share a crop tip, price alert, or start a group buy..."
-                className="resize-none border-0 focus-visible:ring-0 px-0 shadow-none text-sm min-h-[72px]"
+                placeholder="Share a tip, ask a question, alert the community..."
+                className="resize-none border-0 focus-visible:ring-0 px-0 shadow-none min-h-[72px]"
                 value={postContent}
                 onChange={e => setPostContent(e.target.value)}
               />
-              <div className="flex items-center gap-2 pt-2 border-t flex-wrap">
-                <Select value={postCategory} onValueChange={setPostCategory}>
-                  <SelectTrigger className="h-8 text-xs border bg-background w-[130px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Object.entries(BADGE_CONFIG).map(([key, val]) => (
-                      <SelectItem key={key} value={key}>
-                        <span className="flex items-center gap-1.5">{val.icon} {val.label}</span>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Select value={postVisibility} onValueChange={setPostVisibility}>
-                  <SelectTrigger className="h-8 text-xs border bg-background w-[120px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="PUBLIC"><span className="flex items-center gap-1.5"><Globe className="w-3 h-3"/>Public</span></SelectItem>
-                    <SelectItem value="EXPERT"><span className="flex items-center gap-1.5"><Award className="w-3 h-3"/>Experts Only</span></SelectItem>
-                  </SelectContent>
-                </Select>
-                <Button size="sm" className="ml-auto" onClick={handleCreatePost} disabled={createPost.isPending || !postContent.trim()}>
-                  {createPost.isPending ? "Posting..." : "Post"}
+              <div className="flex flex-wrap justify-between items-center pt-2 border-t gap-2">
+                <div className="flex gap-2 items-center flex-wrap">
+                  <Select value={postCategory} onValueChange={v => setPostCategory(v as Category)}>
+                    <SelectTrigger className="h-7 text-xs border bg-muted/40 w-[120px]">
+                      <SelectValue placeholder="Category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.entries(CATEGORY_CONFIG).map(([key, cfg]) => (
+                        <SelectItem key={key} value={key}>
+                          <span className="flex items-center gap-1.5">{cfg.icon} {cfg.label}</span>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Select value={postVisibility} onValueChange={setPostVisibility}>
+                    <SelectTrigger className="h-7 text-xs border bg-muted/40 w-[110px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="PUBLIC"><span className="flex items-center gap-1.5"><Globe className="w-3 h-3" /> Public</span></SelectItem>
+                      <SelectItem value="EXPERT"><span className="flex items-center gap-1.5"><Award className="w-3 h-3" /> Experts Only</span></SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Button size="sm" onClick={handleCreatePost} disabled={createPost.isPending || !postContent.trim()}>
+                  Post
                 </Button>
               </div>
             </CardContent>
           </Card>
 
-          {/* Posts */}
-          {loadingPosts ? (
-            Array(3).fill(0).map((_, i) => <Skeleton key={i} className="h-36 w-full rounded-xl" />)
-          ) : posts?.map(post => {
-            const badgeCfg = post.badge ? BADGE_CONFIG[post.badge] : null;
-            const isTrending = (post.likes || 0) >= 20;
-            const isLiked = likedPosts.has(post.id);
-            const avatarColor = getAvatarColor(post.author);
-            const comments = Array.isArray(post.comments) ? post.comments as Array<{ id: number; author: string; content: string }> : [];
+          {/* Category Filter */}
+          <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-hide">
+            <button
+              onClick={() => setFilterCategory("all")}
+              className={cn(
+                "flex-shrink-0 px-3 py-1 rounded-full text-xs font-medium border transition-all",
+                filterCategory === "all"
+                  ? "bg-primary text-primary-foreground border-primary"
+                  : "bg-muted/40 text-muted-foreground border-border hover:border-primary/50"
+              )}
+            >
+              All Posts
+            </button>
+            {Object.entries(CATEGORY_CONFIG).map(([key, cfg]) => (
+              <button
+                key={key}
+                onClick={() => setFilterCategory(filterCategory === key ? "all" : key)}
+                className={cn(
+                  "flex-shrink-0 inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium border transition-all",
+                  filterCategory === key
+                    ? `${cfg.bg} ${cfg.color} ${cfg.border} border`
+                    : "bg-muted/40 text-muted-foreground border-border hover:border-primary/50"
+                )}
+              >
+                {cfg.icon} {cfg.label}
+              </button>
+            ))}
+          </div>
 
-            return (
-              <Card key={post.id} className="overflow-hidden border-border/60 hover:shadow-md transition-shadow">
-                <CardContent className="p-4 pb-3">
-                  <div className="flex items-start gap-3">
-                    <Avatar className="w-9 h-9 shrink-0 mt-0.5">
-                      <AvatarFallback className={`text-sm font-bold ${avatarColor}`}>
+          {/* Posts */}
+          <div className="space-y-3">
+            {loadingPosts ? (
+              Array(3).fill(0).map((_, i) => <Skeleton key={i} className="h-40 w-full rounded-xl" />)
+            ) : filteredPosts?.map(post => {
+              const cat = (post as any).category as string ?? "tip";
+              const cfg = CATEGORY_CONFIG[cat] ?? CATEGORY_CONFIG.tip;
+              const isTrending = post.likes >= 100;
+              const isGroupBuy = cat === "group_buy";
+
+              return (
+                <Card
+                  key={post.id}
+                  className={cn(
+                    "overflow-hidden transition-all",
+                    isGroupBuy && "ring-2 ring-amber-300 shadow-amber-100 shadow-md"
+                  )}
+                >
+                  <CardHeader className={cn("p-4 pb-2 flex flex-row items-start gap-3 space-y-0", isGroupBuy && "bg-amber-50/60")}>
+                    <Avatar className="w-9 h-9 border-2 border-primary/20 flex-shrink-0">
+                      <AvatarFallback className={cn("font-bold text-sm", isGroupBuy ? "bg-amber-100 text-amber-700" : "bg-primary/10 text-primary")}>
                         {post.author.substring(0, 2).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-semibold text-sm">{post.author}</span>
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="font-bold text-sm truncate">{post.author}</span>
+                        {post.badge && (
+                          <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 bg-accent/20 text-accent-foreground border-0 flex-shrink-0">
+                            {post.badge}
+                          </Badge>
+                        )}
                         {isTrending && (
-                          <span className="flex items-center gap-0.5 text-[10px] font-bold text-orange-600 bg-orange-50 border border-orange-200 rounded-full px-1.5 py-0.5">
-                            <Flame className="w-2.5 h-2.5" /> Trending
+                          <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-orange-600 bg-orange-50 border border-orange-200 px-1.5 py-0 rounded-full flex-shrink-0">
+                            <TrendingUp className="w-2.5 h-2.5" /> Trending
                           </span>
                         )}
-                        {post.visibility === "EXPERT" && <Lock className="w-3 h-3 text-yellow-600" />}
                       </div>
-                      <span className="text-[10px] text-muted-foreground">{timeAgo(post.createdAt)}</span>
-                    </div>
-                    {badgeCfg && (
-                      <span className={`flex items-center gap-1 text-[10px] font-semibold border rounded-full px-2 py-0.5 shrink-0 ${badgeCfg.color} ${badgeCfg.bg}`}>
-                        {badgeCfg.icon} {badgeCfg.label}
-                      </span>
-                    )}
-                  </div>
-
-                  <p className="text-sm mt-3 leading-relaxed whitespace-pre-wrap">{post.content}</p>
-
-                  {post.filecoinCid && (
-                    <div className="mt-3 bg-muted/50 p-2 rounded text-[10px] font-mono text-muted-foreground flex items-center gap-2 border">
-                      <Shield className="w-3 h-3" /> Verified on Filecoin: {post.filecoinCid.substring(0, 16)}...
-                    </div>
-                  )}
-                </CardContent>
-
-                <CardFooter className="px-4 py-2.5 bg-muted/20 border-t flex flex-col gap-2">
-                  <div className="flex items-center gap-4 w-full">
-                    <button
-                      onClick={() => handleLike(post.id)}
-                      className={`flex items-center gap-1.5 text-xs transition-colors ${isLiked ? "text-rose-500 font-semibold" : "text-muted-foreground hover:text-rose-500"}`}
-                    >
-                      <Heart className={`w-4 h-4 ${isLiked ? "fill-rose-500" : ""}`} />
-                      {post.likes}
-                    </button>
-                    <button
-                      onClick={() => setActiveCommentPost(activeCommentPost === post.id ? null : post.id)}
-                      className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors"
-                    >
-                      <MessageSquare className="w-4 h-4" /> {comments.length}
-                    </button>
-                    <span className="ml-auto text-[10px] text-muted-foreground flex items-center gap-1">
-                      <Users className="w-3 h-3" /> {Math.floor(Math.random() * 30 + 5)} views
-                    </span>
-                  </div>
-
-                  {comments.length > 0 && (
-                    <div className="w-full pl-3 border-l-2 border-primary/20 space-y-1.5">
-                      {comments.slice(0, 3).map((c: { id: number; author: string; content: string }) => (
-                        <div key={c.id} className="text-xs">
-                          <span className="font-semibold text-foreground">{c.author}</span>
-                          <span className="text-muted-foreground ml-1">{c.content}</span>
-                        </div>
-                      ))}
-                      {comments.length > 3 && (
-                        <span className="text-[10px] text-primary cursor-pointer">+{comments.length - 3} more comments</span>
-                      )}
-                    </div>
-                  )}
-
-                  {activeCommentPost === post.id && (
-                    <div className="flex w-full gap-2">
-                      <Input
-                        size={1}
-                        className="h-8 text-xs flex-1"
-                        placeholder="Write a comment..."
-                        value={commentText[post.id] || ""}
-                        onChange={e => setCommentText({ ...commentText, [post.id]: e.target.value })}
-                        onKeyDown={e => e.key === "Enter" && handleComment(post.id)}
-                      />
-                      <Button size="sm" className="h-8 px-3" onClick={() => handleComment(post.id)} disabled={addComment.isPending}>
-                        <Send className="w-3 h-3" />
-                      </Button>
-                    </div>
-                  )}
-                </CardFooter>
-              </Card>
-            );
-          })}
-        </TabsContent>
-
-        {/* ─── CHAT TAB ─── */}
-        <TabsContent value="chat">
-          <div className="flex flex-col" style={{ height: "480px" }}>
-            <div className="bg-gradient-to-r from-violet-600 to-purple-700 p-2.5 rounded-t-xl flex items-center justify-between">
-              <div className="flex items-center gap-2 text-white">
-                <Lock className="w-3.5 h-3.5" />
-                <span className="text-xs font-semibold">E2E Encrypted · Zama FHE</span>
-              </div>
-              <div className="flex items-center gap-1.5 bg-white/20 rounded-full px-2 py-0.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-                <span className="text-[10px] text-white font-medium">{onlineCount} online</span>
-              </div>
-            </div>
-
-            <div className="flex-1 border-x border-border bg-background/50 p-4 overflow-y-auto space-y-3">
-              {loadingMessages ? (
-                <div className="text-center text-muted-foreground text-sm py-8">Decrypting messages...</div>
-              ) : messages?.map(msg => {
-                const isMe = msg.sender === "Current Farmer";
-                const avatarColor = getAvatarColor(msg.sender);
-                return (
-                  <div key={msg.id} className={`flex gap-2 ${isMe ? "flex-row-reverse" : "flex-row"}`}>
-                    {!isMe && (
-                      <Avatar className="w-7 h-7 shrink-0 mt-1">
-                        <AvatarFallback className={`text-[10px] font-bold ${avatarColor}`}>
-                          {msg.sender.substring(0, 2).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                    )}
-                    <div className={`max-w-[80%] ${isMe ? "items-end" : "items-start"} flex flex-col`}>
-                      {!isMe && <span className="text-[10px] text-muted-foreground mb-0.5 ml-1">{msg.sender}</span>}
-                      <div className={`rounded-2xl px-3 py-2 ${isMe ? "bg-primary text-primary-foreground rounded-tr-none" : "bg-muted rounded-tl-none"}`}>
-                        <p className="text-sm">{msg.content}</p>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <span className="text-[10px] text-muted-foreground">
+                          {post.visibility === 'EXPERT' && <Lock className="w-2.5 h-2.5 inline mr-0.5 text-yellow-600" />}
+                          {timeAgo(post.createdAt)}
+                        </span>
+                        <CategoryBadge category={cat} />
                       </div>
-                      {msg.isEncrypted && (
-                        <div className={`flex items-center gap-0.5 text-[9px] text-muted-foreground mt-0.5 ${isMe ? "justify-end" : "justify-start"}`}>
-                          <Lock className="w-2 h-2 text-violet-500" />
-                          <span className="text-violet-500">encrypted</span>
-                        </div>
-                      )}
                     </div>
-                  </div>
-                );
-              })}
-            </div>
+                  </CardHeader>
 
-            <form onSubmit={handleSendMessage} className="p-3 border border-t-0 rounded-b-xl flex gap-2 bg-background">
-              <Input
-                placeholder="Encrypted message..."
-                value={chatMessage}
-                onChange={e => setChatMessage(e.target.value)}
-                className="flex-1 text-sm"
-              />
-              <Button type="submit" size="icon" disabled={sendMessage.isPending || !chatMessage.trim()}>
-                <Send className="w-4 h-4" />
-              </Button>
-            </form>
+                  <CardContent className="p-4 pt-2 space-y-3">
+                    <p className="text-sm whitespace-pre-wrap leading-relaxed">{post.content}</p>
+
+                    {(post as any).imageUrl && (
+                      <div className="rounded-lg overflow-hidden border border-border">
+                        <img
+                          src={(post as any).imageUrl}
+                          alt="Post image"
+                          className="w-full h-48 object-cover"
+                          loading="lazy"
+                        />
+                      </div>
+                    )}
+
+                    {post.filecoinCid && (
+                      <div className="bg-muted/50 p-2 rounded text-[10px] font-mono text-muted-foreground flex items-center gap-2 border border-border">
+                        <Lock className="w-3 h-3 flex-shrink-0" />
+                        Verified on Filecoin: {post.filecoinCid.substring(0, 20)}...
+                      </div>
+                    )}
+                  </CardContent>
+
+                  <CardFooter className="p-3 bg-muted/20 border-t border-border flex flex-col items-stretch gap-2">
+                    <div className="flex gap-4 w-full">
+                      <button
+                        onClick={() => handleLike(post.id)}
+                        className={cn(
+                          "flex items-center gap-1.5 text-xs transition-colors",
+                          likedPosts.has(post.id) ? "text-rose-500" : "text-muted-foreground hover:text-rose-500"
+                        )}
+                      >
+                        <Heart className={cn("w-4 h-4", likedPosts.has(post.id) && "fill-rose-500")} />
+                        {post.likes + (likedPosts.has(post.id) ? 0 : 0)}
+                      </button>
+                      <button
+                        onClick={() => setActiveCommentPost(activeCommentPost === post.id ? null : post.id)}
+                        className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors"
+                      >
+                        <MessageSquare className="w-4 h-4" /> {post.comments.length}
+                      </button>
+                    </div>
+
+                    {post.comments.length > 0 && (
+                      <div className="space-y-2 w-full pl-3 border-l-2 border-primary/20">
+                        {post.comments.map(c => (
+                          <div key={c.id} className="text-xs">
+                            <span className="font-bold mr-1">{c.author}:</span>
+                            <span className="text-muted-foreground">{c.content}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {activeCommentPost === post.id && (
+                      <div className="flex w-full gap-2 mt-1">
+                        <Input
+                          size={1}
+                          className="h-8 text-xs flex-1"
+                          placeholder="Write a comment..."
+                          value={commentText[post.id] || ""}
+                          onChange={e => setCommentText({ ...commentText, [post.id]: e.target.value })}
+                          onKeyDown={e => e.key === "Enter" && handleComment(post.id)}
+                        />
+                        <Button size="sm" className="h-8" onClick={() => handleComment(post.id)} disabled={addComment.isPending}>
+                          Send
+                        </Button>
+                      </div>
+                    )}
+                  </CardFooter>
+                </Card>
+              );
+            })}
           </div>
         </TabsContent>
 
-        {/* ─── EXPERTS TAB ─── */}
-        <TabsContent value="experts" className="space-y-4">
-          {loadingExperts ? (
-            Array(2).fill(0).map((_, i) => <Skeleton key={i} className="h-36 w-full" />)
-          ) : experts?.map((expert, idx) => {
-            const isAvailable = idx % 3 !== 2;
-            const responseTime = ["~2 hours", "~4 hours", "~1 day", "~30 min"][idx % 4];
+        {/* ─────────── ALERTS TAB ─────────── */}
+        <TabsContent value="alerts" className="flex-1 overflow-y-auto pb-4 space-y-3 pr-1">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="font-semibold text-sm">Disease & Weather Alerts</h3>
+              <p className="text-[11px] text-muted-foreground">Auto-refreshes every 30 seconds</p>
+            </div>
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <RefreshCw className={cn("w-3 h-3 transition-all", alertsPulse && "animate-spin text-primary")} />
+              {formatTime(alertsLastRefresh)}
+            </div>
+          </div>
+
+          {/* Live Pulse Indicator */}
+          <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-lg p-2">
+            <span className="relative flex h-2.5 w-2.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500" />
+            </span>
+            <span className="text-xs font-semibold text-red-700">LIVE — Monitoring 847 farms across India</span>
+          </div>
+
+          {MOCK_ALERTS.map(alert => {
+            const sev = SEVERITY_CONFIG[alert.severity];
             return (
-              <Card key={expert.id} className="overflow-hidden">
-                <CardContent className="p-4">
-                  <div className="flex gap-3">
-                    <div className="relative shrink-0">
-                      <Avatar className="w-14 h-14 border-2 border-primary/20">
-                        <AvatarFallback className="bg-primary/10 text-primary font-bold text-lg">
-                          {expert.name.charAt(0)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <span className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-background ${isAvailable ? "bg-green-500" : "bg-gray-400"}`} />
+              <Card key={alert.id} className={cn("border", sev.bg)}>
+                <CardContent className="p-4 space-y-2">
+                  <div className="flex items-start gap-3">
+                    <div className={cn("mt-0.5 p-1.5 rounded-full", alert.type === "disease" ? "bg-orange-100" : "bg-blue-100")}>
+                      {alert.type === "disease"
+                        ? <Bug className="w-4 h-4 text-orange-600" />
+                        : <Wind className="w-4 h-4 text-blue-600" />
+                      }
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="flex justify-between items-start gap-2">
-                        <div>
-                          <h3 className="font-bold text-sm">{expert.name}</h3>
-                          <p className="text-xs text-primary font-medium">{expert.specialization}</p>
-                        </div>
-                        <div className="flex flex-col items-end gap-1 shrink-0">
-                          <span className="flex items-center gap-0.5 text-xs font-semibold text-yellow-600">
-                            <Star className="w-3 h-3 fill-yellow-500 text-yellow-500" /> {expert.rating}
-                          </span>
-                          <span className={`text-[10px] font-medium ${isAvailable ? "text-green-600" : "text-muted-foreground"}`}>
-                            {isAvailable ? "● Available" : "● Busy"}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-3 mt-2">
-                        <span className="text-[10px] text-muted-foreground flex items-center gap-1">
-                          <CheckCircle2 className="w-3 h-3 text-green-500" /> {expert.questionsAnswered} answered
-                        </span>
-                        <span className="text-[10px] text-muted-foreground flex items-center gap-1">
-                          <Clock className="w-3 h-3" /> Replies {responseTime}
+                      <div className="flex items-center gap-2 flex-wrap mb-1">
+                        <span className="font-bold text-sm">{alert.title}</span>
+                        <span className={cn("text-[10px] font-semibold px-1.5 py-0.5 rounded-full border", sev.color, sev.bg)}>
+                          {sev.label}
                         </span>
                       </div>
-
-                      {expert.badge && (
-                        <Badge variant="secondary" className="mt-2 text-[10px] bg-accent/10 text-accent border-accent/20">
-                          {expert.badge}
-                        </Badge>
-                      )}
-
-                      {askExpertId === expert.id ? (
-                        <div className="mt-3 space-y-2">
-                          <Textarea
-                            placeholder="Describe your farming issue in detail..."
-                            className="min-h-[80px] text-sm"
-                            value={questionText}
-                            onChange={e => setQuestionText(e.target.value)}
-                          />
-                          <div className="flex gap-2">
-                            <Button size="sm" className="flex-1" onClick={() => handleAskExpert(expert.id)} disabled={askExpert.isPending}>
-                              Send Question
-                            </Button>
-                            <Button size="sm" variant="outline" onClick={() => setAskExpertId(null)}>Cancel</Button>
-                          </div>
-                        </div>
-                      ) : (
-                        <Button size="sm" className="w-full mt-3" onClick={() => setAskExpertId(expert.id)}>
-                          Ask {expert.name.split(" ")[0]}
-                        </Button>
-                      )}
+                      <p className="text-xs text-muted-foreground leading-relaxed">{alert.detail}</p>
+                      <div className="flex flex-wrap gap-1 mt-2">
+                        {alert.regions.map(r => (
+                          <span key={r} className="text-[10px] bg-white/60 border border-border px-2 py-0.5 rounded-full">{r}</span>
+                        ))}
+                      </div>
+                      <p className="text-[10px] text-muted-foreground mt-1.5 flex items-center gap-1">
+                        <AlertTriangle className="w-2.5 h-2.5" />
+                        {timeAgo(alert.time)}
+                      </p>
                     </div>
                   </div>
                 </CardContent>
@@ -461,23 +542,163 @@ export default function Community() {
             );
           })}
 
+          <Card className="bg-muted/30 border-dashed">
+            <CardContent className="p-4 text-center space-y-1">
+              <p className="text-sm font-medium">Enable Push Notifications</p>
+              <p className="text-xs text-muted-foreground">Get instant alerts for your district when outbreaks are detected</p>
+              <Button size="sm" variant="outline" className="mt-2">
+                Subscribe to Alerts
+              </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* ─────────── CHAT TAB ─────────── */}
+        <TabsContent value="chat" className="flex-1 flex flex-col min-h-[400px]">
+          <div className="bg-primary/10 border border-primary/20 p-2 rounded-t-lg flex items-center justify-between text-xs font-semibold text-primary">
+            <span className="flex items-center gap-1.5">
+              <Lock className="w-3 h-3" />
+              End-to-End Encrypted via Zama FHE
+            </span>
+            <span className="flex items-center gap-1 text-green-600 font-medium">
+              <Users className="w-3 h-3" />
+              {ONLINE_COUNT} online
+            </span>
+          </div>
+
+          <div className="flex-1 border-x border-border bg-background p-3 overflow-y-auto space-y-3">
+            {loadingMessages ? (
+              <div className="space-y-3">
+                {Array(4).fill(0).map((_, i) => <Skeleton key={i} className="h-12 w-3/4" style={{ marginLeft: i % 2 === 0 ? 0 : "auto" }} />)}
+              </div>
+            ) : messages?.map((msg, i) => {
+              const isMe = msg.sender === "Current Farmer";
+              const showSender = i === 0 || messages[i - 1]?.sender !== msg.sender;
+              return (
+                <div key={msg.id} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
+                  {showSender && !isMe && (
+                    <span className="text-[10px] text-muted-foreground ml-1 mb-0.5">{msg.sender}</span>
+                  )}
+                  <div className={`max-w-[85%] rounded-2xl px-3 py-2 ${isMe ? 'bg-primary text-primary-foreground rounded-tr-none' : 'bg-muted rounded-tl-none'}`}>
+                    <p className="text-sm">{msg.content}</p>
+                  </div>
+                  <div className={cn("flex items-center gap-1 mt-0.5", isMe ? "flex-row-reverse" : "flex-row")}>
+                    <span className="text-[9px] text-muted-foreground">{formatTime(msg.createdAt)}</span>
+                    {msg.isEncrypted && (
+                      <span className="text-[9px] text-muted-foreground flex items-center gap-0.5">
+                        <Lock className="w-2 h-2" />
+                      </span>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+            <div ref={chatBottomRef} />
+          </div>
+
+          <form onSubmit={handleSendMessage} className="p-2.5 border border-t-0 rounded-b-lg flex gap-2 bg-background">
+            <Input
+              placeholder="Secure message..."
+              value={chatMessage}
+              onChange={e => setChatMessage(e.target.value)}
+              className="flex-1 h-9"
+            />
+            <Button type="submit" size="icon" className="h-9 w-9" disabled={sendMessage.isPending || !chatMessage.trim()}>
+              <Send className="w-4 h-4" />
+            </Button>
+          </form>
+        </TabsContent>
+
+        {/* ─────────── EXPERTS TAB ─────────── */}
+        <TabsContent value="experts" className="flex-1 overflow-y-auto space-y-3 pr-1">
+          {loadingExperts ? (
+            Array(2).fill(0).map((_, i) => <Skeleton key={i} className="h-36 w-full rounded-xl" />)
+          ) : experts?.map(expert => (
+            <Card key={expert.id} className="overflow-hidden">
+              <CardContent className="p-4">
+                <div className="flex gap-3">
+                  <div className="relative flex-shrink-0">
+                    <Avatar className="w-14 h-14 border-2 border-accent">
+                      <AvatarFallback className="bg-accent/10 text-accent font-bold text-xl">
+                        {expert.name.charAt(0)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className={cn(
+                      "absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full border-2 border-background",
+                      (expert as any).isOnline ? "bg-green-500" : "bg-gray-300"
+                    )} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex justify-between items-start gap-2">
+                      <div className="min-w-0">
+                        <h3 className="font-bold text-sm truncate">{expert.name}</h3>
+                        <p className="text-xs text-primary font-medium">{expert.specialization}</p>
+                      </div>
+                      <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                        <Badge variant="outline" className="bg-yellow-50 border-yellow-200 text-yellow-700 text-[10px]">
+                          ★ {expert.rating}
+                        </Badge>
+                        <span className={cn(
+                          "text-[10px] font-semibold",
+                          (expert as any).isOnline ? "text-green-600" : "text-muted-foreground"
+                        )}>
+                          {(expert as any).isOnline ? "● Online now" : "○ Away"}
+                        </span>
+                      </div>
+                    </div>
+                    <p className="text-[11px] text-muted-foreground mt-1.5">
+                      {expert.experience} • {expert.questionsAnswered} questions answered
+                    </p>
+                    <Badge variant="secondary" className="mt-1 text-[10px] px-1.5 h-4">{expert.badge}</Badge>
+
+                    {askExpertId === expert.id ? (
+                      <div className="mt-3 space-y-2">
+                        <Textarea
+                          placeholder="Type your question..."
+                          className="min-h-[80px] text-sm"
+                          value={questionText}
+                          onChange={e => setQuestionText(e.target.value)}
+                        />
+                        <div className="flex gap-2">
+                          <Button size="sm" className="flex-1" onClick={() => handleAskExpert(expert.id)} disabled={askExpert.isPending}>
+                            Send Question
+                          </Button>
+                          <Button size="sm" variant="outline" onClick={() => setAskExpertId(null)}>Cancel</Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <Button
+                        size="sm"
+                        variant={(expert as any).isOnline ? "default" : "secondary"}
+                        className="w-full mt-3"
+                        onClick={() => setAskExpertId(expert.id)}
+                      >
+                        {(expert as any).isOnline ? "Ask Now →" : "Ask a Question"}
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+
           {expertQuestions && expertQuestions.length > 0 && (
-            <div>
-              <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider mb-3">My Questions</h3>
+            <div className="mt-4">
+              <h3 className="font-bold text-sm mb-3 text-muted-foreground uppercase tracking-wider">My Questions</h3>
               <div className="space-y-3">
                 {expertQuestions.map(q => (
                   <Card key={q.id} className="bg-muted/30 border-dashed">
                     <CardContent className="p-3">
                       <div className="flex justify-between mb-2">
-                        <Badge variant={q.status === "ANSWERED" ? "default" : "secondary"} className="text-[10px]">
-                          {q.status === "ANSWERED" ? <><CheckCircle2 className="w-3 h-3 mr-1"/>Answered</> : <><Clock className="w-3 h-3 mr-1"/>Pending</>}
+                        <Badge variant={q.status === 'ANSWERED' ? 'default' : 'secondary'} className="text-[10px]">
+                          {q.status}
                         </Badge>
-                        {q.expertName && <span className="text-[10px] text-muted-foreground">To: {q.expertName}</span>}
+                        <span className="text-[10px] text-muted-foreground">To: {q.expertName}</span>
                       </div>
-                      <p className="text-sm font-medium">Q: {q.question}</p>
+                      <p className="text-sm font-medium mb-2">Q: {q.question}</p>
                       {q.answer && (
-                        <div className="bg-background p-2 rounded text-sm border mt-2">
-                          <span className="font-bold text-primary text-xs block mb-1">Expert Answer:</span>
+                        <div className="bg-background p-2 rounded text-sm border border-border">
+                          <span className="font-bold text-primary text-xs block mb-1">Answer:</span>
                           {q.answer}
                         </div>
                       )}
@@ -487,84 +708,6 @@ export default function Community() {
               </div>
             </div>
           )}
-        </TabsContent>
-
-        {/* ─── ALERTS TAB ─── */}
-        <TabsContent value="alerts" className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="font-semibold text-sm">Disease Intelligence Map</h3>
-              <p className="text-[11px] text-muted-foreground">Punjab districts · Zama FHE encrypted reports</p>
-            </div>
-            <Badge variant="outline" className="text-[10px] bg-violet-50 border-violet-200 text-violet-700">
-              <Lock className="w-2.5 h-2.5 mr-1" /> FHE Protected
-            </Badge>
-          </div>
-
-          <div className="space-y-2.5">
-            {DISEASE_ALERTS.map(d => {
-              const style = RISK_STYLE[d.risk];
-              const barWidth = d.risk === "HIGH" ? "80%" : d.risk === "MEDIUM" ? "50%" : "20%";
-              return (
-                <Card key={d.district} className="overflow-hidden">
-                  <CardContent className="p-3">
-                    <div className="flex items-center justify-between mb-2">
-                      <div>
-                        <span className="font-semibold text-sm">{d.district}</span>
-                        <p className="text-xs text-muted-foreground">{d.disease}</p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {d.cases > 0 && (
-                          <span className="text-[10px] text-muted-foreground">{d.cases} cases</span>
-                        )}
-                        <span className={`text-[10px] font-semibold border rounded-full px-2 py-0.5 ${style.badge}`}>
-                          {d.risk}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="h-1.5 bg-muted rounded-full overflow-hidden">
-                      <div className={`h-full rounded-full transition-all ${style.bar}`} style={{ width: barWidth }} />
-                    </div>
-                    <div className="flex justify-between mt-1">
-                      <span className={`text-[10px] flex items-center gap-0.5 ${d.trend === "rising" ? "text-red-500" : d.trend === "falling" ? "text-green-500" : "text-muted-foreground"}`}>
-                        {d.trend === "rising" ? "↑ Rising" : d.trend === "falling" ? "↓ Falling" : "→ Stable"}
-                      </span>
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-
-          <Card className="border-amber-200 bg-amber-50">
-            <CardContent className="p-3 flex gap-3 items-start">
-              <AlertTriangle className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" />
-              <div>
-                <p className="text-xs font-semibold text-amber-800">High Risk Areas: Ludhiana, Bathinda</p>
-                <p className="text-[11px] text-amber-700 mt-0.5">Apply preventive fungicide immediately. Contact your nearest KVK for free crop inspection and treatment guidance.</p>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-blue-200 bg-blue-50">
-            <CardContent className="p-3 flex gap-3 items-start">
-              <CloudRain className="w-4 h-4 text-blue-600 mt-0.5 shrink-0" />
-              <div>
-                <p className="text-xs font-semibold text-blue-800">Weather Advisory</p>
-                <p className="text-[11px] text-blue-700 mt-0.5">IMD forecasts 60% chance of rain in next 72 hours across Punjab. Delay spraying operations. Ensure proper drainage in fields.</p>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-green-200 bg-green-50">
-            <CardContent className="p-3 flex gap-3 items-start">
-              <CheckCircle2 className="w-4 h-4 text-green-600 mt-0.5 shrink-0" />
-              <div>
-                <p className="text-xs font-semibold text-green-800">Good News: Ferozpur & Hoshiarpur</p>
-                <p className="text-[11px] text-green-700 mt-0.5">Both districts show no active disease outbreaks. Continue normal crop monitoring schedule.</p>
-              </div>
-            </CardContent>
-          </Card>
         </TabsContent>
       </Tabs>
     </div>

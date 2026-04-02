@@ -195,6 +195,10 @@ export interface CommunityPost {
   filecoinCid?: string | null;
   /** @nullable */
   badge?: string | null;
+  /** @nullable */
+  category?: string | null;
+  /** @nullable */
+  imageUrl?: string | null;
   comments: Comment[];
   createdAt: string;
 }
@@ -207,6 +211,10 @@ export interface CreateCommunityPostInput {
   visibility?: string;
   /** @nullable */
   badge?: string | null;
+  /** @nullable */
+  category?: string | null;
+  /** @nullable */
+  imageUrl?: string | null;
 }
 
 export interface AddCommentInput {
@@ -236,6 +244,7 @@ export interface Expert {
   rating: number;
   questionsAnswered: number;
   badge: string;
+  isOnline: boolean;
 }
 
 export interface ExpertQuestion {
