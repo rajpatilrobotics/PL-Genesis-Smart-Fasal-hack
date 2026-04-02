@@ -11,9 +11,23 @@ interface FheKeyCache {
   publicParams2048: string;
   publicParams2048Id: string;
   fetchedAt: number;
+  simulated?: boolean;
 }
 
 let fheKeyCache: FheKeyCache | null = null;
+
+function makeMockCache(): FheKeyCache {
+  const rand = (len: number) =>
+    Array.from({ length: len }, () => Math.floor(Math.random() * 256).toString(16).padStart(2, "0")).join("");
+  return {
+    publicKey: rand(512),
+    publicKeyId: `sim-pk-${Date.now()}`,
+    publicParams2048: rand(1024),
+    publicParams2048Id: `sim-pp-${Date.now()}`,
+    fetchedAt: Date.now(),
+    simulated: true,
+  };
+}
 
 router.get("/fhe/public-key", async (_req, res) => {
   try {
@@ -23,7 +37,7 @@ router.get("/fhe/public-key", async (_req, res) => {
 
     const keyurlRes = await fetch(`${GATEWAY_URL}keyurl`, {
       headers: { Accept: "application/json" },
-      signal: AbortSignal.timeout(12000),
+      signal: AbortSignal.timeout(8000),
     });
     if (!keyurlRes.ok) throw new Error(`Gateway keyurl returned ${keyurlRes.status}`);
 
@@ -54,12 +68,14 @@ router.get("/fhe/public-key", async (_req, res) => {
       publicParams2048: toHex(paramsBuf),
       publicParams2048Id,
       fetchedAt: Date.now(),
+      simulated: false,
     };
 
     return res.json(fheKeyCache);
   } catch (err) {
-    console.error("FHE gateway fetch error:", err);
-    return res.status(503).json({ error: "FHE gateway unavailable", details: String(err) });
+    console.warn("FHE gateway unreachable, using simulation mode:", (err as Error).message);
+    fheKeyCache = makeMockCache();
+    return res.json(fheKeyCache);
   }
 });
 

@@ -818,6 +818,7 @@ function ZamaTab() {
   const [aggregate, setAggregate] = useState<AggregateData | null>(null);
   const [loadingDash, setLoadingDash] = useState(false);
   const [reportCount, setReportCount] = useState(0);
+  const [isSimulated, setIsSimulated] = useState(false);
 
   const loadDashboard = async () => {
     setLoadingDash(true);
@@ -838,6 +839,10 @@ function ZamaTab() {
     if (view === "dashboard") loadDashboard();
   }, [view]);
 
+  const randHex = (len: number) =>
+    Array.from(crypto.getRandomValues(new Uint8Array(len)))
+      .map(b => b.toString(16).padStart(2, "0")).join("");
+
   const handleEncryptAndSubmit = async () => {
     setFheStep("init");
     setEncryptedHex(null);
@@ -848,14 +853,6 @@ function ZamaTab() {
     let handle: string;
 
     try {
-      const { initFhevm, createInstance } = await import("fhevmjs/web");
-
-      await initFhevm({
-        tfheParams: "/tfhe_bg.wasm",
-        kmsParams: "/kms_lib_bg.wasm",
-        thread: 0,
-      });
-
       const fheRes = await fetch("/api/fhe/public-key");
       if (!fheRes.ok) throw new Error(`FHE key API returned ${fheRes.status}`);
       const fheKeys = await fheRes.json() as {
@@ -863,37 +860,57 @@ function ZamaTab() {
         publicKeyId: string;
         publicParams2048: string;
         publicParams2048Id: string;
+        simulated?: boolean;
       };
 
-      const fromHex = (hex: string): Uint8Array => {
-        const bytes = new Uint8Array(hex.length / 2);
-        for (let i = 0; i < bytes.length; i++) {
-          bytes[i] = parseInt(hex.slice(i * 2, i * 2 + 2), 16);
-        }
-        return bytes;
-      };
+      const simulated = fheKeys.simulated === true;
+      setIsSimulated(simulated);
 
-      const instance = await createInstance({
-        kmsContractAddress: ZAMA_KMS,
-        aclContractAddress: ZAMA_ACL,
-        publicKey: fromHex(fheKeys.publicKey),
-        publicKeyId: fheKeys.publicKeyId,
-        publicParams: {
-          2048: {
-            publicParams: fromHex(fheKeys.publicParams2048),
-            publicParamsId: fheKeys.publicParams2048Id,
+      if (simulated) {
+        await new Promise(r => setTimeout(r, 800));
+        setFheStep("encrypting");
+        await new Promise(r => setTimeout(r, 600));
+        proof = randHex(128);
+        handle = randHex(32);
+      } else {
+        const { initFhevm, createInstance } = await import("fhevmjs/web");
+
+        await initFhevm({
+          tfheParams: "/tfhe_bg.wasm",
+          kmsParams: "/kms_lib_bg.wasm",
+          thread: 0,
+        });
+
+        const fromHex = (hex: string): Uint8Array => {
+          const bytes = new Uint8Array(hex.length / 2);
+          for (let i = 0; i < bytes.length; i++) {
+            bytes[i] = parseInt(hex.slice(i * 2, i * 2 + 2), 16);
+          }
+          return bytes;
+        };
+
+        const instance = await createInstance({
+          kmsContractAddress: ZAMA_KMS,
+          aclContractAddress: ZAMA_ACL,
+          publicKey: fromHex(fheKeys.publicKey),
+          publicKeyId: fheKeys.publicKeyId,
+          publicParams: {
+            2048: {
+              publicParams: fromHex(fheKeys.publicParams2048),
+              publicParamsId: fheKeys.publicParams2048Id,
+            },
           },
-        },
-        gatewayUrl: "https://gateway.sepolia.zama.ai/",
-      });
+          gatewayUrl: "https://gateway.sepolia.zama.ai/",
+        });
 
-      setFheStep("encrypting");
-      const input = instance.createEncryptedInput(ZAMA_ACL, FARMER_ADDR);
-      input.addBool(diseaseStatus === "infected");
-      const { handles, inputProof } = await input.encrypt();
+        setFheStep("encrypting");
+        const input = instance.createEncryptedInput(ZAMA_ACL, FARMER_ADDR);
+        input.addBool(diseaseStatus === "infected");
+        const { handles, inputProof } = await input.encrypt();
 
-      proof = Array.from(inputProof).map(b => b.toString(16).padStart(2, "0")).join("");
-      handle = Array.from(handles[0]).map(b => b.toString(16).padStart(2, "0")).join("");
+        proof = Array.from(inputProof).map(b => b.toString(16).padStart(2, "0")).join("");
+        handle = Array.from(handles[0]).map(b => b.toString(16).padStart(2, "0")).join("");
+      }
 
       setEncryptedHex(proof);
       setHandleHex(handle);
@@ -909,7 +926,9 @@ function ZamaTab() {
       setSubmitted(true);
       toast({
         title: "Report submitted!",
-        description: "Real Zama FHE ciphertext submitted. Your farm identity is not stored.",
+        description: simulated
+          ? "Demo ciphertext submitted. (Zama testnet unreachable from this environment.)"
+          : "Real Zama FHE ciphertext submitted. Your farm identity is not stored.",
       });
     } catch (err) {
       console.error("FHE error:", err);
@@ -928,7 +947,10 @@ function ZamaTab() {
           <div className="flex items-center gap-2 mb-1">
             <FlaskConical className="w-5 h-5 text-violet-600" />
             <span className="font-bold text-violet-800">Disease Shield — Private FHE Intelligence</span>
-            <Badge className="bg-violet-100 text-violet-700 border-violet-300 text-[10px] ml-auto">Zama Sepolia Testnet</Badge>
+            {isSimulated
+              ? <Badge className="bg-yellow-100 text-yellow-700 border-yellow-300 text-[10px] ml-auto">Demo Mode</Badge>
+              : <Badge className="bg-violet-100 text-violet-700 border-violet-300 text-[10px] ml-auto">Zama Sepolia Testnet</Badge>
+            }
           </div>
           <p className="text-xs text-muted-foreground">Farmers encrypt disease scan results using Fully Homomorphic Encryption. The government sees district-level outbreak maps — zero individual farms are ever identified.</p>
           <div className="flex gap-1 mt-2 text-[10px] font-mono text-violet-600/80">

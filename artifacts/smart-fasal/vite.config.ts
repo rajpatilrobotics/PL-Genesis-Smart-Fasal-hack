@@ -68,6 +68,8 @@ export default defineConfig({
     allowedHosts: true,
     headers: {
       "Cross-Origin-Resource-Policy": "cross-origin",
+      "Cross-Origin-Opener-Policy": "same-origin",
+      "Cross-Origin-Embedder-Policy": "require-corp",
     },
     fs: {
       strict: true,
