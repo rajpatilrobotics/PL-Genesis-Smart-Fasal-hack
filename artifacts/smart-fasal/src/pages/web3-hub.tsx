@@ -1677,7 +1677,7 @@ function ZamaTab() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// STARKNET TAB — Parametric Insurance + ZK Proofs
+// STARKNET TAB — Parametric Insurance + Soil Attestations
 // ─────────────────────────────────────────────────────────────────────────────
 type StarkCarbonCredit = {
   tokenId: string;
@@ -1691,6 +1691,9 @@ type StarkCarbonCredit = {
   networkLive: boolean;
   mintedAt: string;
   explorerUrl: string;
+  txHash: string | null;
+  txUrl: string | null;
+  onChain: boolean;
 };
 
 type NetworkStatus = {
@@ -1789,7 +1792,7 @@ function StarknetTab() {
       };
       addZKProof(proof);
       toast({
-        title: data.verified ? "ZK Proof Verified on Starknet!" : "Proof Generated — Condition Not Met",
+        title: data.verified ? "Soil Attestation Verified on Starknet!" : "Attestation Computed — Condition Not Met",
         description: data.verified
           ? `Block #${data.blockNumber} · ${data.networkLive ? "Live Sepolia" : "Signed offline"} · +25 FLOW`
           : "Your soil data did not satisfy this condition today.",
@@ -1817,10 +1820,12 @@ function StarknetTab() {
       if (!mintRes.ok) throw new Error("Minting failed");
       const data = await mintRes.json() as StarkCarbonCredit;
       setStarkCredits(prev => [data, ...prev]);
-      addFlowReward("Carbon Credit Minted via Starknet ZK Proof", 50);
+      addFlowReward("Carbon Credit Recorded on Starknet", 50);
       toast({
-        title: "Carbon Credit Minted on Starknet!",
-        description: `${data.co2Kg} kg CO₂ sequestered · ₹${data.valueINR} value · Block #${data.blockNumber}`,
+        title: data.onChain ? "Carbon Credit Recorded On-Chain! ✓" : "Carbon Credit Signed (deploy contract for on-chain record)",
+        description: data.onChain
+          ? `${data.co2Kg} kg CO₂ · ₹${data.valueINR} · TX: ${data.txHash?.slice(0, 16)}…`
+          : `${data.co2Kg} kg CO₂ · ₹${data.valueINR} · Block #${data.blockNumber}`,
       });
     } catch (err) {
       toast({ title: "Minting failed", description: String(err), variant: "destructive" });
