@@ -230,6 +230,7 @@ export const GetMarketPricesResponseItem = zod.object({
   market: zod.string(),
   state: zod.string(),
   change: zod.number(),
+  category: zod.string().nullish(),
   updatedAt: zod.coerce.date(),
 });
 export const GetMarketPricesResponse = zod.array(GetMarketPricesResponseItem);
@@ -250,9 +251,12 @@ export const GetMarketListingsResponseItem = zod.object({
   location: zod.string(),
   status: zod.string(),
   imageCid: zod.string().nullish(),
+  imageUrl: zod.string().nullish(),
   receiptCid: zod.string().nullish(),
   escrowStatus: zod.string(),
   buyerName: zod.string().nullish(),
+  rating: zod.number().nullish(),
+  category: zod.string().nullish(),
   createdAt: zod.coerce.date(),
 });
 export const GetMarketListingsResponse = zod.array(
@@ -299,9 +303,12 @@ export const BuyMarketListingResponse = zod.object({
   location: zod.string(),
   status: zod.string(),
   imageCid: zod.string().nullish(),
+  imageUrl: zod.string().nullish(),
   receiptCid: zod.string().nullish(),
   escrowStatus: zod.string(),
   buyerName: zod.string().nullish(),
+  rating: zod.number().nullish(),
+  category: zod.string().nullish(),
   createdAt: zod.coerce.date(),
 });
 
@@ -325,9 +332,12 @@ export const ConfirmDeliveryResponse = zod.object({
   location: zod.string(),
   status: zod.string(),
   imageCid: zod.string().nullish(),
+  imageUrl: zod.string().nullish(),
   receiptCid: zod.string().nullish(),
   escrowStatus: zod.string(),
   buyerName: zod.string().nullish(),
+  rating: zod.number().nullish(),
+  category: zod.string().nullish(),
   createdAt: zod.coerce.date(),
 });
 
