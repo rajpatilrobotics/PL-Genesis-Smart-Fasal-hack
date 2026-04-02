@@ -84,7 +84,7 @@ type WalletContextType = {
   zkProofs: ZKProof[];
   handleConnect: () => Promise<void>;
   handleDisconnect: () => void;
-  handleManualConnect: () => void;
+  handleManualConnect: (address?: string) => void;
   addFlowReward: (activity: string, points: number) => void;
   addDataEntry: (entry: DataEntry) => void;
   setCurrentRisk: (risk: RiskStatus) => void;
@@ -194,8 +194,8 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     toast({ title: "Wallet Disconnected" });
   };
 
-  const handleManualConnect = () => {
-    const trimmed = manualAddress.trim();
+  const handleManualConnect = (address?: string) => {
+    const trimmed = (address ?? manualAddress).trim();
     if (!trimmed) return;
     setWalletAddress(trimmed);
     setIsManual(true);
