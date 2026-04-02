@@ -8,8 +8,8 @@
       "farmerId": "SmartFasal_Farm_001",
       "droughtThreshold": 30,
       "heatThreshold": 35,
-      "registeredAt": "2026-04-02T20:27:30.808Z",
-      "txHash": "0x19b4ae1c31233c9cffc7aa4a497f636a3bf9074149c5811d0a0df5703270f9"
+      "registeredAt": "2026-04-02T20:30:20.805Z",
+      "txHash": "0x2534a73900f8ae37903e5f296b332d5176424b323306cf79303a9bac5eecb17"
     }
   },
   "claims": []

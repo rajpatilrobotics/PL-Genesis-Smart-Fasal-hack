@@ -61,6 +61,23 @@ function saveState(s: StarknetState) {
   try { writeFileSync(STATE_FILE, JSON.stringify(s, null, 2)); } catch { /**/ }
 }
 
+async function withRetry<T>(fn: () => Promise<T>, retries = 3, delayMs = 3000): Promise<T> {
+  for (let i = 0; i < retries; i++) {
+    try {
+      return await fn();
+    } catch (err: any) {
+      const isTransient = err?.baseError?.code === 19 || /temporary internal error|please retry/i.test(err?.message ?? "");
+      if (isTransient && i < retries - 1) {
+        console.warn(`[Starknet] Transient RPC error, retrying in ${delayMs}ms (attempt ${i + 1}/${retries})…`);
+        await new Promise(r => setTimeout(r, delayMs));
+      } else {
+        throw err;
+      }
+    }
+  }
+  throw new Error("withRetry exhausted");
+}
+
 // ─── Helpers ────────────────────────────────────────────────────────────────
 async function getLiveBlock() {
   try {
@@ -224,6 +241,23 @@ router.post("/starknet/register-policy", async (req, res): Promise<void> => {
     return;
   }
 
+  // Return existing registration without a new on-chain tx
+  if (state.policies[farmerId]) {
+    const p = state.policies[farmerId];
+    const { blockNumber, networkLive } = await getLiveBlock();
+    res.json({
+      success: true, alreadyRegistered: true,
+      farmerId: p.farmerId, droughtThreshold: p.droughtThreshold, heatThreshold: p.heatThreshold,
+      txHash: p.txHash,
+      txUrl: `${STARKSCAN_BASE}/tx/${p.txHash}`,
+      contractAddress: state.contractAddress,
+      explorerUrl: `${STARKSCAN_BASE}/contract/${state.contractAddress}`,
+      blockNumber, network: NETWORK_NAME, networkLive,
+      registeredAt: p.registeredAt,
+    });
+    return;
+  }
+
   try {
     const farmerIdFelt = cairo.felt(farmerId);
     const calldata = CallData.compile({
@@ -232,11 +266,11 @@ router.post("/starknet/register-policy", async (req, res): Promise<void> => {
       heat_temp_threshold: heatThreshold,
     });
 
-    const resp = await getAccount().execute({
-      contractAddress: state.contractAddress,
+    const resp = await withRetry(() => getAccount().execute({
+      contractAddress: state.contractAddress!,
       entrypoint: "register_policy",
       calldata,
-    });
+    }));
     await provider.waitForTransaction(resp.transaction_hash);
 
     const { blockNumber, networkLive } = await getLiveBlock();
@@ -260,7 +294,11 @@ router.post("/starknet/register-policy", async (req, res): Promise<void> => {
     });
   } catch (err: any) {
     console.error("[Starknet] Register policy error:", err);
-    res.status(500).json({ error: err?.message ?? String(err) });
+    const msg: string = err?.message ?? String(err);
+    const isTransient = /temporary internal error|please retry/i.test(msg);
+    res.status(500).json({
+      error: isTransient ? "Starknet RPC is temporarily busy — please try again in a few seconds" : msg,
+    });
   }
 });
 
@@ -313,11 +351,11 @@ router.post("/starknet/submit-claim", async (req, res): Promise<void> => {
       temperature:  Math.round(temperature ?? 0),
     });
 
-    const resp = await getAccount().execute({
-      contractAddress: state.contractAddress,
+    const resp = await withRetry(() => getAccount().execute({
+      contractAddress: state.contractAddress!,
       entrypoint: "submit_claim",
       calldata,
-    });
+    }));
     await provider.waitForTransaction(resp.transaction_hash);
 
     const { blockNumber, networkLive } = await getLiveBlock();
