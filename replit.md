@@ -2,35 +2,40 @@
 
 ## ⚡ AGENT QUICK START (Read This First — Saves Credits)
 
-When imported fresh, run these steps **in order** without exploration:
+> **CRITICAL**: This project has pre-built workflows. **NEVER create new workflows.** Only restart the two that already exist. Creating duplicates causes port conflicts and wastes credits.
 
-### Step 1 — Install dependencies (if node_modules missing)
+### The two workflows (already exist — just restart them)
+
+| Workflow name | What it does | Port |
+|---|---|---|
+| `API Server` | Database push + Express API | 8080 |
+| `artifacts/smart-fasal: web` | React/Vite frontend | 5000 |
+
+The `artifacts/smart-fasal: web` workflow is **managed by the artifact system** — PORT=5000 and BASE_PATH=/ are already injected automatically. Do not override or recreate it.
+
+### Step 1 — Install dependencies (only if `node_modules` is missing)
 ```bash
 pnpm install
 ```
+> On a fresh GitHub import this runs automatically via `scripts/post-merge.sh`. Only run manually if node_modules is absent.
 
-### Step 2 — Start workflows (if not already running)
-The project needs **two** workflows running simultaneously:
-
-**Workflow 1 — API Server** (console output, port 8080):
+### Step 2 — Restart workflows (never create new ones)
 ```
-pnpm --filter @workspace/db run push-force && PORT=8080 pnpm --filter @workspace/api-server run dev
+restart_workflow("API Server")
+restart_workflow("artifacts/smart-fasal: web")
 ```
 
-**Workflow 2 — Frontend** (webview output, port 5000):
-```
-pnpm --filter @workspace/smart-fasal run dev
-```
-With env: `PORT=5000`, `BASE_PATH=/`
+### Step 3 — Verify
+- API: `curl http://localhost:8080/api/weather` → JSON weather data
+- Frontend: visit `http://localhost:5000/` → Farm Dashboard visible
 
-### Step 3 — Verify it works
-- API: `curl http://localhost:8080/api/weather` → should return JSON
-- Frontend: visit `http://localhost:5000/` → Farm Dashboard
-
-### Known Issues & Fixes
-- If port 8080 conflict: only ONE workflow should run the API server. Remove any duplicate "Start application" workflow.
-- If frontend shows blank: remove headers `Cross-Origin-Opener-Policy` and `Cross-Origin-Embedder-Policy` from `artifacts/smart-fasal/vite.config.ts`
-- If `drizzle-kit not found`: run `pnpm install` from workspace root first
+### Troubleshooting
+| Symptom | Fix |
+|---|---|
+| Preview shows "app not running" | A duplicate workflow grabbed port 5000. Delete any workflow named "Start application" or "Frontend", then restart `artifacts/smart-fasal: web` |
+| `drizzle-kit not found` | Run `pnpm install` from workspace root |
+| Frontend blank/white | Check `artifacts/smart-fasal/vite.config.ts` — remove `Cross-Origin-Opener-Policy` and `Cross-Origin-Embedder-Policy` headers if present |
+| Port 8080 in use | Delete any duplicate API workflow; only `API Server` should run |
 
 ### Environment Variables (already set in .replit userenv)
 ```
