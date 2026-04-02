@@ -1972,7 +1972,7 @@ function StarknetTab() {
                   <p className="text-[11px] text-muted-foreground mt-0.5">Account contract deployed at {networkStatus.walletAddressShort}</p>
                   <a href={networkStatus.accountExplorerUrl} target="_blank" rel="noopener noreferrer"
                     className="inline-flex items-center gap-1 text-[10px] text-blue-600 hover:underline mt-1">
-                    <ExternalLink className="w-2.5 h-2.5" /> View on Starkscan
+                    <ExternalLink className="w-2.5 h-2.5" /> View on Voyager
                   </a>
                 </>
               ) : (
@@ -2016,7 +2016,7 @@ function StarknetTab() {
               {networkStatus?.contractDeployed && networkStatus.explorerUrl && (
                 <a href={networkStatus.explorerUrl} target="_blank" rel="noopener noreferrer"
                   className="inline-flex items-center gap-1 text-[10px] text-blue-600 hover:underline mt-1">
-                  <ExternalLink className="w-2.5 h-2.5" /> View on Starkscan
+                  <ExternalLink className="w-2.5 h-2.5" /> View on Voyager
                 </a>
               )}
               {networkStatus?.contractDeployed && networkStatus.deployTxHash && (
@@ -2123,9 +2123,9 @@ function StarknetTab() {
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-[9px] text-muted-foreground">{new Date(claim.timestamp).toLocaleString("en-IN")}</span>
-                    <a href={`https://sepolia.starkscan.co/tx/${claim.txHash}`} target="_blank" rel="noopener noreferrer"
+                    <a href={`https://sepolia.voyager.online/tx/${claim.txHash}`} target="_blank" rel="noopener noreferrer"
                       className="flex items-center gap-0.5 text-[10px] text-blue-600 hover:underline font-semibold">
-                      <ExternalLink className="w-2.5 h-2.5" /> Starkscan
+                      <ExternalLink className="w-2.5 h-2.5" /> Voyager
                     </a>
                   </div>
                 </CardContent>
@@ -2189,7 +2189,7 @@ function StarknetTab() {
                     {p.explorerUrl && (
                       <a href={p.explorerUrl} target="_blank" rel="noopener noreferrer"
                         className="flex items-center gap-0.5 text-[10px] text-blue-600 hover:underline">
-                        <ExternalLink className="w-2.5 h-2.5" /> Starkscan
+                        <ExternalLink className="w-2.5 h-2.5" /> Voyager
                       </a>
                     )}
                   </div>
@@ -2216,7 +2216,7 @@ function StarknetTab() {
         </CardHeader>
         <CardContent className="space-y-3">
           <p className="text-xs text-muted-foreground">
-            IoT soil readings → Pedersen commitment → STARK curve ECDSA → on-chain registration in the Cairo parametric insurance contract. Each credit is a real Starknet Sepolia event with a verifiable tx hash on Starkscan.
+            IoT soil readings → Pedersen commitment → STARK curve ECDSA → on-chain registration in the Cairo parametric insurance contract. Each credit is a real Starknet Sepolia event with a verifiable tx hash on Voyager explorer.
           </p>
           <div className="grid grid-cols-3 gap-2 text-center text-[10px] text-muted-foreground">
             <div className="bg-white/70 rounded-lg p-2">
@@ -2289,20 +2289,20 @@ function StarknetTab() {
                   <div className="space-y-1.5">
                     <a href={c.txUrl} target="_blank" rel="noopener noreferrer"
                       className="flex items-center gap-1 text-[10px] text-blue-600 hover:underline font-semibold">
-                      <ExternalLink className="w-3 h-3" /> View on-chain TX on Starkscan ↗
+                      <ExternalLink className="w-3 h-3" /> View on-chain TX on Voyager ↗
                     </a>
                     <p className="text-[9px] text-amber-600">
-                      ⏳ Starkscan may take 1–3 min to index new Sepolia transactions. If the page is blank, wait and refresh.
+                      ⏳ Voyager may take 1–3 min to index new Sepolia transactions. If the page is blank, wait and refresh.
                     </p>
                     <div className="bg-emerald-50 border border-emerald-200 rounded p-1.5">
-                      <p className="text-[9px] text-muted-foreground mb-0.5">Full TX hash (paste into Starkscan search):</p>
+                      <p className="text-[9px] text-muted-foreground mb-0.5">Full TX hash (paste into Voyager search):</p>
                       <p className="text-[9px] font-mono text-emerald-800 break-all select-all">{c.txHash}</p>
                     </div>
                   </div>
                 ) : (
                   <a href={c.explorerUrl} target="_blank" rel="noopener noreferrer"
                     className="flex items-center gap-1 text-[10px] text-blue-600 hover:underline">
-                    <ExternalLink className="w-3 h-3" /> View signer on Starkscan
+                    <ExternalLink className="w-3 h-3" /> View signer on Voyager
                   </a>
                 )}
               </div>

@@ -21,7 +21,7 @@ const WALLET_ADDR     = process.env.STARKNET_WALLET_ADDRESS || "0x17ecda611fa4c7
 const STATE_FILE      = join(process.cwd(), "starknet-state.json");
 const SIERRA_PATH     = join(process.cwd(), "contracts/insurance.sierra.json");
 const CASM_PATH       = join(process.cwd(), "contracts/insurance.casm.json");
-const STARKSCAN_BASE  = "https://sepolia.starkscan.co";
+const STARKSCAN_BASE  = "https://sepolia.voyager.online";
 const NETWORK_NAME    = "Starknet Sepolia";
 const OZ_CLASS_HASH   = "0x061dac032f228abef9c6626f995015233097ae253a7f72d68552db02f2971b8f";
 
@@ -447,7 +447,7 @@ router.post("/starknet/generate-proof", async (req, res): Promise<void> => {
  * the STARK curve (real cryptography — same primitives as Starknet itself).
  * If the parametric-insurance contract is already deployed, we also record
  * the credit on-chain by calling register_policy with carbon-credit calldata,
- * producing a real Starknet Sepolia tx verifiable on Starkscan.
+ * producing a real Starknet Sepolia tx verifiable on Voyager explorer.
  */
 router.post("/starknet/carbon-credit/mint", async (req, res): Promise<void> => {
   const { ph, nitrogen, phosphorus, potassium, moisture } = req.body;
@@ -476,7 +476,7 @@ router.post("/starknet/carbon-credit/mint", async (req, res): Promise<void> => {
     // carbon-credit calldata.  farmer_id encodes "CC_<tokenId8>" as a
     // felt252 short-string; drought_threshold stores co2Kg; heat_threshold
     // stores the health score (0-100).  This creates a permanent, verifiable
-    // Starknet Sepolia event that any judge can inspect on Starkscan.
+    // Starknet Sepolia event that any judge can inspect on Voyager explorer.
     //
     let txHash:  string | null = null;
     let txUrl:   string | null = null;
