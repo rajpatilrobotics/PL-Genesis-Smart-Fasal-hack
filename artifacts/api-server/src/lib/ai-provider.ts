@@ -1,22 +1,37 @@
 /**
  * AI Provider Abstraction
  *
- * Auto-detects which AI provider to use based on available environment variables:
- * - On Replit: uses OpenAI via Replit's AI Integration (AI_INTEGRATIONS_OPENAI_API_KEY)
- * - On Render/elsewhere: uses Google Gemini (GOOGLE_API_KEY)
+ * Provider selection (in priority order):
+ *   1. Replit environment: OpenAI via Replit's AI Integration
+ *      (auto-configured — no API key needed, just the Replit integration)
+ *      Detected via: AI_INTEGRATIONS_OPENAI_BASE_URL or AI_INTEGRATIONS_OPENAI_API_KEY
  *
- * Both providers return the same response shape — routes don't need to know which is active.
+ *   2. Render / external deployment: Google Gemini free tier
+ *      Set GOOGLE_API_KEY in Render environment variables.
+ *      Get a free key at: https://aistudio.google.com/apikey
+ *      Model: gemini-2.0-flash — supports text + vision (image analysis),
+ *      free tier limits: 15 req/min, 1,500 req/day, 1M tokens/day.
+ *
+ * Both providers return identical response shapes — routes are provider-agnostic.
  */
 
 import { openai } from "@workspace/integrations-openai-ai-server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
+// Free-tier Gemini model — supports both text and image (vision) inputs.
+// Switch to gemini-1.5-flash if gemini-2.0-flash is unavailable in your region.
+const GEMINI_FREE_MODEL = "gemini-2.0-flash";
+
 function getProvider(): "openai" | "gemini" {
-  // Always prefer OpenAI (via Replit AI integration) — Gemini only if explicitly forced
-  // and no OpenAI integration is available.
-  if (process.env.FORCE_GEMINI === "true" && process.env.GOOGLE_API_KEY && !process.env.AI_INTEGRATIONS_OPENAI_API_KEY && !process.env.AI_INTEGRATIONS_OPENAI_BASE_URL) {
+  // On Replit: the AI integration sets these env vars automatically.
+  if (process.env.AI_INTEGRATIONS_OPENAI_BASE_URL || process.env.AI_INTEGRATIONS_OPENAI_API_KEY) {
+    return "openai";
+  }
+  // On Render / external: use Gemini free tier if GOOGLE_API_KEY is set.
+  if (process.env.GOOGLE_API_KEY) {
     return "gemini";
   }
+  // Default: attempt OpenAI (will show a clear error if integration not provisioned).
   return "openai";
 }
 
@@ -25,7 +40,7 @@ let geminiClient: GoogleGenerativeAI | null = null;
 function getGeminiClient(): GoogleGenerativeAI {
   if (!geminiClient) {
     const apiKey = process.env.GOOGLE_API_KEY;
-    if (!apiKey) throw new Error("GOOGLE_API_KEY not set");
+    if (!apiKey) throw new Error("GOOGLE_API_KEY not set. Get a free key at https://aistudio.google.com/apikey");
     geminiClient = new GoogleGenerativeAI(apiKey);
   }
   return geminiClient;
@@ -33,7 +48,7 @@ function getGeminiClient(): GoogleGenerativeAI {
 
 /**
  * Generate a JSON response from a text-only prompt.
- * Used for: credit scoring, crop recommendations, risk analysis.
+ * Used for: crop recommendations, risk analysis.
  */
 export async function generateJSON(prompt: string): Promise<string> {
   const provider = getProvider();
@@ -41,7 +56,7 @@ export async function generateJSON(prompt: string): Promise<string> {
   if (provider === "gemini") {
     const genAI = getGeminiClient();
     const model = genAI.getGenerativeModel({
-      model: "gemini-2.5-flash",
+      model: GEMINI_FREE_MODEL,
       generationConfig: { responseMimeType: "application/json" },
     });
     const result = await model.generateContent(prompt);
@@ -49,7 +64,7 @@ export async function generateJSON(prompt: string): Promise<string> {
   }
 
   const completion = await openai.chat.completions.create({
-    model: "gpt-5.2",
+    model: "gpt-4o",
     max_completion_tokens: 1024,
     messages: [{ role: "user", content: prompt }],
     response_format: { type: "json_object" },
@@ -60,6 +75,7 @@ export async function generateJSON(prompt: string): Promise<string> {
 /**
  * Generate a JSON response from an image + text prompt.
  * Used for: disease detection from crop photos.
+ * Both gemini-2.0-flash and gpt-4o support multimodal vision inputs.
  */
 export async function generateVisionJSON(params: {
   imageBase64: string;
@@ -73,7 +89,7 @@ export async function generateVisionJSON(params: {
   if (provider === "gemini") {
     const genAI = getGeminiClient();
     const model = genAI.getGenerativeModel({
-      model: "gemini-2.5-flash",
+      model: GEMINI_FREE_MODEL,
       generationConfig: { responseMimeType: "application/json" },
       systemInstruction: systemPrompt,
     });
@@ -109,8 +125,8 @@ export async function generateVisionJSON(params: {
 }
 
 /**
- * Generate a JSON response from a text-only prompt (no image).
- * Alias of generateJSON — used for credit scoring specifically with longer output.
+ * Generate a JSON response from a text-only prompt with limited output.
+ * Used for: credit scoring.
  */
 export async function generateCreditJSON(prompt: string): Promise<string> {
   const provider = getProvider();
@@ -118,7 +134,7 @@ export async function generateCreditJSON(prompt: string): Promise<string> {
   if (provider === "gemini") {
     const genAI = getGeminiClient();
     const model = genAI.getGenerativeModel({
-      model: "gemini-2.5-flash",
+      model: GEMINI_FREE_MODEL,
       generationConfig: {
         responseMimeType: "application/json",
         maxOutputTokens: 512,
@@ -129,7 +145,7 @@ export async function generateCreditJSON(prompt: string): Promise<string> {
   }
 
   const completion = await openai.chat.completions.create({
-    model: "gpt-5.2",
+    model: "gpt-4o",
     max_completion_tokens: 512,
     messages: [{ role: "user", content: prompt }],
     response_format: { type: "json_object" },
