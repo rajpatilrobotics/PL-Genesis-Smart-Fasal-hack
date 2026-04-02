@@ -292,7 +292,6 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
 
   const addZKProof = (proof: ZKProof) => {
     setZKProofs((prev) => [proof, ...prev]);
-    addFlowReward("ZK Proof Verified on Starknet", 25);
   };
 
   const addInsuranceClaim = (claim: InsuranceClaim) => {
