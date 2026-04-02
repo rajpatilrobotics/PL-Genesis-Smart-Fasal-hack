@@ -2286,10 +2286,19 @@ function StarknetTab() {
                   {c.txHash && <p className="text-[9px] font-mono text-emerald-700 break-all">TX: {c.txHash.slice(0, 26)}…</p>}
                 </div>
                 {c.txUrl ? (
-                  <a href={c.txUrl} target="_blank" rel="noopener noreferrer"
-                    className="flex items-center gap-1 text-[10px] text-blue-600 hover:underline font-semibold">
-                    <ExternalLink className="w-3 h-3" /> View on-chain TX on Starkscan ↗
-                  </a>
+                  <div className="space-y-1.5">
+                    <a href={c.txUrl} target="_blank" rel="noopener noreferrer"
+                      className="flex items-center gap-1 text-[10px] text-blue-600 hover:underline font-semibold">
+                      <ExternalLink className="w-3 h-3" /> View on-chain TX on Starkscan ↗
+                    </a>
+                    <p className="text-[9px] text-amber-600">
+                      ⏳ Starkscan may take 1–3 min to index new Sepolia transactions. If the page is blank, wait and refresh.
+                    </p>
+                    <div className="bg-emerald-50 border border-emerald-200 rounded p-1.5">
+                      <p className="text-[9px] text-muted-foreground mb-0.5">Full TX hash (paste into Starkscan search):</p>
+                      <p className="text-[9px] font-mono text-emerald-800 break-all select-all">{c.txHash}</p>
+                    </div>
+                  </div>
                 ) : (
                   <a href={c.explorerUrl} target="_blank" rel="noopener noreferrer"
                     className="flex items-center gap-1 text-[10px] text-blue-600 hover:underline">
