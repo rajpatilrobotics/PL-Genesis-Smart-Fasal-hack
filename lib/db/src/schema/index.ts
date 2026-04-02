@@ -9,3 +9,4 @@ export * from "./event-logs";
 export * from "./credit";
 export * from "./disease-scans";
 export * from "./lit-vault";
+export * from "./disease-intel";

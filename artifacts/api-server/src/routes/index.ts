@@ -11,6 +11,7 @@ import rewardsRouter from "./rewards";
 import analyticsRouter from "./analytics";
 import creditRouter from "./credit";
 import litRouter from "./lit";
+import diseaseIntelRouter from "./disease-intel";
 
 const router: IRouter = Router();
 
@@ -26,5 +27,6 @@ router.use(rewardsRouter);
 router.use(analyticsRouter);
 router.use(creditRouter);
 router.use(litRouter);
+router.use(diseaseIntelRouter);
 
 export default router;

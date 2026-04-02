@@ -775,138 +775,401 @@ function LitTab() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// ZAMA FHE TAB — Private Computation
+// ZAMA FHE TAB — Private Multi-Farm Disease Intelligence
 // ─────────────────────────────────────────────────────────────────────────────
+
+const PUNJAB_DISTRICTS = [
+  "Ludhiana", "Amritsar", "Jalandhar", "Patiala", "Gurdaspur",
+  "Hoshiarpur", "Bathinda", "Sangrur", "Moga", "Fazilka",
+  "Ropar", "Pathankot", "Kapurthala", "Fatehgarh Sahib", "Barnala",
+];
+const FHE_CROPS = ["Wheat", "Rice (Paddy)", "Maize", "Cotton", "Sugarcane", "Mustard"];
+const ZAMA_ACL = "0x687820221192C5B662b25367F70076A37bc79b6c";
+const ZAMA_KMS = "0x1364cBBf2cDF5032C47d8226a6f6FBD2AFCDacAC";
+const FARMER_ADDR = "0x1C9d29F655E2674665eFD84B3997c8E76F1f88Cc";
+
+type AggregateData = {
+  totalEncryptedReports: number;
+  individualsIdentified: number;
+  districtOutbreakMap: Record<string, { total: number; byCrop: Record<string, number> }>;
+  cropBreakdown: Record<string, number>;
+  recentReports: Array<{ id: number; reportId: string; district: string; cropType: string; encryptedStatusPreview: string; createdAt: string }>;
+  network: string;
+};
+
+function getHeatColor(count: number) {
+  if (count === 0) return "bg-green-100 text-green-800 border-green-200";
+  if (count <= 2) return "bg-yellow-100 text-yellow-800 border-yellow-200";
+  if (count <= 4) return "bg-orange-100 text-orange-800 border-orange-200";
+  return "bg-red-100 text-red-800 border-red-200";
+}
+
 function ZamaTab() {
   const { toast } = useToast();
-  const { walletAddress } = useWallet();
-  const [computing, setComputing] = useState(false);
-  const [result, setResult] = useState<null | { recommendation: string; healthScore: number; encryptedCID: string }>(null);
-  const [auctionBid, setAuctionBid] = useState("");
-  const [auctionSubmitted, setAuctionSubmitted] = useState(false);
-  const [auctionResult, setAuctionResult] = useState<null | { winner: string; winningBid: string }>(null);
+  const [view, setView] = useState<"farmer" | "dashboard">("farmer");
+  const [district, setDistrict] = useState(PUNJAB_DISTRICTS[0]);
+  const [cropType, setCropType] = useState(FHE_CROPS[0]);
+  const [diseaseStatus, setDiseaseStatus] = useState<"infected" | "clean">("clean");
+  const [fheStep, setFheStep] = useState<"idle" | "init" | "encrypting" | "done" | "error">("idle");
+  const [encryptedHex, setEncryptedHex] = useState<string | null>(null);
+  const [handleHex, setHandleHex] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [aggregate, setAggregate] = useState<AggregateData | null>(null);
+  const [loadingDash, setLoadingDash] = useState(false);
+  const [reportCount, setReportCount] = useState(0);
 
-  const handleFHEAnalysis = async () => {
-    if (!walletAddress) { toast({ title: "Connect wallet first", variant: "destructive" }); return; }
-    setComputing(true);
-    setResult(null);
-    await new Promise(r => setTimeout(r, 2200));
-    setResult({
-      recommendation: "Optimal: Increase nitrogen by 15%. Soil health is above district average. Suggested crop: Wheat variety HD-3086.",
-      healthScore: Math.floor(Math.random() * 20) + 75,
-      encryptedCID: randomCID(),
-    });
-    setComputing(false);
-    toast({ title: "FHE Computation Complete!", description: "Soil analysis done on encrypted data — your raw values were never exposed." });
+  const loadDashboard = async () => {
+    setLoadingDash(true);
+    try {
+      const res = await fetch("/api/disease-intel/aggregate");
+      if (!res.ok) throw new Error("Failed to load");
+      const data = await res.json() as AggregateData;
+      setAggregate(data);
+      setReportCount(data.totalEncryptedReports);
+    } catch {
+      toast({ title: "Could not load dashboard", variant: "destructive" });
+    } finally {
+      setLoadingDash(false);
+    }
   };
 
-  const handleBlindBid = async () => {
-    if (!auctionBid) { toast({ title: "Enter a bid amount", variant: "destructive" }); return; }
-    setAuctionSubmitted(true);
-    await new Promise(r => setTimeout(r, 1800));
-    const winnerBid = Math.floor(Math.random() * 500) + 800;
-    const myBid = parseInt(auctionBid);
-    const won = myBid >= winnerBid;
-    setAuctionResult({
-      winner: won ? "You won!" : "Outbid",
-      winningBid: `₹${winnerBid}/quintal`,
-    });
-    toast({ title: won ? "Auction Won!" : "Outbid", description: `Winning price: ₹${winnerBid}/quintal` });
+  useEffect(() => {
+    if (view === "dashboard") loadDashboard();
+  }, [view]);
+
+  const handleEncryptAndSubmit = async () => {
+    setFheStep("init");
+    setEncryptedHex(null);
+    setHandleHex(null);
+    setSubmitted(false);
+
+    try {
+      setFheStep("init");
+      const { initFhevm, createInstance } = await import("fhevmjs/web");
+      await initFhevm({
+        tfheParams: "/tfhe_bg.wasm",
+        kmsParams: "/kms_lib_bg.wasm",
+      });
+      const instance = await createInstance({
+        kmsContractAddress: ZAMA_KMS,
+        aclContractAddress: ZAMA_ACL,
+        networkUrl: "https://eth-sepolia.public.blastapi.io",
+        gatewayUrl: "https://gateway.sepolia.zama.ai/",
+      });
+
+      setFheStep("encrypting");
+      const input = instance.createEncryptedInput(ZAMA_ACL, FARMER_ADDR);
+      input.addBool(diseaseStatus === "infected");
+      const { handles, inputProof } = await input.encrypt();
+
+      const proof = Array.from(inputProof).map(b => b.toString(16).padStart(2, "0")).join("");
+      const handle = Array.from(handles[0]).map(b => b.toString(16).padStart(2, "0")).join("");
+      setEncryptedHex(proof);
+      setHandleHex(handle);
+      setFheStep("done");
+
+      setSubmitting(true);
+      const res = await fetch("/api/disease-intel/submit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ district, cropType, encryptedStatus: proof, encryptionHandle: handle }),
+      });
+      if (!res.ok) throw new Error("Submit failed");
+      setSubmitted(true);
+      toast({ title: "Report submitted!", description: "Your encrypted disease report is on-record. Your farm identity is not stored." });
+    } catch (err) {
+      console.error("FHE error:", err);
+      setFheStep("error");
+      toast({ title: "FHE encryption failed", description: String(err), variant: "destructive" });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
     <div className="space-y-4">
+      {/* Header */}
       <Card className="bg-gradient-to-br from-violet-50 to-purple-50 border-violet-200">
         <CardContent className="p-4">
-          <div className="flex items-center gap-2 mb-2">
+          <div className="flex items-center gap-2 mb-1">
             <FlaskConical className="w-5 h-5 text-violet-600" />
-            <span className="font-bold text-violet-800">Zama FHE — Fully Homomorphic Encryption</span>
+            <span className="font-bold text-violet-800">Disease Shield — Private FHE Intelligence</span>
+            <Badge className="bg-violet-100 text-violet-700 border-violet-300 text-[10px] ml-auto">Zama Sepolia Testnet</Badge>
           </div>
-          <p className="text-xs text-muted-foreground">Compute on encrypted data without revealing raw values. Your soil NPK, pH, and moisture stay private while AI still gives full recommendations.</p>
+          <p className="text-xs text-muted-foreground">Farmers encrypt disease scan results using Fully Homomorphic Encryption. The government sees district-level outbreak maps — zero individual farms are ever identified.</p>
+          <div className="flex gap-1 mt-2 text-[10px] font-mono text-violet-600/80">
+            <span>ACL: {ZAMA_ACL.slice(0, 10)}…</span>
+            <span className="mx-1">·</span>
+            <span>Chain: 11155111 (Sepolia)</span>
+          </div>
         </CardContent>
       </Card>
 
-      {/* Private Soil Analysis */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm flex items-center gap-2">
-            <FlaskConical className="w-4 h-4 text-violet-500" />
-            Private Soil Analysis
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {/* Encryption visualization */}
-          <div className="bg-muted/50 rounded-xl p-3 font-mono text-[10px] space-y-1">
-            <div className="flex items-center gap-2">
-              <span className="text-muted-foreground w-20">Raw pH:</span>
-              <span className="text-violet-700">{computing ? "encrypting..." : "Enc(6.8) → 0x7a3f..."}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-muted-foreground w-20">Raw N:</span>
-              <span className="text-violet-700">{computing ? "encrypting..." : "Enc(145) → 0x2b9c..."}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-muted-foreground w-20">Raw Moisture:</span>
-              <span className="text-violet-700">{computing ? "encrypting..." : "Enc(62%) → 0x8d1a..."}</span>
-            </div>
-            <div className="flex items-center gap-2 border-t pt-1 mt-1">
-              <span className="text-muted-foreground w-20">AI Compute:</span>
-              <span className="text-green-600">On encrypted data ✓</span>
-            </div>
-          </div>
-          <Button className="w-full" onClick={handleFHEAnalysis} disabled={computing}>
-            {computing ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Running FHE Computation...</> : <><FlaskConical className="w-4 h-4 mr-2" />Run Private Analysis</>}
-          </Button>
-          {result && (
-            <div className="bg-green-50 border border-green-200 rounded-xl p-3 space-y-2">
-              <div className="flex items-center gap-1.5 text-green-700 font-semibold text-xs">
-                <CheckCircle2 className="w-3.5 h-3.5" /> FHE Result — Raw data never exposed
-              </div>
-              <p className="text-xs text-gray-700">{result.recommendation}</p>
-              <div className="flex justify-between text-[10px] text-muted-foreground">
-                <span>Health Score: <strong className="text-green-600">{result.healthScore}%</strong></span>
-                <span>CID: {shortHash(result.encryptedCID)}</span>
-              </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      {/* View Toggle */}
+      <div className="flex rounded-xl overflow-hidden border border-violet-200 text-sm font-medium">
+        <button
+          className={cn("flex-1 py-2 transition-colors", view === "farmer" ? "bg-violet-600 text-white" : "bg-white text-violet-700 hover:bg-violet-50")}
+          onClick={() => setView("farmer")}
+        >
+          Farmer Portal
+        </button>
+        <button
+          className={cn("flex-1 py-2 transition-colors", view === "dashboard" ? "bg-violet-600 text-white" : "bg-white text-violet-700 hover:bg-violet-50")}
+          onClick={() => setView("dashboard")}
+        >
+          Gov Dashboard {reportCount > 0 && <span className="ml-1 text-[10px] bg-red-500 text-white rounded-full px-1.5">{reportCount}</span>}
+        </button>
+      </div>
 
-      {/* Blind Auction */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm flex items-center gap-2">
-            <BarChart3 className="w-4 h-4 text-violet-500" />
-            Blind Crop Auction
-          </CardTitle>
-          <p className="text-xs text-muted-foreground">Bid on crop purchase contracts without seeing competitor bids. All bids are FHE-encrypted until reveal phase.</p>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="bg-violet-50 rounded-lg p-2.5 text-xs">
-            <p className="font-semibold text-violet-700 mb-1">Active Auction: Wheat — 10 Quintal</p>
-            <p className="text-muted-foreground">District: Nashik · Ends: 2h 15m</p>
-          </div>
-          {!auctionResult ? (
-            <div className="flex gap-2">
-              <div className="flex-1 relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">₹</span>
-                <input
-                  type="number" placeholder="Your bid / quintal"
-                  value={auctionBid} onChange={e => setAuctionBid(e.target.value)}
-                  className="w-full pl-6 pr-3 py-2 text-sm border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-violet-300"
-                />
+      {view === "farmer" && (
+        <div className="space-y-3">
+          {/* Form */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <Lock className="w-4 h-4 text-violet-500" />
+                Submit Encrypted Disease Report
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1 block">District</label>
+                  <select
+                    value={district}
+                    onChange={e => setDistrict(e.target.value)}
+                    className="w-full text-xs border rounded-lg px-2 py-1.5 bg-background focus:outline-none focus:ring-2 focus:ring-violet-300"
+                    disabled={fheStep !== "idle" && fheStep !== "done" && fheStep !== "error"}
+                  >
+                    {PUNJAB_DISTRICTS.map(d => <option key={d}>{d}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1 block">Crop Type</label>
+                  <select
+                    value={cropType}
+                    onChange={e => setCropType(e.target.value)}
+                    className="w-full text-xs border rounded-lg px-2 py-1.5 bg-background focus:outline-none focus:ring-2 focus:ring-violet-300"
+                    disabled={fheStep !== "idle" && fheStep !== "done" && fheStep !== "error"}
+                  >
+                    {FHE_CROPS.map(c => <option key={c}>{c}</option>)}
+                  </select>
+                </div>
               </div>
-              <Button variant="outline" className="border-violet-300 text-violet-700" onClick={handleBlindBid} disabled={auctionSubmitted}>
-                {auctionSubmitted ? <Loader2 className="w-4 h-4 animate-spin" /> : "Bid (FHE)"}
+
+              <div>
+                <label className="text-xs text-muted-foreground mb-1.5 block">Disease Detection Result</label>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setDiseaseStatus("infected")}
+                    className={cn("flex-1 py-2 text-xs font-semibold rounded-lg border transition-colors", diseaseStatus === "infected" ? "bg-red-100 border-red-400 text-red-700" : "bg-muted/50 border-muted text-muted-foreground")}
+                    disabled={fheStep !== "idle" && fheStep !== "done" && fheStep !== "error"}
+                  >
+                    🔴 Infected
+                  </button>
+                  <button
+                    onClick={() => setDiseaseStatus("clean")}
+                    className={cn("flex-1 py-2 text-xs font-semibold rounded-lg border transition-colors", diseaseStatus === "clean" ? "bg-green-100 border-green-400 text-green-700" : "bg-muted/50 border-muted text-muted-foreground")}
+                    disabled={fheStep !== "idle" && fheStep !== "done" && fheStep !== "error"}
+                  >
+                    🟢 Clean
+                  </button>
+                </div>
+                <p className="text-[10px] text-muted-foreground mt-1">Your raw result is never sent to the server — only the FHE ciphertext.</p>
+              </div>
+
+              {/* FHE progress steps */}
+              {fheStep !== "idle" && (
+                <div className="bg-muted/30 rounded-xl p-3 space-y-1.5 text-[11px]">
+                  <div className={cn("flex items-center gap-2", fheStep === "init" ? "text-violet-600" : "text-green-600")}>
+                    {fheStep === "init" ? <Loader2 className="w-3 h-3 animate-spin" /> : <CheckCircle2 className="w-3 h-3" />}
+                    Connecting to Zama Sepolia testnet & fetching FHE public key…
+                  </div>
+                  {(fheStep === "encrypting" || fheStep === "done" || fheStep === "error") && (
+                    <div className={cn("flex items-center gap-2", fheStep === "encrypting" ? "text-violet-600" : fheStep === "error" ? "text-red-600" : "text-green-600")}>
+                      {fheStep === "encrypting" ? <Loader2 className="w-3 h-3 animate-spin" /> : fheStep === "error" ? <Shield className="w-3 h-3" /> : <CheckCircle2 className="w-3 h-3" />}
+                      Running TFHE encryption (addBool → ciphertext + ZK proof)…
+                    </div>
+                  )}
+                  {(fheStep === "done" || submitting) && !submitted && (
+                    <div className={cn("flex items-center gap-2", submitting ? "text-violet-600" : "text-green-600")}>
+                      {submitting ? <Loader2 className="w-3 h-3 animate-spin" /> : <CheckCircle2 className="w-3 h-3" />}
+                      Submitting encrypted report to server…
+                    </div>
+                  )}
+                  {submitted && (
+                    <div className="flex items-center gap-2 text-green-600 font-semibold">
+                      <CheckCircle2 className="w-3 h-3" />
+                      Report stored. Your farm identity: not recorded.
+                    </div>
+                  )}
+                  {fheStep === "error" && (
+                    <p className="text-red-600 text-[10px] mt-1">FHE init requires Zama Sepolia network access. Check console for details.</p>
+                  )}
+                </div>
+              )}
+
+              {/* Real ciphertext display */}
+              {encryptedHex && (
+                <div className="bg-violet-950 rounded-xl p-3 space-y-2">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-[10px] text-violet-300 font-semibold uppercase tracking-wider">Real TFHE Ciphertext (inputProof)</span>
+                    <Badge className="bg-violet-800 text-violet-200 text-[9px]">Sepolia Chain 11155111</Badge>
+                  </div>
+                  <p className="font-mono text-[10px] text-green-400 break-all leading-relaxed">
+                    0x{encryptedHex.slice(0, 96)}…
+                  </p>
+                  <div className="border-t border-violet-800 pt-2">
+                    <span className="text-[10px] text-violet-400">Handle: </span>
+                    <span className="font-mono text-[10px] text-violet-300">0x{handleHex?.slice(0, 32)}…</span>
+                  </div>
+                  <p className="text-[9px] text-violet-500">This ciphertext was encrypted using Zama's fhevmjs with the KMS public key from Ethereum Sepolia. Only the KMS can decrypt it — the server above has zero knowledge of whether this farm is infected.</p>
+                </div>
+              )}
+
+              <Button
+                className="w-full bg-violet-600 hover:bg-violet-700 text-white"
+                onClick={submitted ? () => { setFheStep("idle"); setEncryptedHex(null); setHandleHex(null); setSubmitted(false); setView("dashboard"); } : handleEncryptAndSubmit}
+                disabled={(fheStep !== "idle" && fheStep !== "done" && fheStep !== "error") || submitting}
+              >
+                {submitted
+                  ? <><Globe className="w-4 h-4 mr-2" />View Outbreak Dashboard</>
+                  : fheStep === "idle" || fheStep === "error"
+                    ? <><FlaskConical className="w-4 h-4 mr-2" />Encrypt with Zama FHE & Submit</>
+                    : <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Working…</>
+                }
               </Button>
+
+              {/* How it works */}
+              <div className="bg-muted/40 rounded-xl p-3 text-[10px] text-muted-foreground space-y-1">
+                <p className="font-semibold text-foreground text-xs">How it works</p>
+                <p>1. fhevmjs fetches the FHE public key from the KMS contract on Ethereum Sepolia</p>
+                <p>2. Your disease result is encrypted locally: <code className="text-violet-600">addBool(infected)</code> → real TFHE ciphertext</p>
+                <p>3. The server stores the ciphertext + your district/crop. Your farm identity and raw result: never stored.</p>
+                <p>4. Government sees aggregate counts only. Decryption requires the Zama KMS — nobody else can read it.</p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {view === "dashboard" && (
+        <div className="space-y-3">
+          {loadingDash ? (
+            <div className="flex flex-col items-center justify-center py-12 gap-3">
+              <Loader2 className="w-8 h-8 animate-spin text-violet-500" />
+              <p className="text-sm text-muted-foreground">Loading outbreak intelligence…</p>
             </div>
+          ) : aggregate ? (
+            <>
+              {/* Summary */}
+              <div className="grid grid-cols-3 gap-2">
+                <Card className="text-center p-3">
+                  <p className="text-2xl font-bold text-violet-700">{aggregate.totalEncryptedReports}</p>
+                  <p className="text-[10px] text-muted-foreground">Encrypted Reports</p>
+                </Card>
+                <Card className="text-center p-3">
+                  <p className="text-2xl font-bold text-green-600">{aggregate.individualsIdentified}</p>
+                  <p className="text-[10px] text-muted-foreground">Farms Identified</p>
+                </Card>
+                <Card className="text-center p-3">
+                  <p className="text-2xl font-bold text-blue-600">{Object.keys(aggregate.districtOutbreakMap).length}</p>
+                  <p className="text-[10px] text-muted-foreground">Districts Reporting</p>
+                </Card>
+              </div>
+
+              <div className="bg-green-50 border border-green-200 rounded-xl p-2.5 text-[10px] text-green-700 flex items-center gap-2">
+                <Shield className="w-3.5 h-3.5 flex-shrink-0" />
+                <span><strong>Zero individual farms identified.</strong> All disease statuses are FHE-encrypted — the server holds only encrypted blobs and district-level metadata.</span>
+              </div>
+
+              {/* District heatmap */}
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <Globe className="w-4 h-4 text-violet-500" />
+                    District Outbreak Heatmap
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-3 gap-1.5">
+                    {PUNJAB_DISTRICTS.map(d => {
+                      const info = aggregate.districtOutbreakMap[d];
+                      const count = info?.total ?? 0;
+                      return (
+                        <div key={d} className={cn("rounded-lg border p-2 text-center", getHeatColor(count))}>
+                          <p className="text-[10px] font-semibold leading-tight">{d}</p>
+                          <p className="text-base font-bold">{count}</p>
+                          <p className="text-[9px] opacity-75">reports</p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div className="flex gap-3 mt-3 text-[9px] text-muted-foreground justify-center">
+                    <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded bg-green-200 inline-block" />0</span>
+                    <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded bg-yellow-200 inline-block" />1-2</span>
+                    <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded bg-orange-200 inline-block" />3-4</span>
+                    <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded bg-red-200 inline-block" />5+</span>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Crop breakdown */}
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <BarChart3 className="w-4 h-4 text-violet-500" />
+                    Crop-wise Report Breakdown
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  {Object.entries(aggregate.cropBreakdown).sort((a, b) => b[1] - a[1]).map(([crop, count]) => (
+                    <div key={crop} className="flex items-center gap-2">
+                      <span className="text-xs w-28 truncate text-muted-foreground">{crop}</span>
+                      <div className="flex-1 bg-muted rounded-full h-2">
+                        <div
+                          className="h-2 rounded-full bg-violet-500"
+                          style={{ width: `${Math.min(100, (count / aggregate.totalEncryptedReports) * 100)}%` }}
+                        />
+                      </div>
+                      <span className="text-xs font-bold text-violet-700 w-6 text-right">{count}</span>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+
+              {/* Recent reports */}
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <ScrollText className="w-4 h-4 text-violet-500" />
+                    Recent Encrypted Reports
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  {aggregate.recentReports.map(r => (
+                    <div key={r.id} className="bg-muted/40 rounded-lg p-2.5">
+                      <div className="flex justify-between text-xs">
+                        <span className="font-semibold">{r.district} — {r.cropType}</span>
+                        <span className="text-muted-foreground text-[10px]">{new Date(r.createdAt).toLocaleDateString("en-IN")}</span>
+                      </div>
+                      <p className="font-mono text-[10px] text-violet-600 mt-1 truncate">0x{r.encryptedStatusPreview}…</p>
+                      <p className="text-[9px] text-muted-foreground mt-0.5">Farm identity: <span className="text-green-600 font-semibold">not recorded</span> · Sepolia Chain 11155111</p>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+
+              <Button variant="outline" className="w-full" onClick={loadDashboard}>
+                <ArrowRight className="w-4 h-4 mr-2" />Refresh Dashboard
+              </Button>
+            </>
           ) : (
-            <div className={cn("rounded-xl p-3 border text-xs font-semibold", auctionResult.winner === "You won!" ? "bg-green-50 border-green-300 text-green-700" : "bg-red-50 border-red-300 text-red-700")}>
-              {auctionResult.winner} · Winning price: {auctionResult.winningBid}
-            </div>
+            <div className="text-center py-10 text-muted-foreground text-sm">No data yet</div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      )}
     </div>
   );
 }

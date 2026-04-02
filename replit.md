@@ -98,6 +98,20 @@ All routes are prefixed with `/api`:
 
 Tables: `sensor_readings`, `insurance_claims`, `market_listings`, `community_posts`, `community_messages`, `community_experts`, `filecoin_records`, `rewards_wallets`, `reward_transactions`, `event_logs`
 
+## Disease Shield — Private Multi-Farm Disease Intelligence (Zama FHE)
+
+Real FHE feature added to the Zama tab in the Web3 hub.
+
+- Farmers encrypt their disease scan result (infected/clean) using Zama's `fhevmjs` connected to Ethereum Sepolia testnet
+- Real TFHE ciphertext generated via `createEncryptedInput().addBool(value).encrypt()`
+- WASM files (`tfhe_bg.wasm`, `kms_lib_bg.wasm`) served from `artifacts/smart-fasal/public/`
+- KMS Contract: `0x1364cBBf2cDF5032C47d8226a6f6FBD2AFCDacAC` (Sepolia)
+- ACL Contract: `0x687820221192C5B662b25367F70076A37bc79b6c` (Sepolia)
+- Server stores encrypted blobs + district/crop metadata — NO individual farm identity stored
+- Government dashboard shows district heatmap and crop breakdown
+- DB table: `disease_intel_reports`
+- API routes: `POST /api/disease-intel/submit`, `GET /api/disease-intel/aggregate`
+
 ## Key Design Decisions
 
 - **Filecoin storage**: Simulated with SHA-256 CID generation + ipfs.io URLs
