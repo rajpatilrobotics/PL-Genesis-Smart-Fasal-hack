@@ -177,7 +177,15 @@ Respond with a JSON object with exactly these fields:
 
   await logEvent("ai", `Disease detection via ${getProvider()}: ${plantName} - ${diseaseName} (${confidencePercent}% confidence)`);
 
-  res.json({ ...DetectDiseaseResponse.parse({ plantName, diseaseName, confidencePercent, treatment, severity }), id: scanRow.id, createdAt: scanRow.createdAt });
+  res.json(DetectDiseaseResponse.parse({
+    id: scanRow.id,
+    plantName,
+    diseaseName,
+    confidencePercent,
+    treatment,
+    severity,
+    createdAt: scanRow.createdAt,
+  }));
 });
 
 router.get("/disease-detections/history", async (_req, res): Promise<void> => {
