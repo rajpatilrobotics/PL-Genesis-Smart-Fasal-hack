@@ -21,7 +21,7 @@ const WALLET_ADDR     = process.env.STARKNET_WALLET_ADDRESS || "0x17ecda611fa4c7
 const STATE_FILE      = join(process.cwd(), "starknet-state.json");
 const SIERRA_PATH     = join(process.cwd(), "contracts/insurance.sierra.json");
 const CASM_PATH       = join(process.cwd(), "contracts/insurance.casm.json");
-const STARKSCAN_BASE  = "https://sepolia.voyager.online";
+const EXPLORER_BASE   = "https://sepolia.voyager.online";
 const NETWORK_NAME    = "Starknet Sepolia";
 const OZ_CLASS_HASH   = "0x061dac032f228abef9c6626f995015233097ae253a7f72d68552db02f2971b8f";
 
@@ -149,8 +149,8 @@ router.get("/starknet/network-status", async (_req, res): Promise<void> => {
     contractAddress: state.contractAddress,
     contractDeployed: !!state.contractAddress,
     deployTxHash: state.deployTxHash,
-    explorerUrl: state.contractAddress ? `${STARKSCAN_BASE}/contract/${state.contractAddress}` : null,
-    accountExplorerUrl: `${STARKSCAN_BASE}/contract/${WALLET_ADDR}`,
+    explorerUrl: state.contractAddress ? `${EXPLORER_BASE}/contract/${state.contractAddress}` : null,
+    accountExplorerUrl: `${EXPLORER_BASE}/contract/${WALLET_ADDR}`,
     faucetUrl: `https://faucet.starknet.io`,
   });
 });
@@ -159,7 +159,7 @@ router.get("/starknet/network-status", async (_req, res): Promise<void> => {
 router.post("/starknet/deploy-account", async (_req, res): Promise<void> => {
   const alreadyDeployed = await isAccountDeployed(WALLET_ADDR);
   if (alreadyDeployed) {
-    res.json({ alreadyDeployed: true, address: WALLET_ADDR, explorerUrl: `${STARKSCAN_BASE}/contract/${WALLET_ADDR}` });
+    res.json({ alreadyDeployed: true, address: WALLET_ADDR, explorerUrl: `${EXPLORER_BASE}/contract/${WALLET_ADDR}` });
     return;
   }
   try {
@@ -176,8 +176,8 @@ router.post("/starknet/deploy-account", async (_req, res): Promise<void> => {
       success: true,
       txHash: transaction_hash,
       address: contract_address ?? WALLET_ADDR,
-      txUrl: `${STARKSCAN_BASE}/tx/${transaction_hash}`,
-      explorerUrl: `${STARKSCAN_BASE}/contract/${contract_address ?? WALLET_ADDR}`,
+      txUrl: `${EXPLORER_BASE}/tx/${transaction_hash}`,
+      explorerUrl: `${EXPLORER_BASE}/contract/${contract_address ?? WALLET_ADDR}`,
     });
   } catch (err: any) {
     const msg: string = err?.message ?? String(err);
@@ -195,7 +195,7 @@ router.post("/starknet/deploy-account", async (_req, res): Promise<void> => {
 router.post("/starknet/deploy", async (_req, res): Promise<void> => {
   const state = loadState();
   if (state.contractAddress) {
-    res.json({ alreadyDeployed: true, contractAddress: state.contractAddress, deployTxHash: state.deployTxHash, explorerUrl: `${STARKSCAN_BASE}/contract/${state.contractAddress}` });
+    res.json({ alreadyDeployed: true, contractAddress: state.contractAddress, deployTxHash: state.deployTxHash, explorerUrl: `${EXPLORER_BASE}/contract/${state.contractAddress}` });
     return;
   }
 
@@ -225,8 +225,8 @@ router.post("/starknet/deploy", async (_req, res): Promise<void> => {
     res.json({
       success: true, contractAddress, classHash,
       deployTxHash: deployResp.transaction_hash,
-      explorerUrl: `${STARKSCAN_BASE}/contract/${contractAddress}`,
-      txUrl: `${STARKSCAN_BASE}/tx/${deployResp.transaction_hash}`,
+      explorerUrl: `${EXPLORER_BASE}/contract/${contractAddress}`,
+      txUrl: `${EXPLORER_BASE}/tx/${deployResp.transaction_hash}`,
       network: NETWORK_NAME,
       deployedAt: state.deployedAt,
     });
@@ -266,9 +266,9 @@ router.post("/starknet/register-policy", async (req, res): Promise<void> => {
       success: true, alreadyRegistered: true,
       farmerId: p.farmerId, droughtThreshold: p.droughtThreshold, heatThreshold: p.heatThreshold,
       txHash: p.txHash,
-      txUrl: `${STARKSCAN_BASE}/tx/${p.txHash}`,
+      txUrl: `${EXPLORER_BASE}/tx/${p.txHash}`,
       contractAddress: state.contractAddress,
-      explorerUrl: `${STARKSCAN_BASE}/contract/${state.contractAddress}`,
+      explorerUrl: `${EXPLORER_BASE}/contract/${state.contractAddress}`,
       blockNumber, network: NETWORK_NAME, networkLive,
       registeredAt: p.registeredAt,
     });
@@ -303,9 +303,9 @@ router.post("/starknet/register-policy", async (req, res): Promise<void> => {
     res.json({
       success: true, farmerId, droughtThreshold, heatThreshold,
       txHash: resp.transaction_hash,
-      txUrl: `${STARKSCAN_BASE}/tx/${resp.transaction_hash}`,
+      txUrl: `${EXPLORER_BASE}/tx/${resp.transaction_hash}`,
       contractAddress: state.contractAddress,
-      explorerUrl: `${STARKSCAN_BASE}/contract/${state.contractAddress}`,
+      explorerUrl: `${EXPLORER_BASE}/contract/${state.contractAddress}`,
       blockNumber, network: NETWORK_NAME, networkLive,
       registeredAt: state.policies[farmerId].registeredAt,
     });
@@ -391,9 +391,9 @@ router.post("/starknet/submit-claim", async (req, res): Promise<void> => {
       triggered: true, trigger, claimId,
       soilDataHash: soilHash,
       txHash: resp.transaction_hash,
-      txUrl: `${STARKSCAN_BASE}/tx/${resp.transaction_hash}`,
+      txUrl: `${EXPLORER_BASE}/tx/${resp.transaction_hash}`,
       contractAddress: state.contractAddress,
-      explorerUrl: `${STARKSCAN_BASE}/contract/${state.contractAddress}`,
+      explorerUrl: `${EXPLORER_BASE}/contract/${state.contractAddress}`,
       blockNumber, network: NETWORK_NAME, networkLive,
       moisture, temperature, farmerId,
       timestamp: claimRecord.timestamp,
@@ -436,7 +436,7 @@ router.post("/starknet/generate-proof", async (req, res): Promise<void> => {
   res.json({
     proofHash: soilHash, sigR, sigS, publicKey: pubKey, walletAddress: WALLET_ADDR,
     blockNumber, blockHash, networkLive, verified, claim, claimType,
-    explorerUrl: `${STARKSCAN_BASE}/contract/${WALLET_ADDR}`,
+    explorerUrl: `${EXPLORER_BASE}/contract/${WALLET_ADDR}`,
     network: NETWORK_NAME, generatedAt: new Date().toISOString(),
   });
 });
@@ -501,7 +501,7 @@ router.post("/starknet/carbon-credit/mint", async (req, res): Promise<void> => {
         await provider.waitForTransaction(resp.transaction_hash);
 
         txHash  = resp.transaction_hash;
-        txUrl   = `${STARKSCAN_BASE}/tx/${txHash}`;
+        txUrl   = `${EXPLORER_BASE}/tx/${txHash}`;
         onChain = true;
       } catch (onChainErr: any) {
         // Non-fatal: signature + Pedersen hash are still real cryptography.
@@ -524,8 +524,8 @@ router.post("/starknet/carbon-credit/mint", async (req, res): Promise<void> => {
       blockNumber, networkLive,
       mintedAt:    new Date().toISOString(),
       explorerUrl: txHash
-        ? `${STARKSCAN_BASE}/tx/${txHash}`
-        : `${STARKSCAN_BASE}/contract/${WALLET_ADDR}`,
+        ? `${EXPLORER_BASE}/tx/${txHash}`
+        : `${EXPLORER_BASE}/contract/${WALLET_ADDR}`,
       txHash, txUrl, onChain,
       network: NETWORK_NAME,
     });
@@ -542,7 +542,7 @@ router.get("/starknet/claims", async (_req, res): Promise<void> => {
     claims: state.claims,
     totalClaims: state.claims.length,
     contractAddress: state.contractAddress,
-    explorerUrl: state.contractAddress ? `${STARKSCAN_BASE}/contract/${state.contractAddress}` : null,
+    explorerUrl: state.contractAddress ? `${EXPLORER_BASE}/contract/${state.contractAddress}` : null,
     blockNumber, networkLive, network: NETWORK_NAME,
   });
 });

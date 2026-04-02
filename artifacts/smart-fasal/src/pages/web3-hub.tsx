@@ -1794,7 +1794,7 @@ function StarknetTab() {
       toast({
         title: data.verified ? "Soil Attestation Verified on Starknet!" : "Attestation Computed — Condition Not Met",
         description: data.verified
-          ? `Block #${data.blockNumber} · ${data.networkLive ? "Live Sepolia" : "Signed offline"} · +25 FLOW`
+          ? `Block #${data.blockNumber} · ${data.networkLive ? "Live Sepolia" : "Signed offline"} · Pedersen + STARK ECDSA`
           : "Your soil data did not satisfy this condition today.",
       });
     } catch (err) {
@@ -2188,8 +2188,9 @@ function StarknetTab() {
                     </div>
                     {p.explorerUrl && (
                       <a href={p.explorerUrl} target="_blank" rel="noopener noreferrer"
-                        className="flex items-center gap-0.5 text-[10px] text-blue-600 hover:underline">
-                        <ExternalLink className="w-2.5 h-2.5" /> Voyager
+                        className="flex items-center gap-0.5 text-[10px] text-blue-600 hover:underline"
+                        title="Opens the signer wallet on Voyager — attestations are off-chain STARK signatures, not on-chain transactions">
+                        <ExternalLink className="w-2.5 h-2.5" /> Signer wallet ↗
                       </a>
                     )}
                   </div>
@@ -2299,12 +2300,13 @@ function StarknetTab() {
                       <p className="text-[9px] font-mono text-emerald-800 break-all select-all">{c.txHash}</p>
                     </div>
                   </div>
-                ) : (
+                ) : c.explorerUrl ? (
                   <a href={c.explorerUrl} target="_blank" rel="noopener noreferrer"
-                    className="flex items-center gap-1 text-[10px] text-blue-600 hover:underline">
-                    <ExternalLink className="w-3 h-3" /> View signer on Voyager
+                    className="flex items-center gap-1 text-[10px] text-blue-600 hover:underline"
+                    title="Opens the signer wallet on Voyager — this credit has a Pedersen hash + STARK signature but no separate on-chain TX">
+                    <ExternalLink className="w-3 h-3" /> View signer wallet on Voyager
                   </a>
-                )}
+                ) : null}
               </div>
             ))}
           </div>
