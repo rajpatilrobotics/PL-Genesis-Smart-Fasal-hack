@@ -12,6 +12,7 @@ import analyticsRouter from "./analytics";
 import creditRouter from "./credit";
 import litRouter from "./lit";
 import diseaseIntelRouter from "./disease-intel";
+import fheRouter from "./fhe";
 
 const router: IRouter = Router();
 
@@ -28,5 +29,6 @@ router.use(analyticsRouter);
 router.use(creditRouter);
 router.use(litRouter);
 router.use(diseaseIntelRouter);
+router.use(fheRouter);
 
 export default router;
