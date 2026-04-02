@@ -23,7 +23,7 @@ import {
   Leaf, CheckCircle2, Loader2, ExternalLink, Copy,
   TrendingUp, Droplets, FlaskConical, BadgeCheck,
   CloudSun, Coins, BarChart3, ScrollText, ArrowRight,
-  Star, Trophy, Globe, Users,
+  Star, Trophy, Globe, Users, AlertTriangle, RefreshCw, FileText, Wifi, WifiOff,
 } from "lucide-react";
 
 function randomHex(len: number) {
@@ -1677,7 +1677,7 @@ function ZamaTab() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// STARKNET TAB — ZK Proofs & Carbon Credit Minting
+// STARKNET TAB — Parametric Insurance + ZK Proofs
 // ─────────────────────────────────────────────────────────────────────────────
 type StarkCarbonCredit = {
   tokenId: string;
@@ -1693,6 +1693,26 @@ type StarkCarbonCredit = {
   explorerUrl: string;
 };
 
+type NetworkStatus = {
+  live: boolean;
+  blockNumber: number;
+  contractAddress: string | null;
+  contractDeployed: boolean;
+  deployTxHash: string | null;
+  explorerUrl: string | null;
+};
+
+type OnChainClaim = {
+  claimId: number;
+  farmerId: string;
+  trigger: string;
+  soilHash: string;
+  moisture: number;
+  temperature: number;
+  txHash: string;
+  timestamp: string;
+};
+
 function StarknetTab() {
   const { toast } = useToast();
   const { walletAddress, zkProofs, addZKProof, addFlowReward, dataHistory } = useWallet();
@@ -1700,14 +1720,28 @@ function StarknetTab() {
   const [generatingId, setGeneratingId] = useState<string | null>(null);
   const [minting, setMinting] = useState(false);
   const [starkCredits, setStarkCredits] = useState<StarkCarbonCredit[]>([]);
-  const [networkStatus, setNetworkStatus] = useState<{ live: boolean; blockNumber: number } | null>(null);
+  const [networkStatus, setNetworkStatus] = useState<NetworkStatus | null>(null);
+  const [deploying, setDeploying] = useState(false);
+  const [registeringPolicy, setRegisteringPolicy] = useState(false);
+  const [submittingClaim, setSubmittingClaim] = useState(false);
+  const [onChainClaims, setOnChainClaims] = useState<OnChainClaim[]>([]);
+  const [policyRegistered, setPolicyRegistered] = useState<{ txHash: string; txUrl: string } | null>(null);
+  const [loadingStatus, setLoadingStatus] = useState(true);
 
-  useEffect(() => {
+  const refreshStatus = () => {
+    setLoadingStatus(true);
     fetch("/api/starknet/network-status")
       .then(r => r.json())
-      .then(d => setNetworkStatus({ live: d.live, blockNumber: d.blockNumber }))
+      .then(d => setNetworkStatus(d))
+      .catch(() => {})
+      .finally(() => setLoadingStatus(false));
+    fetch("/api/starknet/claims")
+      .then(r => r.json())
+      .then(d => setOnChainClaims(d.claims ?? []))
       .catch(() => {});
-  }, []);
+  };
+
+  useEffect(() => { refreshStatus(); }, []);
 
   const proofTypes = [
     { id: "ph",       claimType: "ph_healthy",       label: "Soil pH in healthy range (6.0–7.5)", icon: FlaskConical, color: "text-emerald-600" },
@@ -1786,9 +1820,76 @@ function StarknetTab() {
     }
   };
 
-  const contractStatus = dataHistory.length > 0
-    ? { active: true, coverage: `₹${(dataHistory.length * 2500).toLocaleString()}`, trigger: dataHistory[0]?.riskStatus === "High" ? "Triggered" : "Monitoring" }
-    : { active: false, coverage: "₹0", trigger: "Inactive" };
+  const handleDeploy = async () => {
+    setDeploying(true);
+    try {
+      const r = await fetch("/api/starknet/deploy", { method: "POST" });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error ?? "Deploy failed");
+      if (d.alreadyDeployed) {
+        toast({ title: "Contract already deployed ✓", description: d.contractAddress?.slice(0, 20) + "…" });
+      } else {
+        toast({ title: "Contract deployed on Starknet Sepolia! 🎉", description: `TX: ${d.deployTxHash?.slice(0, 18)}…` });
+      }
+      refreshStatus();
+    } catch (err: any) {
+      toast({ title: "Deploy failed", description: err.message, variant: "destructive" });
+    } finally {
+      setDeploying(false);
+    }
+  };
+
+  const handleRegisterPolicy = async () => {
+    setRegisteringPolicy(true);
+    try {
+      const r = await fetch("/api/starknet/register-policy", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ farmerId: "SmartFasal_Farm_001", droughtThreshold: 30, heatThreshold: 35 }),
+      });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error ?? "Registration failed");
+      setPolicyRegistered({ txHash: d.txHash, txUrl: d.txUrl });
+      toast({ title: "Policy registered on-chain! ✓", description: `Drought <30% | Heat >35°C | TX: ${d.txHash?.slice(0, 16)}…` });
+    } catch (err: any) {
+      toast({ title: "Registration failed", description: err.message, variant: "destructive" });
+    } finally {
+      setRegisteringPolicy(false);
+    }
+  };
+
+  const handleSubmitClaim = async () => {
+    setSubmittingClaim(true);
+    try {
+      const sensorRes = await fetch("/api/sensor-data");
+      const sensor = await sensorRes.json();
+      const r = await fetch("/api/starknet/submit-claim", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          farmerId: "SmartFasal_Farm_001",
+          ph: sensor.ph, nitrogen: sensor.nitrogen,
+          phosphorus: sensor.phosphorus, potassium: sensor.potassium,
+          moisture: sensor.moisture, temperature: sensor.temperature,
+        }),
+      });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error ?? "Claim failed");
+      if (d.triggered) {
+        toast({
+          title: `Parametric claim submitted on-chain! ⚡`,
+          description: `${d.trigger === "drought" ? "Drought" : "Heat stress"} · TX: ${d.txHash?.slice(0, 16)}…`,
+        });
+        refreshStatus();
+      } else {
+        toast({ title: "Conditions normal — no claim triggered", description: d.reason });
+      }
+    } catch (err: any) {
+      toast({ title: "Claim submission failed", description: err.message, variant: "destructive" });
+    } finally {
+      setSubmittingClaim(false);
+    }
+  };
 
   return (
     <div className="space-y-4">
@@ -1798,50 +1899,166 @@ function StarknetTab() {
         <CardContent className="p-4">
           <div className="flex items-center gap-2 mb-1">
             <Shield className="w-5 h-5 text-rose-600" />
-            <span className="font-bold text-rose-800">Starknet — ZK Proofs & Carbon Credits</span>
-            {networkStatus !== null && (
-              <Badge className={cn("text-[10px] ml-auto", networkStatus.live ? "bg-green-600" : "bg-gray-400")}>
-                {networkStatus.live ? `● LIVE · Block #${networkStatus.blockNumber}` : "● Offline"}
-              </Badge>
+            <span className="font-bold text-rose-800">Starknet — Parametric Crop Insurance</span>
+            <button onClick={refreshStatus} className="ml-auto text-muted-foreground hover:text-primary transition-colors">
+              <RefreshCw className="w-3.5 h-3.5" />
+            </button>
+          </div>
+          <p className="text-xs text-muted-foreground mb-3">
+            Real Cairo smart contract on Starknet Sepolia. IoT sensor data triggers automatic on-chain insurance payouts — no middlemen, no paperwork.
+          </p>
+          <div className="flex items-center gap-2 flex-wrap">
+            {loadingStatus ? (
+              <Badge className="text-[10px] bg-gray-400"><Loader2 className="w-2.5 h-2.5 animate-spin mr-1" />Checking…</Badge>
+            ) : networkStatus?.live ? (
+              <Badge className="text-[10px] bg-green-600"><Wifi className="w-2.5 h-2.5 mr-1" />Live · Block #{networkStatus.blockNumber}</Badge>
+            ) : (
+              <Badge className="text-[10px] bg-red-500"><WifiOff className="w-2.5 h-2.5 mr-1" />Offline</Badge>
+            )}
+            {networkStatus?.contractDeployed ? (
+              <Badge className="text-[10px] bg-rose-600"><CheckCircle2 className="w-2.5 h-2.5 mr-1" />Contract Deployed</Badge>
+            ) : (
+              <Badge variant="outline" className="text-[10px] border-rose-300 text-rose-700">Contract Not Deployed</Badge>
             )}
           </div>
-          <p className="text-xs text-muted-foreground">Pedersen-hash soil data → STARK signature → on-chain carbon credit. No raw sensor values ever leave your device.</p>
         </CardContent>
       </Card>
 
-      {/* Smart Contract Insurance */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm flex items-center gap-2">
-            <Shield className="w-4 h-4 text-rose-500" /> On-Chain Insurance Contract
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="grid grid-cols-3 gap-2 text-center">
-            <div className="bg-muted/50 rounded-lg p-2">
-              <p className="text-[10px] text-muted-foreground mb-0.5">Status</p>
-              <Badge variant={contractStatus.active ? "default" : "secondary"} className="text-[10px]">
-                {contractStatus.active ? "Active" : "Inactive"}
-              </Badge>
+      {/* Step 1 — Deploy Contract */}
+      <Card className={cn("border-2 transition-all", networkStatus?.contractDeployed ? "border-green-300 bg-green-50/30" : "border-rose-200")}>
+        <CardContent className="p-4">
+          <div className="flex items-start gap-3">
+            <div className={cn("w-7 h-7 rounded-full flex items-center justify-center text-xs font-black shrink-0 mt-0.5", networkStatus?.contractDeployed ? "bg-green-500 text-white" : "bg-rose-100 text-rose-700")}>
+              {networkStatus?.contractDeployed ? "✓" : "1"}
             </div>
-            <div className="bg-muted/50 rounded-lg p-2">
-              <p className="text-[10px] text-muted-foreground mb-0.5">Coverage</p>
-              <p className="text-xs font-bold">{contractStatus.coverage}</p>
-            </div>
-            <div className="bg-muted/50 rounded-lg p-2">
-              <p className="text-[10px] text-muted-foreground mb-0.5">Trigger</p>
-              <p className={cn("text-xs font-bold", contractStatus.trigger === "Triggered" ? "text-red-600" : "text-green-600")}>
-                {contractStatus.trigger}
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold text-sm">Deploy Insurance Contract</p>
+              <p className="text-[11px] text-muted-foreground mt-0.5">
+                {networkStatus?.contractDeployed
+                  ? `Deployed at ${networkStatus.contractAddress?.slice(0, 10)}…${networkStatus.contractAddress?.slice(-6)}`
+                  : "Deploy the Cairo parametric insurance contract to Starknet Sepolia"}
               </p>
+              {networkStatus?.contractDeployed && networkStatus.explorerUrl && (
+                <a href={networkStatus.explorerUrl} target="_blank" rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-[10px] text-blue-600 hover:underline mt-1">
+                  <ExternalLink className="w-2.5 h-2.5" /> View on Starkscan
+                </a>
+              )}
+              {networkStatus?.contractDeployed && networkStatus.deployTxHash && (
+                <p className="text-[10px] font-mono text-muted-foreground mt-0.5 break-all">
+                  Deploy TX: {networkStatus.deployTxHash.slice(0, 20)}…
+                </p>
+              )}
             </div>
+            {!networkStatus?.contractDeployed && (
+              <Button size="sm" className="h-8 bg-rose-600 hover:bg-rose-700 text-white shrink-0" onClick={handleDeploy} disabled={deploying}>
+                {deploying ? <Loader2 className="w-3 h-3 animate-spin" /> : "Deploy"}
+              </Button>
+            )}
           </div>
-          {contractStatus.trigger === "Triggered" && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-2.5 text-xs text-red-700 font-semibold flex items-center gap-2">
-              <Zap className="w-3.5 h-3.5" /> High risk detected — Starknet contract auto-executing payout
+        </CardContent>
+      </Card>
+
+      {/* Step 2 — Register Policy */}
+      <Card className={cn("border-2 transition-all", !networkStatus?.contractDeployed ? "opacity-50 pointer-events-none border-muted" : policyRegistered ? "border-green-300 bg-green-50/30" : "border-rose-200")}>
+        <CardContent className="p-4">
+          <div className="flex items-start gap-3">
+            <div className={cn("w-7 h-7 rounded-full flex items-center justify-center text-xs font-black shrink-0 mt-0.5", policyRegistered ? "bg-green-500 text-white" : "bg-rose-100 text-rose-700")}>
+              {policyRegistered ? "✓" : "2"}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold text-sm">Register Insurance Policy</p>
+              <p className="text-[11px] text-muted-foreground mt-0.5">
+                Records your farm's thresholds on-chain: drought triggers at moisture &lt;30%, heat stress at temp &gt;35°C
+              </p>
+              {policyRegistered && (
+                <a href={policyRegistered.txUrl} target="_blank" rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-[10px] text-blue-600 hover:underline mt-1">
+                  <ExternalLink className="w-2.5 h-2.5" /> TX: {policyRegistered.txHash.slice(0, 16)}…
+                </a>
+              )}
+            </div>
+            {!policyRegistered && (
+              <Button size="sm" className="h-8 bg-rose-600 hover:bg-rose-700 text-white shrink-0" onClick={handleRegisterPolicy} disabled={registeringPolicy || !networkStatus?.contractDeployed}>
+                {registeringPolicy ? <Loader2 className="w-3 h-3 animate-spin" /> : "Register"}
+              </Button>
+            )}
+          </div>
+          {!policyRegistered && networkStatus?.contractDeployed && (
+            <div className="mt-3 bg-rose-50 border border-rose-100 rounded-lg p-2.5 grid grid-cols-2 gap-2 text-center text-[10px]">
+              <div><p className="font-bold text-rose-700">Drought Trigger</p><p className="text-muted-foreground">Moisture &lt; 30%</p></div>
+              <div><p className="font-bold text-orange-700">Heat Trigger</p><p className="text-muted-foreground">Temp &gt; 35°C</p></div>
             </div>
           )}
         </CardContent>
       </Card>
+
+      {/* Step 3 — Submit Claim */}
+      <Card className={cn("border-2 transition-all", !policyRegistered ? "opacity-50 pointer-events-none border-muted" : "border-rose-200")}>
+        <CardContent className="p-4">
+          <div className="flex items-start gap-3">
+            <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-black shrink-0 mt-0.5 bg-rose-100 text-rose-700">
+              3
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold text-sm">Check Sensor Conditions & Claim</p>
+              <p className="text-[11px] text-muted-foreground mt-0.5">
+                Reads live IoT sensor data, verifies against on-chain policy thresholds, and submits a parametric claim transaction if conditions are met.
+              </p>
+            </div>
+            <Button size="sm" className="h-8 bg-rose-600 hover:bg-rose-700 text-white shrink-0" onClick={handleSubmitClaim} disabled={submittingClaim || !policyRegistered}>
+              {submittingClaim ? <><Loader2 className="w-3 h-3 animate-spin mr-1" />Checking…</> : <><Zap className="w-3 h-3 mr-1" />Check & Claim</>}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* On-chain Claims History */}
+      {onChainClaims.length > 0 && (
+        <div>
+          <h3 className="text-sm font-bold mb-2 flex items-center gap-1.5">
+            <FileText className="w-4 h-4 text-rose-500" /> On-Chain Insurance Claims
+            <Badge className="text-[10px] bg-rose-600 ml-1">{onChainClaims.length}</Badge>
+          </h3>
+          <div className="space-y-2">
+            {onChainClaims.map((claim) => (
+              <Card key={claim.claimId} className="border-rose-200 bg-rose-50/40">
+                <CardContent className="p-3 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Badge className={cn("text-[10px]", claim.trigger === "drought" ? "bg-orange-500" : "bg-red-600")}>
+                        {claim.trigger === "drought" ? "🌵 Drought" : "🔥 Heat Stress"}
+                      </Badge>
+                      <span className="text-[10px] text-muted-foreground">Claim #{claim.claimId}</span>
+                    </div>
+                    <Badge className="text-[10px] bg-green-600"><CheckCircle2 className="w-2.5 h-2.5 mr-0.5" />Verified</Badge>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 text-[10px]">
+                    <div className="bg-white/70 rounded p-1.5">
+                      <p className="text-muted-foreground">Moisture</p>
+                      <p className="font-bold text-orange-600">{claim.moisture}%</p>
+                    </div>
+                    <div className="bg-white/70 rounded p-1.5">
+                      <p className="text-muted-foreground">Temperature</p>
+                      <p className="font-bold text-red-600">{claim.temperature}°C</p>
+                    </div>
+                  </div>
+                  <div className="bg-muted/40 rounded p-1.5 text-[9px] font-mono text-muted-foreground break-all">
+                    Soil Hash: {claim.soilHash?.slice(0, 24)}…
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-[9px] text-muted-foreground">{new Date(claim.timestamp).toLocaleString("en-IN")}</span>
+                    <a href={`https://sepolia.starkscan.co/tx/${claim.txHash}`} target="_blank" rel="noopener noreferrer"
+                      className="flex items-center gap-0.5 text-[10px] text-blue-600 hover:underline font-semibold">
+                      <ExternalLink className="w-2.5 h-2.5" /> Starkscan
+                    </a>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* ZK Proof Generator */}
       <div>

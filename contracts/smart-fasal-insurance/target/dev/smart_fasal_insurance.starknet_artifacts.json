@@ -1,0 +1,1 @@
+{"version":1,"contracts":[{"id":"t7lheb5iibdh2","package_name":"smart_fasal_insurance","contract_name":"ParametricInsurance","module_path":"smart_fasal_insurance::ParametricInsurance","artifacts":{"sierra":"smart_fasal_insurance_ParametricInsurance.contract_class.json","casm":"smart_fasal_insurance_ParametricInsurance.compiled_contract_class.json"}}]}
