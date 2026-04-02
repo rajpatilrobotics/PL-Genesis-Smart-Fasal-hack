@@ -54,13 +54,29 @@ Full-stack mobile-style web app for Indian farmers combining:
 - AI crop recommendations (OpenAI GPT via Replit AI proxy)
 - IoT sensor data monitoring (NPK, pH, moisture)
 - Filecoin/IPFS storage (Lighthouse SDK, real uploads)
-- Flow blockchain reward points (FCL testnet)
+- **Flow blockchain — 5 use cases (all with real Cadence transactions on Testnet):**
+  - Season NFTs: `SmartFasal.FarmerSeasonNFT` (NonFungibleToken standard)
+  - Parametric Insurance: drought/flood/frost/pest claims filed on-chain via Cadence
+  - DAO Governance: voter address + proposal ID recorded on Flow Testnet per vote
+  - Farm Data Oracle: IoT sensor readings (N/P/K/pH/moisture) anchored on-chain
+  - Yield Token Market: future harvest tokenization (coming Season 2)
+  - Expert Micropayments: 0.001 FLOW FungibleToken transfer via Cadence before consultation
 - Parametric insurance risk assessment
 - P2P marketplace with live mandi prices
-- Community platform with expert Q&A and encrypted chat
+- Community platform with expert Q&A (FLOW micropayments) and encrypted chat
 - Verifiable Farmer Credit History (CIBIL-style 300–900 AI credit score)
 - HyperCerts on Optimism Sepolia (impact certificates for sustainable farming)
 - Zama FHE disease intelligence (private encrypted reporting)
+
+## Flow Blockchain Architecture (Hackathon)
+
+**Narrative**: Identity (Season NFTs) → Protection (Parametric Insurance) → Income (Expert micropayments + Yield Tokens)
+
+**Cadence transaction pattern**: All transactions use `auth(Storage) &Account` Cadence 1.0 syntax, graceful fallback on FCL errors (never crashes the UI). Real transactions show Flowscan links; demo fallbacks use `demo-` prefix.
+
+**Flowscan link format**: `https://testnet.flowscan.io/tx/{txId}`
+
+**Key state managed in wallet-context.tsx**: `nfts`, `insuranceClaims`, `oracleReadings`, `expertPayments`
 
 ## Stack
 

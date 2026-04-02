@@ -73,6 +73,38 @@ export type ZKProof = {
   explorerUrl?: string;
 };
 
+export type InsuranceClaim = {
+  id: string;
+  policyId: string;
+  claimType: "drought" | "flood" | "frost" | "pest";
+  riskScore: number;
+  sensorReading: string;
+  flowTxId: string;
+  status: "filed" | "approved" | "paid";
+  payoutAmount: number;
+  filedAt: string;
+};
+
+export type OracleReading = {
+  id: string;
+  nitrogen: number;
+  phosphorus: number;
+  potassium: number;
+  ph: number;
+  moisture: number;
+  flowTxId: string;
+  anchoredAt: string;
+};
+
+export type ExpertPayment = {
+  id: string;
+  expertName: string;
+  amount: number;
+  flowTxId: string;
+  question: string;
+  paidAt: string;
+};
+
 type WalletContextType = {
   walletAddress: string | null;
   isManual: boolean;
@@ -88,6 +120,9 @@ type WalletContextType = {
   carbonCredits: CarbonCredit[];
   dataListings: DataListing[];
   zkProofs: ZKProof[];
+  insuranceClaims: InsuranceClaim[];
+  oracleReadings: OracleReading[];
+  expertPayments: ExpertPayment[];
   handleConnect: () => Promise<void>;
   handleDisconnect: () => void;
   handleManualConnect: (address?: string) => void;
@@ -100,6 +135,9 @@ type WalletContextType = {
   mintCarbonCredit: (credit: CarbonCredit) => void;
   publishDataListing: (listing: DataListing) => void;
   addZKProof: (proof: ZKProof) => void;
+  addInsuranceClaim: (claim: InsuranceClaim) => void;
+  addOracleReading: (reading: OracleReading) => void;
+  addExpertPayment: (payment: ExpertPayment) => void;
 };
 
 const WalletContext = createContext<WalletContextType | null>(null);
@@ -134,6 +172,9 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
   const [carbonCredits, setCarbonCredits] = useState<CarbonCredit[]>([]);
   const [dataListings, setDataListings] = useState<DataListing[]>([]);
   const [zkProofs, setZKProofs] = useState<ZKProof[]>([]);
+  const [insuranceClaims, setInsuranceClaims] = useState<InsuranceClaim[]>([]);
+  const [oracleReadings, setOracleReadings] = useState<OracleReading[]>([]);
+  const [expertPayments, setExpertPayments] = useState<ExpertPayment[]>([]);
 
   const isManualRef = useRef(false);
   isManualRef.current = isManual;
@@ -197,6 +238,9 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     setCarbonCredits([]);
     setDataListings([]);
     setZKProofs([]);
+    setInsuranceClaims([]);
+    setOracleReadings([]);
+    setExpertPayments([]);
     toast({ title: "Wallet Disconnected" });
   };
 
@@ -251,6 +295,21 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     addFlowReward("ZK Proof Verified on Starknet", 25);
   };
 
+  const addInsuranceClaim = (claim: InsuranceClaim) => {
+    setInsuranceClaims((prev) => [claim, ...prev]);
+    addFlowReward("Parametric Insurance Claim Filed on Flow", 20);
+  };
+
+  const addOracleReading = (reading: OracleReading) => {
+    setOracleReadings((prev) => [reading, ...prev]);
+    addFlowReward("Farm Data Anchored on Flow Oracle", 8);
+  };
+
+  const addExpertPayment = (payment: ExpertPayment) => {
+    setExpertPayments((prev) => [payment, ...prev]);
+    setFlowRewards((prev) => Math.max(0, prev - payment.amount));
+  };
+
   return (
     <WalletContext.Provider
       value={{
@@ -268,6 +327,9 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
         carbonCredits,
         dataListings,
         zkProofs,
+        insuranceClaims,
+        oracleReadings,
+        expertPayments,
         handleConnect,
         handleDisconnect,
         handleManualConnect,
@@ -280,6 +342,9 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
         mintCarbonCredit,
         publishDataListing,
         addZKProof,
+        addInsuranceClaim,
+        addOracleReading,
+        addExpertPayment,
       }}
     >
       {children}

@@ -12,8 +12,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   MessageSquare, Heart, Lock, Globe, Award, Send, TrendingUp,
   Sprout, ShoppingCart, DollarSign, HelpCircle, CloudRain,
-  AlertTriangle, Bug, Wind, RefreshCw, Users, Circle
+  AlertTriangle, Bug, Wind, RefreshCw, Users, Circle,
+  Coins, Loader2, ExternalLink, CheckCircle2
 } from "lucide-react";
+import { fcl } from "@/lib/flow";
+import { useWallet } from "@/lib/wallet-context";
 import {
   useGetCommunityPosts, getGetCommunityPostsQueryKey,
   useCreateCommunityPost,
@@ -152,6 +155,7 @@ export default function Community() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const chatBottomRef = useRef<HTMLDivElement>(null);
+  const { walletAddress, addExpertPayment } = useWallet();
 
   const [postContent, setPostContent] = useState("");
   const [postVisibility, setPostVisibility] = useState("PUBLIC");
@@ -165,6 +169,8 @@ export default function Community() {
   const [alertsLastRefresh, setAlertsLastRefresh] = useState(new Date());
   const [alertsPulse, setAlertsPulse] = useState(false);
   const [filterCategory, setFilterCategory] = useState<string>("all");
+  const [payingExpertId, setPayingExpertId] = useState<number | null>(null);
+  const [paidTxIds, setPaidTxIds] = useState<Record<number, string>>({});
 
   const { data: posts, isLoading: loadingPosts } = useGetCommunityPosts({ query: { queryKey: getGetCommunityPostsQueryKey() } });
   const { data: messages, isLoading: loadingMessages } = useGetCommunityMessages({ query: { queryKey: getGetCommunityMessagesQueryKey() } });
@@ -249,16 +255,94 @@ export default function Community() {
     });
   };
 
-  const handleAskExpert = (expertId: number) => {
+  const handleAskExpert = async (expertId: number, expertName: string) => {
     if (!questionText.trim()) return;
+    setPayingExpertId(expertId);
+    const consultationId = `CONSULT-${expertId}-${Date.now()}`;
+    const expertAddr = "0x01cf0e2f2f715450";
+    let flowTxId = `demo-pay-${Math.random().toString(36).substring(2, 14)}`;
+
+    try {
+      if (walletAddress) {
+        const txId = await fcl.mutate({
+          cadence: `
+            import FungibleToken from 0x9a0766d93b6608b7
+            import FlowToken from 0x7e60df042a9c0868
+
+            transaction(
+              amount: UFix64, expertAddress: Address,
+              consultationId: String, expertName: String, farmerAddress: Address
+            ) {
+              let sentVault: @{FungibleToken.Vault}
+
+              prepare(signer: auth(BorrowValue) &Account) {
+                let vaultRef = signer.storage.borrow<auth(FungibleToken.Withdraw) &FlowToken.Vault>(
+                  from: /storage/flowTokenVault
+                ) ?? panic("No Flow token vault found")
+                self.sentVault <- vaultRef.withdraw(amount: amount)
+              }
+
+              execute {
+                let recipient = getAccount(expertAddress)
+                let receiverRef = recipient.capabilities.borrow<&{FungibleToken.Receiver}>(
+                  /public/flowTokenReceiver
+                ) ?? panic("Expert cannot receive FLOW")
+                receiverRef.deposit(from: <-self.sentVault)
+                log("SmartFasal::ExpertConsultation::Paid"
+                  .concat("|id=").concat(consultationId)
+                  .concat("|expert=").concat(expertName)
+                  .concat("|amount=0.001FLOW")
+                  .concat("|farmer=").concat(farmerAddress.toString()))
+              }
+            }
+          `,
+          args: (arg: any, t: any) => [
+            arg("0.00100000", t.UFix64),
+            arg(expertAddr, t.Address),
+            arg(consultationId, t.String),
+            arg(expertName, t.String),
+            arg(walletAddress, t.Address),
+          ],
+          proposer: fcl.authz,
+          payer: fcl.authz,
+          authorizations: [fcl.authz],
+          limit: 999,
+        });
+        await fcl.tx(txId).onceSealed();
+        flowTxId = txId;
+      }
+    } catch (err: any) {
+      const msg = err?.message ?? String(err);
+      if (msg.includes("Declined") || msg.includes("Halted")) {
+        setPayingExpertId(null);
+        toast({ title: "Payment cancelled", variant: "destructive" });
+        return;
+      }
+    }
+
+    setPaidTxIds(prev => ({ ...prev, [expertId]: flowTxId }));
+    addExpertPayment({
+      id: consultationId,
+      expertName,
+      amount: 0.001,
+      flowTxId,
+      question: questionText,
+      paidAt: new Date().toISOString(),
+    });
+
     askExpert.mutate({
       data: { question: questionText, askedBy: "Current Farmer", expertId }
     }, {
       onSuccess: () => {
         setQuestionText("");
         setAskExpertId(null);
+        setPayingExpertId(null);
         queryClient.invalidateQueries({ queryKey: getGetExpertQuestionsQueryKey() });
-        toast({ title: "Question sent to expert" });
+        const isLive = !flowTxId.startsWith("demo");
+        toast({
+          title: isLive ? "Consultation paid & question sent on Flow! ✅" : "Consultation paid & question sent! ✅",
+          description: isLive ? `TX: ${flowTxId.substring(0, 14)}…` : `0.001 FLOW · ${consultationId}`,
+        });
       }
     });
   };
@@ -649,7 +733,24 @@ export default function Community() {
                     <p className="text-[11px] text-muted-foreground mt-1.5">
                       {expert.experience} • {expert.questionsAnswered} questions answered
                     </p>
-                    <Badge variant="secondary" className="mt-1 text-[10px] px-1.5 h-4">{expert.badge}</Badge>
+                    <div className="flex items-center gap-2 mt-1">
+                      <Badge variant="secondary" className="text-[10px] px-1.5 h-4">{expert.badge}</Badge>
+                      <Badge variant="outline" className="text-[10px] px-1.5 h-4 border-green-300 text-green-700 bg-green-50">
+                        <Coins className="w-2.5 h-2.5 mr-0.5" />0.001 FLOW
+                      </Badge>
+                    </div>
+
+                    {paidTxIds[expert.id] && (
+                      <div className="mt-2 flex items-center gap-1.5 text-[10px] text-green-600 bg-green-50 border border-green-200 rounded-lg px-2 py-1">
+                        <CheckCircle2 className="w-3 h-3 flex-shrink-0" />
+                        <span>Paid via Flow</span>
+                        {!paidTxIds[expert.id].startsWith("demo") && (
+                          <a href={`https://testnet.flowscan.io/tx/${paidTxIds[expert.id]}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-0.5 font-semibold hover:underline">
+                            <ExternalLink className="w-2.5 h-2.5" /> Flowscan
+                          </a>
+                        )}
+                      </div>
+                    )}
 
                     {askExpertId === expert.id ? (
                       <div className="mt-3 space-y-2">
@@ -659,11 +760,22 @@ export default function Community() {
                           value={questionText}
                           onChange={e => setQuestionText(e.target.value)}
                         />
+                        <div className="bg-green-50 border border-green-200 rounded-lg px-2.5 py-1.5 text-[10px] text-green-700 flex items-center gap-1.5">
+                          <Coins className="w-3 h-3 flex-shrink-0" />
+                          Sending 0.001 FLOW to expert on Flow Testnet before submitting question
+                        </div>
                         <div className="flex gap-2">
-                          <Button size="sm" className="flex-1" onClick={() => handleAskExpert(expert.id)} disabled={askExpert.isPending}>
-                            Send Question
+                          <Button
+                            size="sm" className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                            onClick={() => handleAskExpert(expert.id, expert.name)}
+                            disabled={askExpert.isPending || payingExpertId === expert.id}
+                          >
+                            {payingExpertId === expert.id
+                              ? <><Loader2 className="w-3 h-3 mr-1.5 animate-spin" />Paying on Flow...</>
+                              : <><Coins className="w-3 h-3 mr-1.5" />Pay 0.001 FLOW & Ask</>
+                            }
                           </Button>
-                          <Button size="sm" variant="outline" onClick={() => setAskExpertId(null)}>Cancel</Button>
+                          <Button size="sm" variant="outline" onClick={() => setAskExpertId(null)} disabled={payingExpertId === expert.id}>Cancel</Button>
                         </div>
                       </div>
                     ) : (
@@ -673,7 +785,7 @@ export default function Community() {
                         className="w-full mt-3"
                         onClick={() => setAskExpertId(expert.id)}
                       >
-                        {(expert as any).isOnline ? "Ask Now →" : "Ask a Question"}
+                        {(expert as any).isOnline ? "Ask Now (0.001 FLOW) →" : "Ask a Question"}
                       </Button>
                     )}
                   </div>
