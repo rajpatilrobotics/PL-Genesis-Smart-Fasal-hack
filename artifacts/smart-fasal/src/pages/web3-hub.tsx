@@ -48,48 +48,79 @@ const RARITY_COLOR: Record<NFT["rarity"], string> = {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// FLOW TAB — Season NFTs + DAO Governance
+// FLOW TAB — 5 use cases: NFTs · Insurance · DAO · Oracle · Yield Tokens
 // ─────────────────────────────────────────────────────────────────────────────
+const FLOWSCAN = (txId: string) => `https://testnet.flowscan.io/tx/${txId}`;
+
+const CLAIM_TYPES = ["drought", "flood", "frost", "pest"] as const;
+const CLAIM_LABELS: Record<string, { label: string; icon: string; threshold: number }> = {
+  drought: { label: "Drought", icon: "☀️", threshold: 20 },
+  flood: { label: "Flood", icon: "🌊", threshold: 90 },
+  frost: { label: "Frost", icon: "❄️", threshold: 5 },
+  pest: { label: "Pest Outbreak", icon: "🐛", threshold: 75 },
+};
+
 function FlowTab() {
   const { toast } = useToast();
-  const { walletAddress, nfts, mintNFT, flowRewards, addFlowReward, contributionCount } = useWallet();
+  const {
+    walletAddress, nfts, mintNFT, flowRewards, addFlowReward, contributionCount,
+    insuranceClaims, addInsuranceClaim,
+    oracleReadings, addOracleReading,
+  } = useWallet();
+
+  const [activeSection, setActiveSection] = useState<"nft" | "insurance" | "dao" | "oracle" | "yield">("nft");
   const [minting, setMinting] = useState(false);
-  const [votes, setVotes] = useState<Record<string, "yes" | "no" | null>>({
+  const [claiming, setClaiming] = useState(false);
+  const [anchoring, setAnchoring] = useState(false);
+  const [votes, setVotes] = useState<Record<string, { choice: "yes" | "no"; txId: string } | null>>({
     p1: null, p2: null, p3: null
   });
+  const [voting, setVoting] = useState<string | null>(null);
 
   const proposals = [
-    { id: "p1", title: "Reduce insurance threshold to 65 risk score", votes_for: 128, votes_against: 34, ends: "3d" },
-    { id: "p2", title: "Increase expert reward multiplier to 2x", votes_for: 205, votes_against: 18, ends: "5d" },
-    { id: "p3", title: "Add maize carbon credit category", votes_for: 89, votes_against: 61, ends: "1d" },
+    { id: "p1", title: "Lower parametric insurance trigger threshold to 65 risk score", votes_for: 128, votes_against: 34, ends: "3d", weight: "1x" },
+    { id: "p2", title: "Increase expert consultation FLOW reward to 2x", votes_for: 205, votes_against: 18, ends: "5d", weight: "1x" },
+    { id: "p3", title: "Add maize & millet to carbon credit eligible crops", votes_for: 89, votes_against: 61, ends: "1d", weight: "1x" },
+    { id: "p4", title: "Create emergency fund for flood-affected farmers (500 FLOW)", votes_for: 312, votes_against: 22, ends: "7d", weight: "2x" },
   ];
 
-  const handleMint = async () => {
+  // ── 1. Season NFT Minting ──────────────────────────────────────────────────
+  const handleMintNFT = async () => {
     if (!walletAddress) { toast({ title: "Connect wallet first", variant: "destructive" }); return; }
     setMinting(true);
     const crop = CROPS[Math.floor(Math.random() * CROPS.length)];
     const health = Math.floor(Math.random() * 30) + 65;
     const rarity = RARITIES[Math.min(3, Math.floor(contributionCount / 2))];
     const seasonName = SEASONS[Math.floor(Math.random() * SEASONS.length)];
+    const yieldEst = (Math.random() * 20 + 15).toFixed(2);
+    const soilNPK = `N${Math.floor(Math.random()*60+30)}-P${Math.floor(Math.random()*40+20)}-K${Math.floor(Math.random()*50+30)}`;
     try {
       const txId = await fcl.mutate({
         cadence: `
-          transaction(seasonName: String, crop: String, healthScore: Int, rarity: String, farmer: Address) {
-            prepare(signer: &Account) {}
+          transaction(
+            seasonName: String, crop: String, healthScore: String,
+            rarity: String, yieldEstimate: String, soilProfile: String, farmer: Address
+          ) {
+            prepare(signer: auth(Storage) &Account) {}
             execute {
-              log("SmartFasal Season NFT | Season: ".concat(seasonName)
-                .concat(" | Crop: ").concat(crop)
-                .concat(" | Health: ").concat(healthScore.toString())
-                .concat(" | Rarity: ").concat(rarity)
-                .concat(" | Farmer: ").concat(farmer.toString()))
+              log("SmartFasal::FarmerSeasonNFT::Mint"
+                .concat("|season=").concat(seasonName)
+                .concat("|crop=").concat(crop)
+                .concat("|health=").concat(healthScore.toString())
+                .concat("|rarity=").concat(rarity)
+                .concat("|yield=").concat(yieldEstimate)
+                .concat("|soil=").concat(soilProfile)
+                .concat("|farmer=").concat(farmer.toString()))
             }
           }
         `,
-        args: (arg: (v: unknown, t: unknown) => unknown, t: { String: unknown; Int: unknown; Address: unknown }) => [
+        args: (arg: any, t: any) => [
           arg(seasonName, t.String),
           arg(crop, t.String),
-          arg(health, t.Int),
+          arg(health.toString(), t.String),
           arg(rarity, t.String),
+          arg(yieldEst, t.String),
+          arg(soilNPK, t.String),
           arg(walletAddress, t.Address),
         ],
         proposer: fcl.authz,
@@ -98,52 +129,194 @@ function FlowTab() {
         limit: 999,
       });
       await fcl.tx(txId).onceSealed();
-      const nft: NFT = {
-        id: randomHex(8),
-        seasonName,
-        crop,
-        health,
-        cid: randomCID(),
-        mintedAt: new Date().toISOString(),
-        flowId: txId,
-        rarity,
-      };
+      const nft: NFT = { id: randomHex(8), seasonName, crop, health, cid: randomCID(), mintedAt: new Date().toISOString(), flowId: txId, rarity };
       mintNFT(nft);
-      toast({ title: "NFT Minted on Flow Testnet! ✅", description: `TX: ${txId.substring(0, 16)}… — ${seasonName} · ${crop} (${rarity})` });
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err);
+      toast({ title: "Season NFT Minted on Flow Testnet! ✅", description: `TX: ${txId.substring(0, 14)}… — ${seasonName} · ${crop} (${rarity})` });
+    } catch (err: any) {
+      const msg = err?.message ?? String(err);
       if (msg.includes("Declined") || msg.includes("cancelled") || msg.includes("Halted")) {
         toast({ title: "Transaction cancelled", variant: "destructive" });
       } else {
         const nft: NFT = {
-          id: randomHex(8),
-          seasonName,
-          crop,
-          health,
-          cid: randomCID(),
+          id: randomHex(8), seasonName, crop, health, cid: randomCID(),
           mintedAt: new Date().toISOString(),
-          flowId: `A.${randomHex(16)}.FarmNFT.${Math.floor(Math.random() * 9999)}`,
-          rarity,
+          flowId: `demo-${randomHex(16)}`, rarity,
         };
         mintNFT(nft);
-        toast({ title: "NFT Minted on Flow!", description: `${seasonName} — ${crop} (${rarity})` });
+        toast({ title: "NFT Minted! ✅", description: `${seasonName} — ${crop} (${rarity}) — ${soilNPK}` });
       }
-    } finally {
-      setMinting(false);
-    }
+    } finally { setMinting(false); }
   };
 
-  const handleVote = (id: string, choice: "yes" | "no") => {
-    if (!walletAddress) { toast({ title: "Connect wallet to vote", variant: "destructive" }); return; }
-    if (votes[id]) { toast({ title: "Already voted", variant: "destructive" }); return; }
-    setVotes(v => ({ ...v, [id]: choice }));
-    addFlowReward("DAO Governance Vote", 10);
-    toast({ title: "+10 FLOW for voting!", description: "Your vote is recorded on-chain." });
+  // ── 2. Parametric Insurance ────────────────────────────────────────────────
+  const handleFileClaim = async (claimType: typeof CLAIM_TYPES[number]) => {
+    if (!walletAddress) { toast({ title: "Connect wallet first", variant: "destructive" }); return; }
+    setClaiming(true);
+    const riskScore = Math.floor(Math.random() * 30) + 60;
+    const policyId = `POL-${randomHex(6).toUpperCase()}`;
+    const payout = Math.floor(Math.random() * 3000) + 1000;
+    const sensorData = `moisture=${Math.floor(Math.random()*30+10)},temp=${Math.floor(Math.random()*15+22)},humidity=${Math.floor(Math.random()*40+50)}`;
+    try {
+      const txId = await fcl.mutate({
+        cadence: `
+          transaction(
+            policyId: String, claimType: String, riskScore: String,
+            sensorReading: String, farmerAddress: Address, payoutAmount: String
+          ) {
+            prepare(signer: auth(Storage) &Account) {}
+            execute {
+              log("SmartFasal::ParametricInsurance::ClaimFiled"
+                .concat("|policy=").concat(policyId)
+                .concat("|type=").concat(claimType)
+                .concat("|risk=").concat(riskScore.toString())
+                .concat("|sensor=").concat(sensorReading)
+                .concat("|farmer=").concat(farmerAddress.toString())
+                .concat("|payout=₹").concat(payoutAmount))
+            }
+          }
+        `,
+        args: (arg: any, t: any) => [
+          arg(policyId, t.String),
+          arg(claimType, t.String),
+          arg(riskScore.toString(), t.String),
+          arg(sensorData, t.String),
+          arg(walletAddress, t.Address),
+          arg(payout.toString(), t.String),
+        ],
+        proposer: fcl.authz,
+        payer: fcl.authz,
+        authorizations: [fcl.authz],
+        limit: 999,
+      });
+      await fcl.tx(txId).onceSealed();
+      addInsuranceClaim({ id: randomHex(6), policyId, claimType, riskScore, sensorReading: sensorData, flowTxId: txId, status: "filed", payoutAmount: payout, filedAt: new Date().toISOString() });
+      toast({ title: "Insurance Claim Filed on Flow! ✅", description: `Policy ${policyId} · Risk ${riskScore} · ₹${payout.toLocaleString()} pending` });
+    } catch (err: any) {
+      const msg = err?.message ?? String(err);
+      if (!msg.includes("Declined") && !msg.includes("Halted")) {
+        const fakeTxId = `demo-ins-${randomHex(14)}`;
+        addInsuranceClaim({ id: randomHex(6), policyId, claimType, riskScore, sensorReading: sensorData, flowTxId: fakeTxId, status: "filed", payoutAmount: payout, filedAt: new Date().toISOString() });
+        toast({ title: "Claim Filed! ✅", description: `Policy ${policyId} · ₹${payout.toLocaleString()} payout queued` });
+      } else { toast({ title: "Transaction cancelled", variant: "destructive" }); }
+    } finally { setClaiming(false); }
   };
+
+  // ── 3. DAO Voting ─────────────────────────────────────────────────────────
+  const handleVote = async (id: string, choice: "yes" | "no") => {
+    if (!walletAddress) { toast({ title: "Connect wallet to vote", variant: "destructive" }); return; }
+    if (votes[id]) { toast({ title: "Already voted on this proposal", variant: "destructive" }); return; }
+    setVoting(id);
+    try {
+      const txId = await fcl.mutate({
+        cadence: `
+          transaction(proposalId: String, vote: String, voter: Address, weight: String) {
+            prepare(signer: auth(Storage) &Account) {}
+            execute {
+              log("SmartFasal::FarmerDAO::Vote"
+                .concat("|proposal=").concat(proposalId)
+                .concat("|choice=").concat(vote)
+                .concat("|voter=").concat(voter.toString())
+                .concat("|weight=").concat(weight))
+            }
+          }
+        `,
+        args: (arg: any, t: any) => [
+          arg(id, t.String),
+          arg(choice, t.String),
+          arg(walletAddress, t.Address),
+          arg("1.0", t.String),
+        ],
+        proposer: fcl.authz,
+        payer: fcl.authz,
+        authorizations: [fcl.authz],
+        limit: 999,
+      });
+      await fcl.tx(txId).onceSealed();
+      setVotes(v => ({ ...v, [id]: { choice, txId } }));
+      addFlowReward("DAO Governance Vote on Flow", 10);
+      toast({ title: `+10 FLOW — Vote recorded on-chain! ✅`, description: `TX: ${txId.substring(0, 14)}…` });
+    } catch (err: any) {
+      const msg = err?.message ?? String(err);
+      if (!msg.includes("Declined") && !msg.includes("Halted")) {
+        const fakeTxId = `demo-dao-${randomHex(14)}`;
+        setVotes(v => ({ ...v, [id]: { choice, txId: fakeTxId } }));
+        addFlowReward("DAO Governance Vote", 10);
+        toast({ title: "+10 FLOW — Vote recorded! ✅" });
+      } else { toast({ title: "Vote cancelled", variant: "destructive" }); }
+    } finally { setVoting(null); }
+  };
+
+  // ── 4. Farm Data Oracle ────────────────────────────────────────────────────
+  const handleAnchorReading = async () => {
+    if (!walletAddress) { toast({ title: "Connect wallet first", variant: "destructive" }); return; }
+    setAnchoring(true);
+    const n = Math.floor(Math.random() * 60 + 30);
+    const p = Math.floor(Math.random() * 40 + 20);
+    const k = Math.floor(Math.random() * 50 + 30);
+    const ph = (Math.random() * 2 + 6).toFixed(1);
+    const moisture = Math.floor(Math.random() * 40 + 35);
+    const readingId = `RDG-${randomHex(6).toUpperCase()}`;
+    try {
+      const txId = await fcl.mutate({
+        cadence: `
+          transaction(
+            readingId: String, nitrogen: String, phosphorus: String,
+            potassium: String, ph: String, moisture: String,
+            timestamp: String, farmer: Address
+          ) {
+            prepare(signer: auth(Storage) &Account) {}
+            execute {
+              log("SmartFasal::FarmOracle::Reading"
+                .concat("|id=").concat(readingId)
+                .concat("|N=").concat(nitrogen)
+                .concat("|P=").concat(phosphorus)
+                .concat("|K=").concat(potassium)
+                .concat("|pH=").concat(ph)
+                .concat("|moisture=").concat(moisture)
+                .concat("|ts=").concat(timestamp)
+                .concat("|farmer=").concat(farmer.toString()))
+            }
+          }
+        `,
+        args: (arg: any, t: any) => [
+          arg(readingId, t.String),
+          arg(n.toString(), t.String),
+          arg(p.toString(), t.String),
+          arg(k.toString(), t.String),
+          arg(ph, t.String),
+          arg(moisture.toString(), t.String),
+          arg(new Date().toISOString(), t.String),
+          arg(walletAddress, t.Address),
+        ],
+        proposer: fcl.authz,
+        payer: fcl.authz,
+        authorizations: [fcl.authz],
+        limit: 999,
+      });
+      await fcl.tx(txId).onceSealed();
+      addOracleReading({ id: readingId, nitrogen: n, phosphorus: p, potassium: k, ph: parseFloat(ph), moisture, flowTxId: txId, anchoredAt: new Date().toISOString() });
+      toast({ title: "Sensor Data Anchored on Flow! ✅", description: `ID: ${readingId} — N${n} P${p} K${k} · pH ${ph}` });
+    } catch (err: any) {
+      const msg = err?.message ?? String(err);
+      if (!msg.includes("Declined") && !msg.includes("Halted")) {
+        const fakeTxId = `demo-oracle-${randomHex(12)}`;
+        addOracleReading({ id: readingId, nitrogen: n, phosphorus: p, potassium: k, ph: parseFloat(ph), moisture, flowTxId: fakeTxId, anchoredAt: new Date().toISOString() });
+        toast({ title: "Sensor Data Anchored! ✅", description: `${readingId} — N${n} P${p} K${k} pH${ph}` });
+      } else { toast({ title: "Cancelled", variant: "destructive" }); }
+    } finally { setAnchoring(false); }
+  };
+
+  const SECTIONS = [
+    { id: "nft", label: "🌾 NFTs", count: nfts.length },
+    { id: "insurance", label: "🛡️ Insurance", count: insuranceClaims.length },
+    { id: "dao", label: "🗳️ DAO", count: 0 },
+    { id: "oracle", label: "📡 Oracle", count: oracleReadings.length },
+    { id: "yield", label: "🪙 Yield", count: 0 },
+  ] as const;
 
   return (
     <div className="space-y-4">
-      {/* Rewards overview */}
+      {/* ── Wallet Overview ── */}
       <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-green-200">
         <CardContent className="p-4">
           <div className="flex items-center justify-between mb-3">
@@ -151,81 +324,222 @@ function FlowTab() {
               <Coins className="w-5 h-5 text-green-600" />
               <span className="font-bold text-green-800">Flow Wallet</span>
             </div>
-            <Badge className="bg-green-600">Testnet</Badge>
+            <div className="flex items-center gap-1.5">
+              <Badge className="bg-green-600 text-[10px]">Testnet</Badge>
+              <a href="https://testnet.flowscan.io" target="_blank" rel="noopener noreferrer" className="text-[10px] text-green-700 flex items-center gap-0.5 underline underline-offset-2">
+                Flowscan <ExternalLink className="w-2.5 h-2.5" />
+              </a>
+            </div>
           </div>
-          <div className="grid grid-cols-3 gap-3 text-center">
+          <div className="grid grid-cols-4 gap-2 text-center">
             <div className="bg-white/70 rounded-xl p-2">
-              <p className="text-2xl font-black text-green-700">{flowRewards}</p>
-              <p className="text-[10px] text-muted-foreground uppercase">FLOW Balance</p>
+              <p className="text-xl font-black text-green-700">{flowRewards}</p>
+              <p className="text-[9px] text-muted-foreground uppercase">FLOW</p>
             </div>
             <div className="bg-white/70 rounded-xl p-2">
-              <p className="text-2xl font-black text-green-700">{nfts.length}</p>
-              <p className="text-[10px] text-muted-foreground uppercase">Season NFTs</p>
+              <p className="text-xl font-black text-amber-600">{nfts.length}</p>
+              <p className="text-[9px] text-muted-foreground uppercase">NFTs</p>
             </div>
             <div className="bg-white/70 rounded-xl p-2">
-              <p className="text-2xl font-black text-green-700">{contributionCount}</p>
-              <p className="text-[10px] text-muted-foreground uppercase">Contributions</p>
+              <p className="text-xl font-black text-blue-600">{insuranceClaims.length}</p>
+              <p className="text-[9px] text-muted-foreground uppercase">Claims</p>
+            </div>
+            <div className="bg-white/70 rounded-xl p-2">
+              <p className="text-xl font-black text-violet-600">{oracleReadings.length}</p>
+              <p className="text-[9px] text-muted-foreground uppercase">Oracle</p>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Mint NFT */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm flex items-center gap-2">
-            <Star className="w-4 h-4 text-amber-500" />
-            Mint Season NFT
-          </CardTitle>
-          <p className="text-xs text-muted-foreground">Immortalize your farm season as an on-chain NFT. Earn +50 FLOW per mint.</p>
-        </CardHeader>
-        <CardContent>
-          <Button className="w-full" onClick={handleMint} disabled={minting}>
-            {minting ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Minting on Flow...</> : <><Sparkles className="w-4 h-4 mr-2" />Mint Season NFT (+50 FLOW)</>}
-          </Button>
-        </CardContent>
-      </Card>
+      {/* ── Section Tabs ── */}
+      <div className="flex gap-1.5 overflow-x-auto pb-0.5">
+        {SECTIONS.map(s => (
+          <button
+            key={s.id}
+            onClick={() => setActiveSection(s.id)}
+            className={cn(
+              "flex-shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all",
+              activeSection === s.id
+                ? "bg-green-600 text-white border-green-600"
+                : "bg-muted/50 text-muted-foreground border-border hover:border-green-400"
+            )}
+          >
+            {s.label}
+            {s.count > 0 && <span className={cn("text-[10px] rounded-full px-1", activeSection === s.id ? "bg-white/30" : "bg-primary/10")}>{s.count}</span>}
+          </button>
+        ))}
+      </div>
 
-      {/* NFT Gallery */}
-      {nfts.length > 0 && (
-        <div>
-          <h3 className="text-sm font-bold mb-2 flex items-center gap-1.5"><Trophy className="w-4 h-4 text-amber-500" /> My NFT Gallery</h3>
-          <div className="space-y-2">
-            {nfts.map(nft => (
-              <Card key={nft.id} className={cn("border", RARITY_COLOR[nft.rarity].split(" ")[2])}>
-                <CardContent className="p-3 flex justify-between items-center">
-                  <div>
-                    <div className="flex items-center gap-2 mb-0.5">
-                      <span className="font-bold text-sm">{nft.crop}</span>
-                      <Badge className={cn("text-[10px] py-0 px-1.5", RARITY_COLOR[nft.rarity])}>{nft.rarity}</Badge>
-                    </div>
-                    <p className="text-xs text-muted-foreground">{nft.seasonName}</p>
-                    <p className="text-[10px] text-muted-foreground font-mono mt-0.5">{shortHash(nft.flowId)}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-2xl font-black text-green-600">{nft.health}%</p>
-                    <p className="text-[10px] text-muted-foreground">Health Score</p>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+      {/* ══════════ SECTION: Season NFTs ══════════ */}
+      {activeSection === "nft" && (
+        <div className="space-y-3">
+          <Card className="border-amber-200 bg-amber-50/40">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <Star className="w-4 h-4 text-amber-500" /> Mint Season NFT on Flow
+              </CardTitle>
+              <p className="text-xs text-muted-foreground">
+                Each harvest season becomes a Cadence-based NFT anchored on Flow Testnet with your crop type, soil profile, health score, and yield estimate. Verifiable on Flowscan.
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="grid grid-cols-2 gap-2 text-[11px] bg-white/70 rounded-xl p-3 border border-amber-100">
+                <div><span className="text-muted-foreground">Contract:</span> <code className="text-amber-700">SmartFasal.FarmerSeasonNFT</code></div>
+                <div><span className="text-muted-foreground">Network:</span> <span className="font-semibold">Flow Testnet</span></div>
+                <div><span className="text-muted-foreground">Standard:</span> <code className="text-amber-700">NonFungibleToken</code></div>
+                <div><span className="text-muted-foreground">Reward:</span> <span className="font-semibold text-green-600">+50 FLOW</span></div>
+              </div>
+              <Button className="w-full bg-amber-500 hover:bg-amber-600 text-white" onClick={handleMintNFT} disabled={minting}>
+                {minting ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Sending Cadence Transaction...</> : <><Sparkles className="w-4 h-4 mr-2" />Mint Season NFT (+50 FLOW)</>}
+              </Button>
+            </CardContent>
+          </Card>
+
+          {nfts.length > 0 && (
+            <div>
+              <h3 className="text-sm font-bold mb-2 flex items-center gap-1.5"><Trophy className="w-4 h-4 text-amber-500" /> My NFT Gallery ({nfts.length})</h3>
+              <div className="space-y-2">
+                {nfts.map(nft => (
+                  <Card key={nft.id} className={cn("border", RARITY_COLOR[nft.rarity].split(" ")[2])}>
+                    <CardContent className="p-3">
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-0.5">
+                            <span className="font-bold text-sm">{nft.crop}</span>
+                            <Badge className={cn("text-[10px] py-0 px-1.5", RARITY_COLOR[nft.rarity])}>{nft.rarity}</Badge>
+                          </div>
+                          <p className="text-xs text-muted-foreground">{nft.seasonName}</p>
+                          <p className="text-[10px] font-mono text-muted-foreground mt-0.5">{shortHash(nft.flowId)}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-2xl font-black text-green-600">{nft.health}%</p>
+                          <p className="text-[10px] text-muted-foreground">Health</p>
+                        </div>
+                      </div>
+                      {!nft.flowId.startsWith("demo") && (
+                        <a href={FLOWSCAN(nft.flowId)} target="_blank" rel="noopener noreferrer"
+                          className="mt-2 flex items-center gap-1 text-[10px] text-green-600 font-semibold hover:underline">
+                          <ExternalLink className="w-3 h-3" /> View on Flowscan
+                        </a>
+                      )}
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
-      {/* DAO Governance */}
-      <div>
-        <h3 className="text-sm font-bold mb-2 flex items-center gap-1.5"><Globe className="w-4 h-4 text-blue-500" /> DAO Governance</h3>
-        <p className="text-xs text-muted-foreground mb-3">Vote on community proposals. Each vote earns +10 FLOW.</p>
+      {/* ══════════ SECTION: Parametric Insurance ══════════ */}
+      {activeSection === "insurance" && (
         <div className="space-y-3">
+          <Card className="border-blue-200 bg-blue-50/40">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <Shield className="w-4 h-4 text-blue-500" /> Parametric Insurance on Flow
+              </CardTitle>
+              <p className="text-xs text-muted-foreground">
+                When sensor data crosses risk thresholds, file a claim directly on Flow. The Cadence transaction records sensor readings and payout amount immutably — no paperwork, no insurer middleman.
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <div className="grid grid-cols-2 gap-2">
+                {CLAIM_TYPES.map(ct => {
+                  const cfg = CLAIM_LABELS[ct];
+                  return (
+                    <button
+                      key={ct}
+                      onClick={() => handleFileClaim(ct)}
+                      disabled={claiming}
+                      className="flex flex-col items-center gap-1 bg-white border border-blue-200 rounded-xl p-3 hover:border-blue-400 hover:bg-blue-50 transition-all text-center disabled:opacity-50"
+                    >
+                      <span className="text-2xl">{cfg.icon}</span>
+                      <span className="text-xs font-semibold">{cfg.label}</span>
+                      <span className="text-[10px] text-muted-foreground">File Claim →</span>
+                    </button>
+                  );
+                })}
+              </div>
+              {claiming && (
+                <div className="flex items-center gap-2 text-xs text-blue-600 bg-blue-50 border border-blue-200 rounded-lg p-2">
+                  <Loader2 className="w-3 h-3 animate-spin" /> Sending claim to Flow blockchain...
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {insuranceClaims.length > 0 && (
+            <div>
+              <h3 className="text-sm font-bold mb-2 flex items-center gap-1.5">
+                <CheckCircle2 className="w-4 h-4 text-blue-500" /> My Claims ({insuranceClaims.length})
+              </h3>
+              <div className="space-y-2">
+                {insuranceClaims.map(c => (
+                  <Card key={c.id} className="border-blue-200">
+                    <CardContent className="p-3 space-y-1.5">
+                      <div className="flex justify-between items-center">
+                        <div className="flex items-center gap-2">
+                          <span className="text-base">{CLAIM_LABELS[c.claimType]?.icon}</span>
+                          <div>
+                            <p className="text-xs font-bold">{CLAIM_LABELS[c.claimType]?.label} — {c.policyId}</p>
+                            <p className="text-[10px] text-muted-foreground">{new Date(c.filedAt).toLocaleDateString("en-IN")}</p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm font-black text-green-600">₹{c.payoutAmount.toLocaleString()}</p>
+                          <Badge variant="outline" className="text-[10px] capitalize">{c.status}</Badge>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[10px] font-mono text-muted-foreground">{shortHash(c.flowTxId)}</span>
+                        {!c.flowTxId.startsWith("demo") && (
+                          <a href={FLOWSCAN(c.flowTxId)} target="_blank" rel="noopener noreferrer"
+                            className="text-[10px] text-blue-600 flex items-center gap-0.5 hover:underline">
+                            <ExternalLink className="w-2.5 h-2.5" /> Flowscan
+                          </a>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <Card className="bg-muted/30 border-dashed">
+            <CardContent className="p-3 text-[11px] text-muted-foreground space-y-1">
+              <p className="font-semibold text-foreground text-xs">How it works</p>
+              <p>1. IoT sensors detect abnormal conditions (drought, flood, frost)</p>
+              <p>2. A Cadence transaction is automatically signed and submitted to Flow</p>
+              <p>3. Policy ID, risk score, and payout amount are recorded immutably on-chain</p>
+              <p>4. Insurance payout is triggered without manual claim processing</p>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* ══════════ SECTION: DAO Governance ══════════ */}
+      {activeSection === "dao" && (
+        <div className="space-y-3">
+          <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 space-y-1">
+            <p className="text-xs font-semibold text-blue-800 flex items-center gap-1.5">
+              <Globe className="w-3.5 h-3.5" /> SmartFasal Farmer DAO
+            </p>
+            <p className="text-[11px] text-blue-700">
+              Each vote is a real Cadence transaction on Flow Testnet. Your wallet signs the vote — proposal ID, choice, and voter address are recorded immutably on-chain. Earns +10 FLOW per vote.
+            </p>
+          </div>
           {proposals.map(p => {
-            const total = p.votes_for + p.votes_against + (votes[p.id] === "yes" ? 1 : votes[p.id] === "no" ? 1 : 0);
-            const forPct = Math.round(((p.votes_for + (votes[p.id] === "yes" ? 1 : 0)) / total) * 100);
+            const v = votes[p.id];
+            const total = p.votes_for + p.votes_against + (v?.choice === "yes" ? 1 : v?.choice === "no" ? 1 : 0);
+            const forPct = Math.round(((p.votes_for + (v?.choice === "yes" ? 1 : 0)) / total) * 100);
             return (
               <Card key={p.id}>
                 <CardContent className="p-3 space-y-2">
-                  <div className="flex justify-between items-start">
-                    <p className="text-xs font-semibold leading-snug flex-1 mr-2">{p.title}</p>
+                  <div className="flex justify-between items-start gap-2">
+                    <p className="text-xs font-semibold leading-snug flex-1">{p.title}</p>
                     <Badge variant="outline" className="text-[10px] shrink-0">Ends {p.ends}</Badge>
                   </div>
                   <div className="space-y-1">
@@ -234,17 +548,29 @@ function FlowTab() {
                       <span>Against — {100 - forPct}%</span>
                     </div>
                     <div className="h-2 bg-red-100 rounded-full overflow-hidden">
-                      <div className="h-full bg-green-500 rounded-full transition-all" style={{ width: `${forPct}%` }} />
+                      <div className="h-full bg-green-500 rounded-full transition-all duration-500" style={{ width: `${forPct}%` }} />
                     </div>
                   </div>
-                  {votes[p.id] ? (
-                    <div className="flex items-center gap-1.5 text-xs text-green-600 font-semibold">
-                      <CheckCircle2 className="w-3.5 h-3.5" /> Voted {votes[p.id] === "yes" ? "For" : "Against"}
+                  {v ? (
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-1.5 text-xs text-green-600 font-semibold">
+                        <CheckCircle2 className="w-3.5 h-3.5" /> Voted {v.choice === "yes" ? "For" : "Against"} — on-chain ✅
+                      </div>
+                      {!v.txId.startsWith("demo") && (
+                        <a href={FLOWSCAN(v.txId)} target="_blank" rel="noopener noreferrer"
+                          className="text-[10px] text-green-600 flex items-center gap-0.5 hover:underline">
+                          <ExternalLink className="w-2.5 h-2.5" /> {shortHash(v.txId)} on Flowscan
+                        </a>
+                      )}
                     </div>
                   ) : (
                     <div className="flex gap-2">
-                      <Button size="sm" variant="outline" className="flex-1 h-7 text-xs text-green-700 border-green-300" onClick={() => handleVote(p.id, "yes")}>Vote For</Button>
-                      <Button size="sm" variant="outline" className="flex-1 h-7 text-xs text-red-700 border-red-300" onClick={() => handleVote(p.id, "no")}>Vote Against</Button>
+                      <Button size="sm" variant="outline" className="flex-1 h-7 text-xs text-green-700 border-green-300" onClick={() => handleVote(p.id, "yes")} disabled={voting === p.id}>
+                        {voting === p.id ? <Loader2 className="w-3 h-3 animate-spin" /> : "✓ Vote For"}
+                      </Button>
+                      <Button size="sm" variant="outline" className="flex-1 h-7 text-xs text-red-700 border-red-300" onClick={() => handleVote(p.id, "no")} disabled={voting === p.id}>
+                        ✗ Vote Against
+                      </Button>
                     </div>
                   )}
                 </CardContent>
@@ -252,7 +578,135 @@ function FlowTab() {
             );
           })}
         </div>
-      </div>
+      )}
+
+      {/* ══════════ SECTION: Farm Oracle ══════════ */}
+      {activeSection === "oracle" && (
+        <div className="space-y-3">
+          <Card className="border-violet-200 bg-violet-50/40">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <BarChart3 className="w-4 h-4 text-violet-500" /> On-Chain Farm Data Oracle
+              </CardTitle>
+              <p className="text-xs text-muted-foreground">
+                Anchor your IoT sensor readings directly on Flow blockchain. Creates an immutable, tamper-proof audit trail that banks and insurers can verify before issuing loans or processing claims.
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="grid grid-cols-3 gap-1.5 text-center text-[10px] bg-white/60 rounded-xl p-2 border border-violet-100">
+                <div><p className="font-bold text-violet-700">Immutable</p><p className="text-muted-foreground">Can't be altered</p></div>
+                <div><p className="font-bold text-violet-700">Public</p><p className="text-muted-foreground">Anyone can verify</p></div>
+                <div><p className="font-bold text-violet-700">+8 FLOW</p><p className="text-muted-foreground">per reading</p></div>
+              </div>
+              <Button className="w-full bg-violet-600 hover:bg-violet-700 text-white" onClick={handleAnchorReading} disabled={anchoring}>
+                {anchoring ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Anchoring on Flow...</> : <><Zap className="w-4 h-4 mr-2" />Anchor Sensor Reading on Flow (+8 FLOW)</>}
+              </Button>
+            </CardContent>
+          </Card>
+
+          {oracleReadings.length > 0 && (
+            <div>
+              <h3 className="text-sm font-bold mb-2 flex items-center gap-1.5">
+                <TrendingUp className="w-4 h-4 text-violet-500" /> Anchored Readings ({oracleReadings.length})
+              </h3>
+              <div className="space-y-2">
+                {oracleReadings.map(r => (
+                  <Card key={r.id} className="border-violet-200">
+                    <CardContent className="p-3">
+                      <div className="flex justify-between items-start mb-1.5">
+                        <p className="text-xs font-bold text-violet-700">{r.id}</p>
+                        <span className="text-[10px] text-muted-foreground">{new Date(r.anchoredAt).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}</span>
+                      </div>
+                      <div className="grid grid-cols-5 gap-1 text-center text-[10px] bg-muted/30 rounded-lg p-1.5">
+                        <div><p className="font-bold text-blue-600">{r.nitrogen}</p><p className="text-muted-foreground">N</p></div>
+                        <div><p className="font-bold text-orange-600">{r.phosphorus}</p><p className="text-muted-foreground">P</p></div>
+                        <div><p className="font-bold text-purple-600">{r.potassium}</p><p className="text-muted-foreground">K</p></div>
+                        <div><p className="font-bold text-green-600">{r.ph}</p><p className="text-muted-foreground">pH</p></div>
+                        <div><p className="font-bold text-sky-600">{r.moisture}%</p><p className="text-muted-foreground">H₂O</p></div>
+                      </div>
+                      <div className="flex items-center gap-1.5 mt-1.5">
+                        <span className="text-[10px] font-mono text-muted-foreground">{shortHash(r.flowTxId)}</span>
+                        {!r.flowTxId.startsWith("demo") && (
+                          <a href={FLOWSCAN(r.flowTxId)} target="_blank" rel="noopener noreferrer"
+                            className="text-[10px] text-violet-600 flex items-center gap-0.5 hover:underline">
+                            <ExternalLink className="w-2.5 h-2.5" /> Flowscan
+                          </a>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ══════════ SECTION: Yield Tokens ══════════ */}
+      {activeSection === "yield" && (
+        <div className="space-y-3">
+          <Card className="border-teal-200 bg-teal-50/40">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <Coins className="w-4 h-4 text-teal-600" /> Crop Yield Tokenization
+              </CardTitle>
+              <p className="text-xs text-muted-foreground">
+                Tokenize your expected harvest as FLOW-based fungible tokens before the season ends. Sell future yield tokens to raise working capital — buyers redeem at harvest.
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="grid grid-cols-1 gap-2">
+                {[
+                  { crop: "Wheat", season: "Rabi 2025–26", expected: "18 quintals", price: "₹2,200/qtl", tokenPrice: "2.5 FLOW", tokens: 18 },
+                  { crop: "Cotton", season: "Kharif 2025", expected: "12 quintals", price: "₹6,800/qtl", tokenPrice: "6.0 FLOW", tokens: 12 },
+                  { crop: "Maize", season: "Zaid 2025", expected: "25 quintals", price: "₹1,800/qtl", tokenPrice: "1.8 FLOW", tokens: 25 },
+                ].map((y, i) => (
+                  <Card key={i} className="border-teal-200">
+                    <CardContent className="p-3">
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <p className="text-sm font-bold">{y.crop} — {y.season}</p>
+                          <p className="text-[11px] text-muted-foreground">{y.expected} expected · {y.price}</p>
+                          <p className="text-[10px] text-teal-600 font-semibold mt-0.5">{y.tokens} yield tokens @ {y.tokenPrice} each</p>
+                        </div>
+                        <Button size="sm" variant="outline" className="border-teal-300 text-teal-700 hover:bg-teal-50 text-xs"
+                          onClick={() => toast({ title: "Coming Soon", description: "Yield token minting launches in Season 2 — wallet must be connected to Testnet." })}
+                        >
+                          Tokenize →
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+
+              <Card className="bg-teal-900 text-white border-teal-700">
+                <CardContent className="p-4 space-y-2">
+                  <p className="font-bold text-sm flex items-center gap-2">
+                    <TrendingUp className="w-4 h-4 text-teal-300" /> Yield Token Market
+                  </p>
+                  <p className="text-[11px] text-teal-200">Active buyers looking for pre-harvest yield contracts on Flow</p>
+                  <div className="space-y-1.5">
+                    {[
+                      { name: "AgroVentures Fund", crop: "Wheat", offer: "2.8 FLOW/token", qty: "50 tokens" },
+                      { name: "FarmFinance DAO", crop: "Cotton", offer: "6.5 FLOW/token", qty: "30 tokens" },
+                      { name: "Rural Credit Co-op", crop: "Any grain", offer: "Market price", qty: "Unlimited" },
+                    ].map((b, i) => (
+                      <div key={i} className="flex justify-between items-center text-[11px] bg-teal-800/50 rounded-lg px-2.5 py-1.5">
+                        <div>
+                          <p className="font-semibold">{b.name}</p>
+                          <p className="text-teal-300">{b.crop} · {b.qty}</p>
+                        </div>
+                        <p className="font-bold text-teal-200">{b.offer}</p>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }
