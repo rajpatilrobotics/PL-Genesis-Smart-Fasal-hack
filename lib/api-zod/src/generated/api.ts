@@ -191,6 +191,13 @@ export const GetInsuranceRiskResponse = zod.object({
   eligibleForClaim: zod.boolean(),
   reasons: zod.array(zod.string()),
   recommendations: zod.array(zod.string()),
+  weatherSummary: zod.object({
+    totalRainfall7d: zod.number(),
+    avgRainfall7d: zod.number(),
+    maxTemp7d: zod.number(),
+    heatwaveDays: zod.number(),
+    source: zod.string(),
+  }).optional(),
 });
 
 /**
