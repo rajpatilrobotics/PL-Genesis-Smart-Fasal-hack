@@ -28,6 +28,7 @@ function cidToUrl(cid: string | null | undefined): string | null {
 }
 
 function truncateCid(cid: string) {
+  if (cid.length <= 16) return cid;
   return `${cid.slice(0, 10)}...${cid.slice(-6)}`;
 }
 
