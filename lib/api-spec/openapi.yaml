@@ -1690,6 +1690,11 @@ components:
           type: array
           items:
             type: string
+        granteeLabels:
+          type: object
+          additionalProperties:
+            type: string
+          description: Map of wallet address to human-readable label (e.g. "Punjab National Bank")
         createdAt:
           type: string
           format: date-time
@@ -1699,6 +1704,7 @@ components:
         - dataType
         - dataPreview
         - allowedWallets
+        - granteeLabels
         - createdAt
 
     LitEncryptInput:

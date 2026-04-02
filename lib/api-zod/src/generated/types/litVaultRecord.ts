@@ -5,6 +5,7 @@
  * Smart Fasal Agriculture Platform API
  * OpenAPI spec version: 0.1.0
  */
+import type { LitVaultRecordGranteeLabels } from "./litVaultRecordGranteeLabels";
 
 export interface LitVaultRecord {
   id: number;
@@ -14,5 +15,7 @@ export interface LitVaultRecord {
   filecoinCid?: string | null;
   filecoinUrl?: string | null;
   allowedWallets: string[];
+  /** Map of wallet address to human-readable label (e.g. "Punjab National Bank") */
+  granteeLabels: LitVaultRecordGranteeLabels;
   createdAt: Date;
 }

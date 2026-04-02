@@ -46,6 +46,7 @@ export * from "./litDecryptResult";
 export * from "./litEncryptInput";
 export * from "./litGrantInput";
 export * from "./litVaultRecord";
+export * from "./litVaultRecordGranteeLabels";
 export * from "./marketListing";
 export * from "./marketPrice";
 export * from "./productRecommendation";

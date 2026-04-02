@@ -12,6 +12,7 @@ export const litVaultTable = pgTable("lit_vault_records", {
   filecoinCid: text("filecoin_cid"),
   filecoinUrl: text("filecoin_url"),
   allowedWallets: text("allowed_wallets").notNull().default("[]"),
+  granteeLabels: text("grantee_labels").notNull().default("{}"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

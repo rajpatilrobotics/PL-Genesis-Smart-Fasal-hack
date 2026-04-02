@@ -1,6 +1,12 @@
 import { useState, useEffect, useRef } from "react";
 import { litEncrypt, litDecrypt, getLitClient, shortCipher, getEphemeralWallet, type LitEncryptResult } from "@/lib/lit";
-import { useStoreOnFilecoin } from "@workspace/api-client-react";
+import {
+  useStoreOnFilecoin,
+  useGetLitVaultRecords,
+  useLitEncryptFarmData,
+  useLitGrantAccess,
+  useLitDecryptFarmData,
+} from "@workspace/api-client-react";
 import { lighthouseUpload } from "@/lib/lighthouse";
 import { fcl } from "@/lib/flow";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -17,7 +23,7 @@ import {
   Leaf, CheckCircle2, Loader2, ExternalLink, Copy,
   TrendingUp, Droplets, FlaskConical, BadgeCheck,
   CloudSun, Coins, BarChart3, ScrollText, ArrowRight,
-  Star, Trophy, Globe
+  Star, Trophy, Globe, Users,
 } from "lucide-react";
 
 function randomHex(len: number) {
@@ -657,47 +663,71 @@ function LitTab() {
                     </div>
                   </div>
 
-                  {/* Access list */}
+                  {/* Access list — shows who can decrypt, with human labels */}
                   <div className="bg-orange-50 rounded-lg px-2 py-1.5">
-                    <p className="text-[10px] text-orange-700 font-semibold mb-1">
-                      Access granted to {record.allowedWallets.length} wallet{record.allowedWallets.length !== 1 ? "s" : ""}:
+                    <p className="text-[10px] text-orange-700 font-semibold mb-1.5 flex items-center gap-1">
+                      <Users className="w-3 h-3" />
+                      Access granted to {record.allowedWallets.length} {record.allowedWallets.length !== 1 ? "parties" : "party"}:
                     </p>
-                    <div className="flex flex-wrap gap-1">
-                      {record.allowedWallets.map((w, i) => (
-                        <span key={i} className="text-[9px] font-mono bg-white border border-orange-200 rounded px-1 py-0.5">
-                          {i === 0 ? "You (owner)" : w.slice(0, 8) + "…" + w.slice(-5)}
-                        </span>
-                      ))}
+                    <div className="space-y-1">
+                      {record.allowedWallets.map((w) => {
+                        const label = record.granteeLabels[w] ?? (w.toLowerCase() === ephemeralAddr.toLowerCase() ? "You (owner)" : w.slice(0, 8) + "…" + w.slice(-5));
+                        const isSelf = w.toLowerCase() === ephemeralAddr.toLowerCase();
+                        return (
+                          <div key={w} className="flex items-center gap-1.5 bg-white border border-orange-200 rounded px-1.5 py-1">
+                            <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isSelf ? "bg-orange-500" : "bg-green-500"}`} />
+                            <span className="text-[10px] font-semibold flex-1 truncate">{label}</span>
+                            <span className="text-[8px] font-mono text-muted-foreground truncate">{w.slice(0, 6)}…{w.slice(-4)}</span>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
 
-                  {/* Grant access */}
+                  {/* Grant access — quick presets for Bank / Insurance / Agronomist */}
                   <div className="space-y-1.5">
-                    <p className="text-[10px] font-semibold text-muted-foreground">Grant access to:</p>
+                    <p className="text-[10px] font-semibold text-muted-foreground">Grant access to a third party:</p>
                     <div className="flex flex-wrap gap-1 mb-1">
-                      {GRANTEE_PRESETS.map(preset => (
-                        <Button
-                          key={preset.label}
-                          size="sm"
-                          variant="outline"
-                          className="text-[10px] h-6 px-2 py-0"
-                          onClick={() => setGrantTarget(p => ({ ...p, [record.id]: { wallet: preset.wallet, label: preset.label } }))}
-                        >
-                          {preset.label}
-                        </Button>
-                      ))}
+                      {GRANTEE_PRESETS.map(preset => {
+                        const alreadyGranted = record.allowedWallets.map(w => w.toLowerCase()).includes(preset.wallet.toLowerCase());
+                        return (
+                          <Button
+                            key={preset.label}
+                            size="sm"
+                            variant={alreadyGranted ? "default" : "outline"}
+                            className={`text-[10px] h-6 px-2 py-0 ${alreadyGranted ? "bg-green-600 hover:bg-green-700" : ""}`}
+                            onClick={() => {
+                              if (!alreadyGranted) {
+                                setGrantTarget(p => ({ ...p, [record.id]: { wallet: preset.wallet, label: preset.label } }));
+                              }
+                            }}
+                            disabled={alreadyGranted}
+                          >
+                            {alreadyGranted ? <><CheckCircle2 className="w-2.5 h-2.5 mr-0.5" />{preset.label}</> : preset.label}
+                          </Button>
+                        );
+                      })}
                     </div>
                     <div className="flex gap-1.5">
-                      <input
-                        type="text"
-                        placeholder="0x… wallet address"
-                        className="flex-1 text-[10px] px-2 py-1 border rounded-md min-w-0 font-mono"
-                        value={gt.wallet}
-                        onChange={e => setGrantTarget(p => ({ ...p, [record.id]: { ...gt, wallet: e.target.value } }))}
-                      />
+                      <div className="flex-1 space-y-1">
+                        <input
+                          type="text"
+                          placeholder="Label (e.g. Punjab National Bank)"
+                          className="w-full text-[10px] px-2 py-1 border rounded-md font-sans"
+                          value={gt.label}
+                          onChange={e => setGrantTarget(p => ({ ...p, [record.id]: { ...gt, label: e.target.value } }))}
+                        />
+                        <input
+                          type="text"
+                          placeholder="0x… wallet address"
+                          className="w-full text-[10px] px-2 py-1 border rounded-md font-mono"
+                          value={gt.wallet}
+                          onChange={e => setGrantTarget(p => ({ ...p, [record.id]: { ...gt, wallet: e.target.value } }))}
+                        />
+                      </div>
                       <Button
                         size="sm"
-                        className="text-[10px] h-7 px-2 shrink-0"
+                        className="text-[10px] h-auto px-2 shrink-0 self-center"
                         disabled={isGranting || !gt.wallet}
                         onClick={() => handleGrant(record.id)}
                       >

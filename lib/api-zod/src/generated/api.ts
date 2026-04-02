@@ -495,6 +495,11 @@ export const GetLitVaultRecordsResponseItem = zod.object({
   filecoinCid: zod.string().nullish(),
   filecoinUrl: zod.string().nullish(),
   allowedWallets: zod.array(zod.string()),
+  granteeLabels: zod
+    .record(zod.string(), zod.string())
+    .describe(
+      'Map of wallet address to human-readable label (e.g. \"Punjab National Bank\")',
+    ),
   createdAt: zod.coerce.date(),
 });
 export const GetLitVaultRecordsResponse = zod.array(
@@ -519,6 +524,11 @@ export const LitEncryptFarmDataResponse = zod.object({
   filecoinCid: zod.string().nullish(),
   filecoinUrl: zod.string().nullish(),
   allowedWallets: zod.array(zod.string()),
+  granteeLabels: zod
+    .record(zod.string(), zod.string())
+    .describe(
+      'Map of wallet address to human-readable label (e.g. \"Punjab National Bank\")',
+    ),
   createdAt: zod.coerce.date(),
 });
 
@@ -540,6 +550,11 @@ export const LitGrantAccessResponse = zod.object({
   filecoinCid: zod.string().nullish(),
   filecoinUrl: zod.string().nullish(),
   allowedWallets: zod.array(zod.string()),
+  granteeLabels: zod
+    .record(zod.string(), zod.string())
+    .describe(
+      'Map of wallet address to human-readable label (e.g. \"Punjab National Bank\")',
+    ),
   createdAt: zod.coerce.date(),
 });
 

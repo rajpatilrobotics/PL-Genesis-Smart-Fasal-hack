@@ -419,6 +419,11 @@ export interface CreditProfile {
   loanEligibility: string;
 }
 
+/**
+ * Map of wallet address to human-readable label (e.g. "Punjab National Bank")
+ */
+export type LitVaultRecordGranteeLabels = { [key: string]: string };
+
 export interface LitVaultRecord {
   id: number;
   farmerWallet: string;
@@ -427,6 +432,8 @@ export interface LitVaultRecord {
   filecoinCid?: string | null;
   filecoinUrl?: string | null;
   allowedWallets: string[];
+  /** Map of wallet address to human-readable label (e.g. "Punjab National Bank") */
+  granteeLabels: LitVaultRecordGranteeLabels;
   createdAt: string;
 }
 

@@ -14,15 +14,19 @@ import {
   getGetAiRecommendationHistoryQueryKey,
   useGetDiseaseHistory,
   getGetDiseaseHistoryQueryKey,
+  useLitEncryptFarmData,
+  type LitVaultRecord,
 } from "@workspace/api-client-react";
 import {
   Brain, Search, Sparkles, AlertTriangle, ChevronRight, Zap,
   Camera, Upload, X, Shield, Copy, ExternalLink, CheckCircle2,
-  Loader2, FileImage, Database, ClipboardList, History, ChevronDown, ChevronUp
+  Loader2, FileImage, Database, ClipboardList, History, ChevronDown, ChevronUp,
+  Lock, ShieldCheck,
 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useWallet } from "@/lib/wallet-context";
 import { lighthouseUpload, lighthouseUploadFile } from "@/lib/lighthouse";
+import { getEphemeralWallet } from "@/lib/lit";
 import { cn } from "@/lib/utils";
 
 type EvidenceRecord = {
@@ -49,11 +53,14 @@ export default function AiHub() {
   const [archiving, setArchiving] = useState(false);
   const [evidence, setEvidence] = useState<EvidenceRecord | null>(null);
   const [copiedCid, setCopiedCid] = useState<string | null>(null);
+  const [litVaultRecord, setLitVaultRecord] = useState<LitVaultRecord | null>(null);
+  const [litVaultSoilRecord, setLitVaultSoilRecord] = useState<LitVaultRecord | null>(null);
 
   const [expandedScan, setExpandedScan] = useState<number | null>(null);
 
   const getAiRec = useGetAiRecommendation();
   const detectDisease = useDetectDisease();
+  const litEncryptMutation = useLitEncryptFarmData();
 
   const { data: recHistory } = useGetAiRecommendationHistory({
     query: { queryKey: getGetAiRecommendationHistoryQueryKey() }
@@ -207,6 +214,66 @@ export default function AiHub() {
     });
   };
 
+  const handleEncryptDiseaseToVault = async (scanId?: number) => {
+    const wallet = getEphemeralWallet();
+    const farmerWallet = walletAddress || wallet.address;
+    try {
+      const record = await litEncryptMutation.mutateAsync({
+        data: {
+          farmerWallet,
+          dataType: "disease-scan",
+          scanId: scanId ?? null,
+        },
+      });
+      setLitVaultRecord(record);
+      toast({
+        title: "🔐 Encrypted & stored on Filecoin!",
+        description: `AES-256-GCM secured. CID: ${record.filecoinCid?.slice(0, 14)}… — Go to Web3 Hub → Lit tab to grant bank/insurance access.`,
+      });
+    } catch (err) {
+      toast({ title: "Encryption failed", description: String(err), variant: "destructive" });
+    }
+  };
+
+  const handleEncryptSoilToVault = async () => {
+    const wallet = getEphemeralWallet();
+    const farmerWallet = walletAddress || wallet.address;
+    try {
+      const plaintext = JSON.stringify({
+        type: "soil-analysis",
+        farmer: farmerWallet,
+        data: {
+          nitrogen: Number(recForm.nitrogen),
+          phosphorus: Number(recForm.phosphorus),
+          potassium: Number(recForm.potassium),
+          ph: Number(recForm.ph),
+          moisture: Number(recForm.moisture),
+          unit: "mg/kg",
+        },
+        aiResult: getAiRec.data ? {
+          cropHealthPercent: getAiRec.data.cropHealthPercent,
+          riskLevel: getAiRec.data.riskLevel,
+          yieldPercent: getAiRec.data.yieldPercent,
+          fertilizerAdvice: getAiRec.data.fertilizerAdvice,
+        } : null,
+        timestamp: new Date().toISOString(),
+        encryptedWith: "AES-256-GCM",
+        accessControl: "Lit Protocol — wallet-signature gate",
+        platform: "SmartFasal",
+      });
+      const record = await litEncryptMutation.mutateAsync({
+        data: { farmerWallet, dataType: "soil-analysis", plaintext },
+      });
+      setLitVaultSoilRecord(record);
+      toast({
+        title: "🔐 Soil analysis encrypted & on Filecoin!",
+        description: `CID: ${record.filecoinCid?.slice(0, 14)}… — Grant a bank or agronomist access in Web3 Hub.`,
+      });
+    } catch (err) {
+      toast({ title: "Encryption failed", description: String(err), variant: "destructive" });
+    }
+  };
+
   const copyToClipboard = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
     setCopiedCid(label);
@@ -308,6 +375,49 @@ export default function AiHub() {
                       <p className="text-muted-foreground">{item.value}</p>
                     </div>
                   ))}
+                </div>
+
+                {/* Lit Vault — Soil Analysis */}
+                <div className="border border-orange-300 bg-orange-50/40 rounded-lg p-2.5 space-y-2">
+                  <div className="flex items-center gap-1.5">
+                    <Lock className="w-3.5 h-3.5 text-orange-600" />
+                    <p className="text-xs font-bold text-orange-800">Store in Private Vault</p>
+                  </div>
+                  {litVaultSoilRecord ? (
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-2 space-y-1">
+                      <div className="flex items-center gap-1.5 text-green-700 text-[11px] font-semibold">
+                        <ShieldCheck className="w-3 h-3" />
+                        Soil data encrypted on Filecoin
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <code className="text-[10px] font-mono text-green-800 flex-1 truncate">
+                          {litVaultSoilRecord.filecoinCid}
+                        </code>
+                        <a
+                          href={litVaultSoilRecord.filecoinUrl ?? `https://gateway.lighthouse.storage/ipfs/${litVaultSoilRecord.filecoinCid}`}
+                          target="_blank" rel="noopener noreferrer"
+                          className="text-blue-500 hover:text-blue-700"
+                        >
+                          <ExternalLink className="w-3 h-3" />
+                        </a>
+                      </div>
+                      <p className="text-[10px] text-muted-foreground">Grant bank/agronomist access in Web3 Hub → Lit tab</p>
+                    </div>
+                  ) : (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="w-full border-orange-400 text-orange-700 hover:bg-orange-100 h-7 text-[11px]"
+                      onClick={handleEncryptSoilToVault}
+                      disabled={litEncryptMutation.isPending}
+                    >
+                      {litEncryptMutation.isPending ? (
+                        <><Loader2 className="w-3 h-3 mr-1 animate-spin" />Encrypting…</>
+                      ) : (
+                        <><Lock className="w-3 h-3 mr-1" />Encrypt Soil Report → Lit Vault + Filecoin</>
+                      )}
+                    </Button>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -489,6 +599,59 @@ export default function AiHub() {
                   <p className="font-bold text-sm mb-1">Recommended Treatment</p>
                   <p className="text-sm text-muted-foreground">{diagnosisData.treatment}</p>
                 </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Lit Vault Encryption — after disease scan */}
+          {diagnosisData && (
+            <Card className="border-orange-300 bg-orange-50/40">
+              <CardContent className="p-3 space-y-2">
+                <div className="flex items-center gap-2">
+                  <Lock className="w-4 h-4 text-orange-600 shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-bold text-orange-800">Private Vault — Lit Protocol</p>
+                    <p className="text-[10px] text-muted-foreground">Encrypt this scan with AES-256-GCM and store the ciphertext on Filecoin. Only wallets you approve can decrypt.</p>
+                  </div>
+                </div>
+                {litVaultRecord ? (
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-2.5 space-y-1.5">
+                    <div className="flex items-center gap-1.5 text-green-700 text-xs font-semibold">
+                      <ShieldCheck className="w-3.5 h-3.5" />
+                      Encrypted on Filecoin — access controlled by Lit Protocol
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <code className="text-[10px] font-mono text-green-800 flex-1 truncate">
+                        {litVaultRecord.filecoinCid}
+                      </code>
+                      <a
+                        href={litVaultRecord.filecoinUrl ?? `https://gateway.lighthouse.storage/ipfs/${litVaultRecord.filecoinCid}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-500 hover:text-blue-700"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" />
+                      </a>
+                    </div>
+                    <p className="text-[10px] text-muted-foreground">
+                      Visit <strong>Web3 Hub → Lit tab</strong> to grant a bank or insurance company access to decrypt this report.
+                    </p>
+                  </div>
+                ) : (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="w-full border-orange-400 text-orange-700 hover:bg-orange-100 h-8 text-xs"
+                    onClick={() => handleEncryptDiseaseToVault()}
+                    disabled={litEncryptMutation.isPending}
+                  >
+                    {litEncryptMutation.isPending ? (
+                      <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />Encrypting & pinning to Filecoin…</>
+                    ) : (
+                      <><Lock className="w-3.5 h-3.5 mr-1.5" />Encrypt to Private Lit Vault + Filecoin</>
+                    )}
+                  </Button>
+                )}
               </CardContent>
             </Card>
           )}
