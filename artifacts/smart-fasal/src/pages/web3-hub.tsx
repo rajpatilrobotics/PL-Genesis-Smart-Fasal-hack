@@ -850,6 +850,7 @@ function ZamaTab() {
       await initFhevm({
         tfheParams: "/tfhe_bg.wasm",
         kmsParams: "/kms_lib_bg.wasm",
+        thread: 0,
       });
       const instance = await createInstance({
         kmsContractAddress: ZAMA_KMS,
