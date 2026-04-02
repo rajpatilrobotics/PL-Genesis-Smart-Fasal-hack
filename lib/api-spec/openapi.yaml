@@ -145,6 +145,21 @@ paths:
               schema:
                 $ref: "#/components/schemas/DiseaseDetectResult"
 
+  /disease-detections/history:
+    get:
+      operationId: getDiseaseHistory
+      tags: [ai]
+      summary: Get history of disease detection scans
+      responses:
+        "200":
+          description: List of past disease scans
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DiseaseScanRecord"
+
   /weather:
     get:
       operationId: getWeather
@@ -787,6 +802,8 @@ components:
     DiseaseDetectResult:
       type: object
       properties:
+        id:
+          type: integer
         plantName:
           type: string
         diseaseName:
@@ -797,12 +814,17 @@ components:
           type: string
         severity:
           type: string
+        createdAt:
+          type: string
+          format: date-time
       required:
+        - id
         - plantName
         - diseaseName
         - confidencePercent
         - treatment
         - severity
+        - createdAt
 
     WeatherData:
       type: object
@@ -1373,6 +1395,45 @@ components:
         - id
         - eventType
         - description
+        - createdAt
+
+    DiseaseScanRecord:
+      type: object
+      properties:
+        id:
+          type: integer
+        cropName:
+          type: ["string", "null"]
+        plantName:
+          type: string
+        diseaseName:
+          type: string
+        confidencePercent:
+          type: integer
+        treatment:
+          type: string
+        severity:
+          type: string
+        imageDescription:
+          type: ["string", "null"]
+        imageCid:
+          type: ["string", "null"]
+        imageUrl:
+          type: ["string", "null"]
+        reportCid:
+          type: ["string", "null"]
+        reportUrl:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - plantName
+        - diseaseName
+        - confidencePercent
+        - treatment
+        - severity
         - createdAt
 
     CreditSeasonInput:

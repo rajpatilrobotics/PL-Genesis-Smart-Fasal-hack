@@ -132,12 +132,36 @@ export const DetectDiseaseBody = zod.object({
 });
 
 export const DetectDiseaseResponse = zod.object({
+  id: zod.number(),
   plantName: zod.string(),
   diseaseName: zod.string(),
   confidencePercent: zod.number(),
   treatment: zod.string(),
   severity: zod.string(),
+  createdAt: zod.coerce.date(),
 });
+
+/**
+ * @summary Get history of disease detection scans
+ */
+export const GetDiseaseHistoryResponseItem = zod.object({
+  id: zod.number(),
+  cropName: zod.string().nullish(),
+  plantName: zod.string(),
+  diseaseName: zod.string(),
+  confidencePercent: zod.number(),
+  treatment: zod.string(),
+  severity: zod.string(),
+  imageDescription: zod.string().nullish(),
+  imageCid: zod.string().nullish(),
+  imageUrl: zod.string().nullish(),
+  reportCid: zod.string().nullish(),
+  reportUrl: zod.string().nullish(),
+  createdAt: zod.coerce.date(),
+});
+export const GetDiseaseHistoryResponse = zod.array(
+  GetDiseaseHistoryResponseItem,
+);
 
 /**
  * @summary Get current weather data

@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { db } from "@workspace/db";
-import { aiRecommendationsTable } from "@workspace/db";
+import { aiRecommendationsTable, diseaseScansTable } from "@workspace/db";
 import { desc } from "drizzle-orm";
 import {
   GetAiRecommendationBody,
@@ -165,9 +165,28 @@ Respond with a JSON object with exactly these fields:
     severity = "Moderate";
   }
 
+  const [scanRow] = await db.insert(diseaseScansTable).values({
+    cropName: cropName || null,
+    plantName,
+    diseaseName,
+    confidencePercent,
+    treatment,
+    severity,
+    imageDescription: imageDescription || null,
+  }).returning();
+
   await logEvent("ai", `Disease detection via ${getProvider()}: ${plantName} - ${diseaseName} (${confidencePercent}% confidence)`);
 
-  res.json(DetectDiseaseResponse.parse({ plantName, diseaseName, confidencePercent, treatment, severity }));
+  res.json({ ...DetectDiseaseResponse.parse({ plantName, diseaseName, confidencePercent, treatment, severity }), id: scanRow.id, createdAt: scanRow.createdAt });
+});
+
+router.get("/disease-detections/history", async (_req, res): Promise<void> => {
+  const rows = await db
+    .select()
+    .from(diseaseScansTable)
+    .orderBy(desc(diseaseScansTable.createdAt))
+    .limit(30);
+  res.json(rows);
 });
 
 export default router;

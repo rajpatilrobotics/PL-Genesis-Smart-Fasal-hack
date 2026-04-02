@@ -34,6 +34,7 @@ import type {
   CreditSeasonRecord,
   DiseaseDetectInput,
   DiseaseDetectResult,
+  DiseaseScanRecord,
   EventLog,
   Expert,
   ExpertQuestion,
@@ -646,6 +647,81 @@ export const useDetectDisease = <
 > => {
   return useMutation(getDetectDiseaseMutationOptions(options));
 };
+
+/**
+ * @summary Get history of disease detection scans
+ */
+export const getGetDiseaseHistoryUrl = () => {
+  return `/api/disease-detections/history`;
+};
+
+export const getDiseaseHistory = async (
+  options?: RequestInit,
+): Promise<DiseaseScanRecord[]> => {
+  return customFetch<DiseaseScanRecord[]>(getGetDiseaseHistoryUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetDiseaseHistoryQueryKey = () => {
+  return [`/api/disease-detections/history`] as const;
+};
+
+export const getGetDiseaseHistoryQueryOptions = <
+  TData = Awaited<ReturnType<typeof getDiseaseHistory>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getDiseaseHistory>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetDiseaseHistoryQueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getDiseaseHistory>>
+  > = ({ signal }) => getDiseaseHistory({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getDiseaseHistory>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetDiseaseHistoryQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getDiseaseHistory>>
+>;
+export type GetDiseaseHistoryQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Get history of disease detection scans
+ */
+
+export function useGetDiseaseHistory<
+  TData = Awaited<ReturnType<typeof getDiseaseHistory>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getDiseaseHistory>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetDiseaseHistoryQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
 
 /**
  * @summary Get current weather data

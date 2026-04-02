@@ -11,12 +11,14 @@ import {
   useGetAiRecommendation,
   useDetectDisease,
   useGetAiRecommendationHistory,
-  getGetAiRecommendationHistoryQueryKey
+  getGetAiRecommendationHistoryQueryKey,
+  useGetDiseaseHistory,
+  getGetDiseaseHistoryQueryKey,
 } from "@workspace/api-client-react";
 import {
   Brain, Search, Sparkles, AlertTriangle, ChevronRight, Zap,
   Camera, Upload, X, Shield, Copy, ExternalLink, CheckCircle2,
-  Loader2, FileImage, Database, ClipboardList
+  Loader2, FileImage, Database, ClipboardList, History, ChevronDown, ChevronUp
 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useWallet } from "@/lib/wallet-context";
@@ -48,11 +50,17 @@ export default function AiHub() {
   const [evidence, setEvidence] = useState<EvidenceRecord | null>(null);
   const [copiedCid, setCopiedCid] = useState<string | null>(null);
 
+  const [expandedScan, setExpandedScan] = useState<number | null>(null);
+
   const getAiRec = useGetAiRecommendation();
   const detectDisease = useDetectDisease();
 
   const { data: recHistory } = useGetAiRecommendationHistory({
     query: { queryKey: getGetAiRecommendationHistoryQueryKey() }
+  });
+
+  const { data: diseaseHistory } = useGetDiseaseHistory({
+    query: { queryKey: getGetDiseaseHistoryQueryKey() }
   });
 
   const handleRecSubmit = (e: React.FormEvent) => {
@@ -192,6 +200,7 @@ export default function AiHub() {
       onSuccess: (data) => {
         toast({ title: "Detection Complete", description: "Archiving evidence to Filecoin..." });
         if (walletAddress) addFlowReward("Disease Detection Analysis", 10);
+        queryClient.invalidateQueries({ queryKey: getGetDiseaseHistoryQueryKey() });
         archiveEvidence(data);
       },
       onError: () => toast({ title: "Error", description: "Failed to analyze.", variant: "destructive" })
@@ -574,6 +583,70 @@ export default function AiHub() {
                 </CardContent>
               )}
             </Card>
+          )}
+
+          {/* Disease Scan History */}
+          {diseaseHistory && diseaseHistory.length > 0 && (
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <History className="w-4 h-4 text-muted-foreground" />
+                <h3 className="text-sm font-semibold">Scan History ({diseaseHistory.length})</h3>
+              </div>
+              {diseaseHistory.map((scan) => {
+                const isExpanded = expandedScan === scan.id;
+                const severityColor =
+                  scan.severity === "Severe" ? "bg-red-100 text-red-800 border-red-200" :
+                  scan.severity === "Moderate" ? "bg-amber-100 text-amber-800 border-amber-200" :
+                  "bg-green-100 text-green-800 border-green-200";
+                return (
+                  <Card key={scan.id} className="border border-border">
+                    <CardContent className="p-3">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="text-sm font-semibold truncate">{scan.diseaseName}</p>
+                            <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full border ${severityColor}`}>
+                              {scan.severity}
+                            </span>
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            {scan.plantName}{scan.cropName && scan.cropName !== scan.plantName ? ` · ${scan.cropName}` : ""} · {scan.confidencePercent}% confidence
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <span className="text-[10px] text-muted-foreground whitespace-nowrap">
+                            {new Date(scan.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
+                          </span>
+                          <button
+                            onClick={() => setExpandedScan(isExpanded ? null : scan.id)}
+                            className="text-muted-foreground hover:text-foreground transition-colors"
+                          >
+                            {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                          </button>
+                        </div>
+                      </div>
+                      {isExpanded && (
+                        <div className="mt-3 pt-3 border-t border-border space-y-2">
+                          <div>
+                            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-1">Treatment</p>
+                            <p className="text-xs text-foreground leading-relaxed">{scan.treatment}</p>
+                          </div>
+                          {scan.imageDescription && (
+                            <div>
+                              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-1">Reported Symptoms</p>
+                              <p className="text-xs text-muted-foreground italic">{scan.imageDescription}</p>
+                            </div>
+                          )}
+                          <p className="text-[10px] text-muted-foreground">
+                            Scanned {new Date(scan.createdAt).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })}
+                          </p>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
           )}
         </TabsContent>
       </Tabs>

@@ -7,9 +7,11 @@
  */
 
 export interface DiseaseDetectResult {
+  id: number;
   plantName: string;
   diseaseName: string;
   confidencePercent: number;
   treatment: string;
   severity: string;
+  createdAt: Date;
 }

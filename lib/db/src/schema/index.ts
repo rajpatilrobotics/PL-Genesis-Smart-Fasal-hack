@@ -7,3 +7,4 @@ export * from "./filecoin";
 export * from "./rewards";
 export * from "./event-logs";
 export * from "./credit";
+export * from "./disease-scans";

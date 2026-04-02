@@ -25,6 +25,7 @@ export * from "./creditSeasonInput";
 export * from "./creditSeasonRecord";
 export * from "./diseaseDetectInput";
 export * from "./diseaseDetectResult";
+export * from "./diseaseScanRecord";
 export * from "./eventLog";
 export * from "./expert";
 export * from "./expertQuestion";

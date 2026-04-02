@@ -79,11 +79,13 @@ export interface DiseaseDetectInput {
 }
 
 export interface DiseaseDetectResult {
+  id: number;
   plantName: string;
   diseaseName: string;
   confidencePercent: number;
   treatment: string;
   severity: string;
+  createdAt: string;
 }
 
 export interface WeatherData {
@@ -324,6 +326,28 @@ export interface AnalyticsSummary {
   avgSoilPh: number;
   avgMoisture: number;
   recentLogs: EventLog[];
+}
+
+export interface DiseaseScanRecord {
+  id: number;
+  /** @nullable */
+  cropName?: string | null;
+  plantName: string;
+  diseaseName: string;
+  confidencePercent: number;
+  treatment: string;
+  severity: string;
+  /** @nullable */
+  imageDescription?: string | null;
+  /** @nullable */
+  imageCid?: string | null;
+  /** @nullable */
+  imageUrl?: string | null;
+  /** @nullable */
+  reportCid?: string | null;
+  /** @nullable */
+  reportUrl?: string | null;
+  createdAt: string;
 }
 
 export interface CreditSeasonInput {
