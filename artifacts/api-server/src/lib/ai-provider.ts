@@ -12,10 +12,9 @@ import { openai } from "@workspace/integrations-openai-ai-server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 function getProvider(): "openai" | "gemini" {
-  if (process.env.AI_INTEGRATIONS_OPENAI_API_KEY || process.env.AI_INTEGRATIONS_OPENAI_BASE_URL) {
-    return "openai";
-  }
-  if (process.env.GOOGLE_API_KEY) {
+  // Always prefer OpenAI (via Replit AI integration) — Gemini only if explicitly forced
+  // and no OpenAI integration is available.
+  if (process.env.FORCE_GEMINI === "true" && process.env.GOOGLE_API_KEY && !process.env.AI_INTEGRATIONS_OPENAI_API_KEY && !process.env.AI_INTEGRATIONS_OPENAI_BASE_URL) {
     return "gemini";
   }
   return "openai";
