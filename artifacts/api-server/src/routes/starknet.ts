@@ -24,7 +24,7 @@ function checkClaim(claimType: string, data: Omit<SoilProofRequest, "claimType">
   switch (claimType) {
     case "ph_healthy":    return data.ph >= 6.0 && data.ph <= 7.5;
     case "no_drought":    return data.moisture > 40;
-    case "yield_insurable": return (data.nitrogen * 0.4 + data.phosphorus * 0.3 + data.potassium * 0.3) > 50;
+    case "yield_insurable": return (data.nitrogen * 0.4 + data.phosphorus * 0.3 + data.potassium * 0.3) > 40;
     default: return false;
   }
 }
