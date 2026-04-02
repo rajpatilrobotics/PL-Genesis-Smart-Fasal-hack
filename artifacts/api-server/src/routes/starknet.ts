@@ -27,7 +27,7 @@ const NETWORK_NAME    = "Starknet Sepolia";
 const provider = new RpcProvider({ nodeUrl: STARKNET_RPC });
 
 function getAccount() {
-  return new Account(provider, WALLET_ADDR, PRIV_KEY);
+  return new Account({ provider, address: WALLET_ADDR, signer: PRIV_KEY });
 }
 
 // ─── Persisted state ────────────────────────────────────────────────────────
