@@ -22,7 +22,7 @@ async function uploadToIPFS(
   dataType: string,
   payload: string | object,
   isImage = false
-): Promise<{ cid: string; url: string; real: boolean }> {
+): Promise<{ cid: string | null; url: string | null; real: boolean }> {
   const apiKey = process.env.LIGHTHOUSE_API_KEY;
   const content = typeof payload === "string" ? payload : JSON.stringify(payload, null, 2);
 
@@ -66,13 +66,12 @@ async function uploadToIPFS(
       console.log(`[IPFS/Filecoin] ✅ Stored on Lighthouse (Protocol Labs) — CID: ${cid}`);
       return { cid, url: `https://gateway.lighthouse.storage/ipfs/${cid}`, real: true };
     } catch (err) {
-      console.error("[IPFS] Lighthouse upload failed, using fallback CID:", err);
+      console.error("[IPFS] Lighthouse unavailable (will store without CID):", (err as Error).message);
     }
   }
 
-  const hash = crypto.createHash("sha256").update(content + Date.now()).digest("hex");
-  const cid = `bafybeig${hash.substring(0, 46)}`;
-  return { cid, url: `https://ipfs.io/ipfs/${cid}`, real: false };
+  // No real CID — return null so callers know not to store/display a link
+  return { cid: null, url: null, real: false };
 }
 
 // ─── Live Mandi Prices (eNAM-seeded, refreshed with realistic drift) ─────────
@@ -158,16 +157,14 @@ router.post("/market/listings", async (req, res): Promise<void> => {
 
   // Feature 1: Upload produce photo to IPFS via Lighthouse (Protocol Labs)
   if (imageBase64) {
-    try {
-      const result = await uploadToIPFS("listing-photo", imageBase64, true);
+    const result = await uploadToIPFS("listing-photo", imageBase64, true);
+    if (result.real && result.cid) {
       imageCid = result.cid;
-      console.log(`[IPFS] Photo stored — CID: ${imageCid}`);
-    } catch (err) {
-      console.error("[IPFS] Photo upload failed:", err);
+      console.log(`[IPFS] Photo stored on Lighthouse — CID: ${imageCid}`);
     }
   }
 
-  // Store listing metadata on IPFS as a decentralised record
+  // Store listing metadata on IPFS (only logs if successful)
   const metadataResult = await uploadToIPFS("listing-metadata", {
     ...listingData,
     imageCid,
@@ -176,17 +173,17 @@ router.post("/market/listings", async (req, res): Promise<void> => {
     timestamp: new Date().toISOString(),
   });
 
-  if (!imageCid) imageCid = metadataResult.cid;
+  const metaCid = metadataResult.real ? metadataResult.cid : null;
 
   const [row] = await db.insert(marketListingsTable).values({
     ...listingData,
     sellerWallet: listingData.sellerWallet ?? undefined,
     status: "available",
     escrowStatus: "none",
-    imageCid,
+    imageCid: imageCid ?? metaCid,
   }).returning();
 
-  await logEvent("market", `New IPFS-backed listing: ${listingData.title} — Metadata CID: ${metadataResult.cid} (${metadataResult.real ? "Lighthouse ✓" : "simulated"})`);
+  await logEvent("market", `New listing: ${listingData.title}${metaCid ? ` — IPFS CID: ${metaCid}` : " (no IPFS, Lighthouse unavailable)"}`);
   res.status(201).json(row);
 });
 
@@ -228,14 +225,15 @@ router.post("/market/listings/:id/buy", async (req, res): Promise<void> => {
   };
 
   const escrowResult = await uploadToIPFS("fvm-escrow", escrowAgreement);
+  const escrowCid = escrowResult.real ? escrowResult.cid : null;
 
   const [updated] = await db
     .update(marketListingsTable)
-    .set({ status: "sold", escrowStatus: "escrowed", buyerName, receiptCid: escrowResult.cid })
+    .set({ status: "sold", escrowStatus: "escrowed", buyerName, receiptCid: escrowCid })
     .where(eq(marketListingsTable.id, id))
     .returning();
 
-  await logEvent("market", `FVM Escrow created on IPFS: ${listing.title} — ₹${listing.price * listing.quantity} locked — CID: ${escrowResult.cid} (${escrowResult.real ? "Lighthouse ✓" : "simulated"})`);
+  await logEvent("market", `Escrow created: ${listing.title} — ₹${listing.price * listing.quantity} locked${escrowCid ? ` — IPFS CID: ${escrowCid}` : " (Lighthouse unavailable)"}`);
   res.json(updated);
 });
 
@@ -275,14 +273,15 @@ router.post("/market/listings/:id/confirm-delivery", async (req, res): Promise<v
   };
 
   const receiptResult = await uploadToIPFS("filecoin-trade-receipt", receipt);
+  const receiptCid = receiptResult.real ? receiptResult.cid : null;
 
   const [updated] = await db
     .update(marketListingsTable)
-    .set({ escrowStatus: "released", receiptCid: receiptResult.cid })
+    .set({ escrowStatus: "released", receiptCid })
     .where(eq(marketListingsTable.id, id))
     .returning();
 
-  await logEvent("market", `Trade complete — Filecoin receipt: ${listing.crop} ${listing.quantity}${listing.unit} — CID: ${receiptResult.cid} (${receiptResult.real ? "Lighthouse ✓" : "simulated"})`);
+  await logEvent("market", `Trade complete: ${listing.crop} ${listing.quantity}${listing.unit}${receiptCid ? ` — Filecoin receipt CID: ${receiptCid}` : " (Lighthouse unavailable)"}`);
   res.json(updated);
 });
 
