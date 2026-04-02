@@ -68,6 +68,9 @@ export default defineConfig({
     allowedHosts: true,
     headers: {
       "Cross-Origin-Resource-Policy": "cross-origin",
+      ...(process.env.NODE_ENV !== "production"
+        ? { "Cache-Control": "no-store" }
+        : {}),
     },
     fs: {
       strict: true,
