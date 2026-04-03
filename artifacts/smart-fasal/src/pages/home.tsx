@@ -393,7 +393,7 @@ export default function Home() {
 
   const riskToDisplay: RiskStatus = pipelineResult?.riskLevel ?? (insuranceRisk?.riskLevel === "HIGH" ? "High" : insuranceRisk?.riskLevel === "LOW" ? "Low" : "Medium");
 
-  const glassCard = "rounded-2xl border border-white/50 bg-white/35 backdrop-blur-2xl shadow-md shadow-emerald-100/40 transition-all duration-200 hover:-translate-y-1 hover:shadow-xl hover:shadow-emerald-300/30 hover:bg-white/45 active:translate-y-0 active:shadow-md";
+  const glassCard = "glass-glow rounded-2xl border border-white/50 bg-white/35 backdrop-blur-2xl hover:bg-white/45";
 
   return (
     <div className="relative -mx-4 -mt-5 min-h-screen animate-in fade-in slide-in-from-bottom-4 duration-500"
