@@ -1,9 +1,49 @@
-import { Leaf, Wallet, LogOut, Wifi, CheckCircle, Gift } from "lucide-react";
+import { Leaf, Wallet, LogOut, Wifi, CheckCircle, Gift, UserCircle, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useWallet } from "@/lib/wallet-context";
+import { useUser, useClerk } from "@clerk/react";
+import { useLocation } from "wouter";
 
 const MOCK_BALANCE = "100,000";
+
+function ClerkAuthButton() {
+  const { isSignedIn, user } = useUser();
+  const { signOut } = useClerk();
+  const [, setLocation] = useLocation();
+
+  if (isSignedIn) {
+    const name = user.firstName || user.emailAddresses[0]?.emailAddress?.split("@")[0] || "Farmer";
+    return (
+      <div className="flex items-center gap-1.5">
+        <button
+          onClick={() => setLocation("/profile")}
+          className="flex items-center gap-1 text-xs font-medium text-primary hover:text-primary/80 transition-colors"
+          title="My Profile"
+        >
+          {user.imageUrl
+            ? <img src={user.imageUrl} alt={name} className="w-5 h-5 rounded-full object-cover" />
+            : <UserCircle className="w-4 h-4" />}
+          <span className="max-w-[70px] truncate hidden sm:inline">{name}</span>
+        </button>
+        <button
+          onClick={() => signOut(() => setLocation("/"))}
+          className="text-muted-foreground hover:text-destructive transition-colors"
+          title="Sign out"
+        >
+          <LogOut className="w-3.5 h-3.5" />
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <Button size="sm" variant="outline" className="h-7 text-xs px-2.5 gap-1" onClick={() => setLocation("/sign-in")}>
+      <LogIn className="w-3 h-3" />
+      Sign In
+    </Button>
+  );
+}
 
 export default function TopHeader() {
   const {
@@ -41,6 +81,7 @@ export default function TopHeader() {
 
         {/* Right section */}
         <div className="flex items-center gap-2 min-w-0">
+          <ClerkAuthButton />
 
           {/* CONNECTED STATE */}
           {walletAddress && (

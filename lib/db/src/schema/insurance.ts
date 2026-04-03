@@ -4,6 +4,7 @@ import { z } from "zod/v4";
 
 export const insuranceClaimsTable = pgTable("insurance_claims", {
   id: serial("id").primaryKey(),
+  userId: text("user_id"),
   claimType: text("claim_type").notNull(),
   riskLevel: text("risk_level").notNull(),
   description: text("description").notNull(),
@@ -20,6 +21,7 @@ export const insuranceClaimsTable = pgTable("insurance_claims", {
 
 export const insurancePoliciesTable = pgTable("insurance_policies", {
   id: serial("id").primaryKey(),
+  userId: text("user_id"),
   plan: text("plan").notNull(),                    // BASIC | STANDARD | PREMIUM
   coveredEvents: text("covered_events").notNull(), // JSON array of event types
   premiumAnnual: integer("premium_annual").notNull(),

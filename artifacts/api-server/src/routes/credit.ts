@@ -1,6 +1,7 @@
 import { Router, type IRouter } from "express";
 import { db, creditSeasonsTable } from "@workspace/db";
 import { eq, desc } from "drizzle-orm";
+import { requireAuth } from "../middlewares/requireAuth.js";
 import { generateCreditJSON, getProvider } from "../lib/ai-provider.js";
 import { logEvent } from "../lib/event-logger.js";
 import crypto from "crypto";
@@ -20,7 +21,7 @@ function getRating(score: number): string {
   return "Poor";
 }
 
-router.post("/credit/seasons", async (req, res): Promise<void> => {
+router.post("/credit/seasons", requireAuth, async (req, res): Promise<void> => {
   const {
     farmerId = "default",
     season,
@@ -133,7 +134,8 @@ Return a JSON object with exactly:
   }
 
   const record = {
-    farmerId,
+    userId: (req as any).userId ?? null,
+    farmerId: (req as any).userId ?? farmerId,
     season,
     cropGrown,
     acresPlanted,
@@ -164,22 +166,23 @@ Return a JSON object with exactly:
   res.json(row);
 });
 
-router.get("/credit/seasons", async (req, res): Promise<void> => {
-  const farmerId = (req.query.farmerId as string) || "default";
+router.get("/credit/seasons", requireAuth, async (req, res): Promise<void> => {
+  const userId = (req as any).userId;
   const rows = await db
     .select()
     .from(creditSeasonsTable)
-    .where(eq(creditSeasonsTable.farmerId, farmerId))
+    .where(eq(creditSeasonsTable.userId, userId))
     .orderBy(desc(creditSeasonsTable.createdAt));
   res.json(rows);
 });
 
-router.get("/credit/profile", async (req, res): Promise<void> => {
-  const farmerId = (req.query.farmerId as string) || "default";
+router.get("/credit/profile", requireAuth, async (req, res): Promise<void> => {
+  const userId = (req as any).userId;
+  const farmerId = userId;
   const seasons = await db
     .select()
     .from(creditSeasonsTable)
-    .where(eq(creditSeasonsTable.farmerId, farmerId))
+    .where(eq(creditSeasonsTable.userId, userId))
     .orderBy(desc(creditSeasonsTable.createdAt));
 
   if (seasons.length === 0) {

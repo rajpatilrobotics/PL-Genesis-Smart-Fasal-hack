@@ -4,6 +4,7 @@ import { z } from "zod/v4";
 
 export const aiRecommendationsTable = pgTable("ai_recommendations", {
   id: serial("id").primaryKey(),
+  userId: text("user_id"),
   fertilizerAdvice: text("fertilizer_advice").notNull(),
   irrigationSuggestion: text("irrigation_suggestion").notNull(),
   riskAnalysis: text("risk_analysis").notNull(),

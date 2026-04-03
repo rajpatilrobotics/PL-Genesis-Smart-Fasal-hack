@@ -4,6 +4,7 @@ import { z } from "zod/v4";
 
 export const creditSeasonsTable = pgTable("credit_seasons", {
   id: serial("id").primaryKey(),
+  userId: text("user_id"),
   farmerId: text("farmer_id").notNull().default("default"),
   season: text("season").notNull(),
   cropGrown: text("crop_grown").notNull(),
