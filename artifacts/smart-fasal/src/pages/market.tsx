@@ -560,13 +560,12 @@ export default function Market() {
         <div className="absolute bottom-0 left-0 w-20 h-20 rounded-full bg-yellow-300/20 blur-lg" />
         <div className="relative flex items-center justify-between">
           <div>
-            <div className="flex items-center gap-2 mb-1">
-              <div className="w-7 h-7 rounded-lg bg-white/20 flex items-center justify-center">
+            <div className="flex items-center gap-2.5 mb-1">
+              <div className="w-7 h-7 rounded-lg bg-white/20 flex items-center justify-center shrink-0">
                 <Store className="w-4 h-4 text-white" />
               </div>
-              <p className="text-orange-100 text-xs font-bold uppercase tracking-wide">Smart Fasal</p>
+              <h2 className="text-xl font-extrabold text-white tracking-tight">Marketplace</h2>
             </div>
-            <h2 className="text-xl font-extrabold text-white tracking-tight">Marketplace</h2>
             <p className="text-orange-100/70 text-xs mt-0.5">Live Mandi Prices · P2P Trade · Filecoin Escrow</p>
           </div>
           <a

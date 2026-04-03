@@ -119,13 +119,12 @@ export default function Profile() {
           <Leaf className="w-28 h-28" />
         </div>
         <div className="relative">
-          <div className="flex items-center gap-2 mb-1">
-            <div className="w-7 h-7 rounded-lg bg-white/20 flex items-center justify-center">
+          <div className="flex items-center gap-2.5 mb-1">
+            <div className="w-7 h-7 rounded-lg bg-white/20 flex items-center justify-center shrink-0">
               <Sprout className="w-4 h-4 text-white" />
             </div>
-            <p className="text-emerald-100 text-xs font-bold uppercase tracking-wide">Smart Fasal</p>
+            <h2 className="text-xl font-extrabold text-white tracking-tight">{t("profile.title")}</h2>
           </div>
-          <h2 className="text-xl font-extrabold text-white tracking-tight">{t("profile.title")}</h2>
           <p className="text-emerald-100/70 text-xs mt-0.5">Credit Score · Farm History · Identity</p>
         </div>
       </div>

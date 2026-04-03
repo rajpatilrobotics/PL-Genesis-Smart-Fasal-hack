@@ -87,23 +87,19 @@ export default function TopHeader() {
       <div className="container mx-auto px-4 flex items-center justify-between gap-3 py-2.5">
 
         {/* Logo */}
-        <div className="flex flex-col shrink-0">
-          <div className="flex items-center gap-2">
-            <div className="relative">
-              <img
-                src="/logo.jpeg"
-                alt="Smart Fasal"
-                className="w-8 h-8 rounded-xl object-cover shadow-md ring-2 ring-emerald-200/80"
-              />
-              <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-white shadow-sm" />
-            </div>
-            <div>
-              <span className="font-extrabold text-base tracking-tight text-gradient-green">Smart Fasal</span>
-            </div>
+        <div className="flex items-center gap-2.5 shrink-0">
+          <div className="relative">
+            <img
+              src="/logo.jpeg"
+              alt="Smart Fasal"
+              className="w-11 h-11 rounded-xl object-cover shadow-md ring-2 ring-emerald-200/80"
+            />
+            <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 rounded-full border-2 border-white shadow-sm" />
           </div>
-          <span className="text-[9px] font-bold text-emerald-600 bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-full px-2 py-px leading-tight mt-0.5 w-fit">
-            ⛓ {t("header.poweredBy")}
-          </span>
+          <div className="flex flex-col">
+            <span className="font-extrabold text-base tracking-tight text-gradient-green leading-tight">Smart Fasal</span>
+            <span className="text-[10px] font-semibold text-emerald-600 leading-tight">The Agriculture Platform</span>
+          </div>
         </div>
 
         {/* Right section */}
@@ -167,19 +163,22 @@ export default function TopHeader() {
 
           {/* NOT CONNECTED — Connect button */}
           {!walletAddress && !showManualInput && (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5">
               <Button
                 onClick={handleConnect}
                 disabled={isConnecting}
                 size="sm"
-                className="rounded-full font-bold px-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 shadow-md hover:shadow-lg transition-all duration-200 border-0"
+                className="rounded-full font-bold px-3 h-8 text-xs bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 shadow-lg hover:shadow-xl transition-all duration-200 border-0 text-white whitespace-nowrap"
               >
-                <Wallet className="w-3.5 h-3.5 mr-1.5" />
-                {isConnecting ? t("header.connecting") : t("header.connect")}
+                <Wallet className="w-3.5 h-3.5 mr-1 shrink-0" />
+                <span className="hidden sm:inline">{isConnecting ? "Connecting…" : "Connect Wallet"}</span>
+                <span className="sm:hidden">{isConnecting ? "…" : "Connect"}</span>
               </Button>
-              <button onClick={() => setShowManualInput(true)}
-                className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground transition-colors">
-                {t("header.manual")}
+              <button
+                onClick={() => setShowManualInput(true)}
+                className="text-[10px] text-muted-foreground hover:text-foreground transition-colors hidden md:block"
+              >
+                Manual
               </button>
             </div>
           )}

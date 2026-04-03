@@ -404,7 +404,6 @@ export default function Home() {
 
         <div className="relative flex items-center justify-between">
           <div>
-            <p className="text-emerald-100 text-xs font-semibold tracking-wide uppercase mb-0.5">🌾 Smart Fasal</p>
             <h2 className="text-xl font-extrabold text-white tracking-tight">{t("home.farmDashboard")}</h2>
             <p className="text-emerald-100/80 text-xs mt-0.5">AI · IoT · Web3 Powered</p>
           </div>
@@ -415,6 +414,50 @@ export default function Home() {
             <RefreshCw className={cn("w-3 h-3", submitSensor.isPending && "animate-spin")} />
             <span>{lastUpdated.toLocaleTimeString()}</span>
           </button>
+        </div>
+      </div>
+
+      {/* Weather card */}
+      <div className="relative rounded-2xl overflow-hidden border border-blue-200/60 card-glow-blue shadow-md">
+        {/* Sky gradient background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-sky-400 via-blue-500 to-indigo-500" />
+        <div className="absolute inset-0 bg-gradient-to-t from-blue-900/20 to-transparent" />
+        {/* Decorative cloud circles */}
+        <div className="absolute -top-4 -right-4 w-24 h-24 rounded-full bg-white/10 blur-lg" />
+        <div className="absolute top-2 right-12 w-14 h-14 rounded-full bg-white/8 blur-md" />
+
+        <div className="relative p-4">
+          {loadingWeather ? (
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-20 bg-white/20" />
+              <Skeleton className="h-8 w-32 bg-white/20" />
+            </div>
+          ) : weather ? (
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="flex items-center gap-1.5 mb-1.5">
+                  <CloudRain className="w-3.5 h-3.5 text-white/80" />
+                  <span className="text-[10px] font-bold text-white/80 uppercase tracking-wider">{t("home.weather")} · Punjab, India</span>
+                </div>
+                <p className="text-3xl font-extrabold text-white tracking-tight">{weather.temperature}°C</p>
+                <p className="text-sm text-white/70 capitalize mt-0.5">{weather.description}</p>
+              </div>
+              <div className="flex flex-col items-end gap-2">
+                <div className="flex items-center gap-1.5 bg-white/15 backdrop-blur-sm rounded-full px-2.5 py-1">
+                  <Droplets className="w-3 h-3 text-blue-200" />
+                  <span className="text-xs font-semibold text-white">{weather.humidity}%</span>
+                </div>
+                <div className="flex items-center gap-1.5 bg-white/15 backdrop-blur-sm rounded-full px-2.5 py-1">
+                  <Wind className="w-3 h-3 text-blue-200" />
+                  <span className="text-xs font-semibold text-white">{weather.windSpeed} m/s</span>
+                </div>
+                <div className="flex items-center gap-1.5 bg-white/15 backdrop-blur-sm rounded-full px-2.5 py-1">
+                  <Thermometer className="w-3 h-3 text-orange-300" />
+                  <span className="text-xs font-semibold text-white">{t("home.feels")} {weather.feelsLike ?? weather.temperature}°C</span>
+                </div>
+              </div>
+            </div>
+          ) : <p className="text-xs text-white/60">Unavailable</p>}
         </div>
       </div>
 
@@ -461,50 +504,6 @@ export default function Home() {
             {riskToDisplay}
           </Badge>
         )}
-      </div>
-
-      {/* Weather card */}
-      <div className="relative rounded-2xl overflow-hidden border border-blue-200/60 card-glow-blue shadow-md">
-        {/* Sky gradient background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-sky-400 via-blue-500 to-indigo-500" />
-        <div className="absolute inset-0 bg-gradient-to-t from-blue-900/20 to-transparent" />
-        {/* Decorative cloud circles */}
-        <div className="absolute -top-4 -right-4 w-24 h-24 rounded-full bg-white/10 blur-lg" />
-        <div className="absolute top-2 right-12 w-14 h-14 rounded-full bg-white/8 blur-md" />
-
-        <div className="relative p-4">
-          {loadingWeather ? (
-            <div className="space-y-2">
-              <Skeleton className="h-4 w-20 bg-white/20" />
-              <Skeleton className="h-8 w-32 bg-white/20" />
-            </div>
-          ) : weather ? (
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="flex items-center gap-1.5 mb-1.5">
-                  <CloudRain className="w-3.5 h-3.5 text-white/80" />
-                  <span className="text-[10px] font-bold text-white/80 uppercase tracking-wider">{t("home.weather")} · Punjab, India</span>
-                </div>
-                <p className="text-3xl font-extrabold text-white tracking-tight">{weather.temperature}°C</p>
-                <p className="text-sm text-white/70 capitalize mt-0.5">{weather.description}</p>
-              </div>
-              <div className="flex flex-col items-end gap-2">
-                <div className="flex items-center gap-1.5 bg-white/15 backdrop-blur-sm rounded-full px-2.5 py-1">
-                  <Droplets className="w-3 h-3 text-blue-200" />
-                  <span className="text-xs font-semibold text-white">{weather.humidity}%</span>
-                </div>
-                <div className="flex items-center gap-1.5 bg-white/15 backdrop-blur-sm rounded-full px-2.5 py-1">
-                  <Wind className="w-3 h-3 text-blue-200" />
-                  <span className="text-xs font-semibold text-white">{weather.windSpeed} m/s</span>
-                </div>
-                <div className="flex items-center gap-1.5 bg-white/15 backdrop-blur-sm rounded-full px-2.5 py-1">
-                  <Thermometer className="w-3 h-3 text-orange-300" />
-                  <span className="text-xs font-semibold text-white">{t("home.feels")} {weather.feelsLike ?? weather.temperature}°C</span>
-                </div>
-              </div>
-            </div>
-          ) : <p className="text-xs text-white/60">Unavailable</p>}
-        </div>
       </div>
 
       {/* Live Soil Readings — NPK + pH + Moisture bars (ESP32 hardware sensor data) */}

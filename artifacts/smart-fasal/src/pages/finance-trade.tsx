@@ -1219,13 +1219,12 @@ export default function FinanceTrade() {
         <div className="absolute bottom-0 left-0 w-20 h-20 rounded-full bg-teal-300/20 blur-lg" />
         <div className="relative flex items-center justify-between">
           <div>
-            <div className="flex items-center gap-2 mb-1">
-              <div className="w-7 h-7 rounded-lg bg-white/20 flex items-center justify-center">
+            <div className="flex items-center gap-2.5 mb-1">
+              <div className="w-7 h-7 rounded-lg bg-white/20 flex items-center justify-center shrink-0">
                 <Landmark className="w-4 h-4 text-white" />
               </div>
-              <p className="text-cyan-100 text-xs font-bold uppercase tracking-wide">Smart Fasal</p>
+              <h2 className="text-xl font-extrabold text-white tracking-tight">{t("finance.title")}</h2>
             </div>
-            <h2 className="text-xl font-extrabold text-white tracking-tight">{t("finance.title")}</h2>
             <p className="text-cyan-100/70 text-xs mt-0.5">Credit Score · Loan Offers · Insurance</p>
           </div>
           <div className="flex items-center gap-1.5 text-xs font-bold text-blue-900 bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-md">

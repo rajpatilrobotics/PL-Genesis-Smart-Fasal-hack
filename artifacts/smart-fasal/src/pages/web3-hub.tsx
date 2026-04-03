@@ -2547,11 +2547,11 @@ export default function Web3Hub() {
         <div className="absolute bottom-0 left-0 w-20 h-20 rounded-full bg-violet-400/20 blur-lg" />
         <div className="relative">
           <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-white/20 flex items-center justify-center">
+            <div className="flex items-center gap-2.5">
+              <div className="w-7 h-7 rounded-lg bg-white/20 flex items-center justify-center shrink-0">
                 <Sparkles className="w-4 h-4 text-white" />
               </div>
-              <p className="text-blue-100 text-xs font-bold uppercase tracking-wide">Smart Fasal</p>
+              <h2 className="text-xl font-extrabold text-white tracking-tight">Web3 Hub</h2>
             </div>
             <span className="text-[10px] font-bold text-green-900 bg-green-300/90 rounded-full px-2.5 py-1">
               🟢 All Protocols Live
