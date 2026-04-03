@@ -17,7 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 import {
   CloudRain, Droplets, Thermometer, Wind, Brain, Database,
   RefreshCw, Shield, Zap, Lock, Globe, Users, CheckCircle2,
-  Loader2, AlertTriangle, Activity, ChevronRight
+  Loader2, AlertTriangle, Activity
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useQueryClient } from "@tanstack/react-query";
@@ -393,34 +393,40 @@ export default function Home() {
 
   const riskToDisplay: RiskStatus = pipelineResult?.riskLevel ?? (insuranceRisk?.riskLevel === "HIGH" ? "High" : insuranceRisk?.riskLevel === "LOW" ? "Low" : "Medium");
 
-  const glassCard = "rounded-2xl border border-white/70 bg-white/60 backdrop-blur-xl shadow-lg transition-all duration-200 hover:-translate-y-1 hover:shadow-xl hover:shadow-emerald-200/50 active:translate-y-0 active:shadow-lg";
+  const glassCard = "glass-glow rounded-2xl border border-white/50 bg-white/35 backdrop-blur-2xl hover:bg-white/45";
 
   return (
     <div className="relative -mx-4 -mt-5 min-h-screen animate-in fade-in slide-in-from-bottom-4 duration-500"
-      style={{ background: "linear-gradient(170deg, #e0f2fe 0%, #dcfce7 30%, #fef9c3 65%, #fef3c7 100%)" }}>
+      style={{ background: "linear-gradient(165deg, #f0f9ff 0%, #ecfdf5 28%, #fefce8 60%, #fef9c3 100%)" }}>
 
-      {/* Nature ambient blobs */}
+      {/* Daylight nature blobs */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute -top-16 -right-16 w-64 h-64 rounded-full bg-sky-300/30 blur-3xl" />
-        <div className="absolute top-1/3 -left-12 w-52 h-52 rounded-full bg-emerald-300/25 blur-3xl" />
-        <div className="absolute bottom-1/3 right-0 w-44 h-44 rounded-full bg-amber-300/25 blur-3xl" />
+        <div className="absolute -top-20 -right-20 w-72 h-72 rounded-full bg-sky-200/50 blur-3xl" />
+        <div className="absolute top-1/4 -left-16 w-60 h-60 rounded-full bg-emerald-200/40 blur-3xl" />
+        <div className="absolute top-2/3 right-0 w-56 h-56 rounded-full bg-amber-200/45 blur-3xl" />
+        <div className="absolute bottom-0 left-1/3 w-40 h-40 rounded-full bg-lime-200/30 blur-2xl" />
       </div>
 
       <div className="relative space-y-4 px-4 pt-5 pb-28">
 
-        {/* ── Hero Header ── */}
-        <div className="relative rounded-2xl overflow-hidden p-4 shadow-xl transition-all duration-200 hover:-translate-y-1 hover:shadow-2xl hover:shadow-green-400/40 active:translate-y-0"
-          style={{ background: "linear-gradient(135deg, #16a34a 0%, #15803d 40%, #166534 100%)", border: "1px solid rgba(255,255,255,0.25)" }}>
-          <div className="absolute -top-6 -right-6 w-32 h-32 rounded-full bg-white/10 blur-2xl" />
-          <div className="absolute bottom-0 left-0 w-20 h-20 rounded-full bg-yellow-300/15 blur-xl" />
+        {/* ── Hero Header — Daylight Crop Green ── */}
+        <div className="relative rounded-2xl overflow-hidden p-4 shadow-xl transition-all duration-200 hover:-translate-y-1 hover:shadow-2xl hover:shadow-green-500/30 active:translate-y-0"
+          style={{ background: "linear-gradient(135deg, #22c55e 0%, #16a34a 45%, #15803d 100%)", border: "1px solid rgba(255,255,255,0.35)" }}>
+          {/* Harvest gold glow top-right */}
+          <div className="absolute -top-4 -right-4 w-36 h-36 rounded-full bg-yellow-300/25 blur-2xl" />
+          {/* Sky shimmer bottom-left */}
+          <div className="absolute bottom-0 left-0 w-28 h-16 rounded-full bg-sky-300/20 blur-xl" />
+          {/* Subtle grid texture */}
+          <div className="absolute inset-0 opacity-5"
+            style={{ backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.8) 1px, transparent 1px)", backgroundSize: "20px 20px" }} />
           <div className="relative flex items-center justify-between">
             <div>
-              <h2 className="text-xl font-extrabold text-white tracking-tight">{t("home.farmDashboard")}</h2>
-              <p className="text-green-200/80 text-xs mt-0.5">AI · IoT · Web3 Powered</p>
+              <h2 className="text-xl font-extrabold text-white tracking-tight drop-shadow-sm">{t("home.farmDashboard")}</h2>
+              <p className="text-green-100/90 text-xs mt-0.5 font-medium">🌾 AI · IoT · Web3 Powered</p>
             </div>
             <button
               onClick={handleSimulateSensor}
-              className="flex items-center gap-1.5 text-xs font-bold text-green-800 bg-white/85 backdrop-blur-sm px-3 py-1.5 rounded-full hover:bg-white transition-all border border-white/60 shadow-md"
+              className="flex items-center gap-1.5 text-xs font-bold text-green-900 bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-full hover:bg-white transition-all border border-white/70 shadow-md"
             >
               <RefreshCw className={cn("w-3 h-3", submitSensor.isPending && "animate-spin")} />
               <span>{lastUpdated.toLocaleTimeString()}</span>
@@ -471,9 +477,9 @@ export default function Home() {
         <div className={cn(
           glassCard,
           "flex items-center justify-between px-4 py-3.5",
-          riskToDisplay === "Low" ? "border-emerald-200/80 bg-emerald-50/70" :
-          riskToDisplay === "Medium" ? "border-amber-200/80 bg-amber-50/70" :
-          "border-red-200/80 bg-red-50/70"
+          riskToDisplay === "Low" ? "border-emerald-200/50 bg-emerald-50/40" :
+          riskToDisplay === "Medium" ? "border-amber-200/50 bg-amber-50/40" :
+          "border-red-200/50 bg-red-50/40"
         )}>
           <div className="flex items-center gap-3">
             <div className={cn(
@@ -560,7 +566,7 @@ export default function Home() {
           {[
             { labelKey: "home.nitrogen", value: displaySensor.nitrogen, max: 200, gradient: "from-emerald-400 to-green-600", dotColor: "bg-emerald-600", unit: "mg/kg", symbol: "N" },
             { labelKey: "home.phosphorus", value: displaySensor.phosphorus, max: 100, gradient: "from-orange-400 to-amber-600", dotColor: "bg-orange-500", unit: "mg/kg", symbol: "P" },
-            { labelKey: "home.potassium", value: displaySensor.potassium, max: 300, gradient: "from-violet-400 to-purple-600", dotColor: "bg-violet-600", unit: "mg/kg", symbol: "K" },
+            { labelKey: "home.potassium", value: displaySensor.potassium, max: 300, gradient: "from-amber-400 to-yellow-500", dotColor: "bg-amber-500", unit: "mg/kg", symbol: "K" },
           ].map(({ labelKey, value, max, gradient, dotColor, unit, symbol }) => (
             <div key={labelKey} className="space-y-1.5">
               <div className="flex justify-between items-center text-xs">
@@ -640,9 +646,12 @@ export default function Home() {
         </div>
 
         {/* ── Analyze Farm Pipeline ── */}
-        <div className="relative rounded-2xl overflow-hidden shadow-xl transition-all duration-200 hover:-translate-y-1 hover:shadow-2xl hover:shadow-green-700/40 active:translate-y-0"
-          style={{ background: "linear-gradient(135deg, #14532d 0%, #166534 45%, #15803d 100%)", border: "1px solid rgba(255,255,255,0.2)" }}>
-          <div className="absolute top-0 right-0 w-32 h-32 bg-yellow-300/10 rounded-full blur-2xl -translate-y-8 translate-x-8" />
+        <div className="relative rounded-2xl overflow-hidden shadow-xl transition-all duration-200 hover:-translate-y-1 hover:shadow-2xl hover:shadow-green-500/35 active:translate-y-0"
+          style={{ background: "linear-gradient(135deg, #16a34a 0%, #15803d 50%, #166534 100%)", border: "1px solid rgba(255,255,255,0.3)" }}>
+          {/* Harvest gold glow */}
+          <div className="absolute top-0 right-0 w-40 h-40 bg-amber-300/15 rounded-full blur-3xl -translate-y-10 translate-x-10" />
+          {/* Sky blue shimmer bottom */}
+          <div className="absolute bottom-0 left-1/4 w-32 h-24 bg-sky-300/10 rounded-full blur-2xl" />
           <div className="relative p-4 space-y-4">
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-xl bg-white/15 backdrop-blur-sm flex items-center justify-center shadow-md border border-white/20">
@@ -766,9 +775,9 @@ export default function Home() {
         {pipelineResult && !pipelineRunning && (
           <div className={cn(
             glassCard, "p-4 space-y-4",
-            pipelineResult.riskLevel === "High" ? "border-red-200/80 bg-red-50/60" :
-            pipelineResult.riskLevel === "Low" ? "border-emerald-200/80 bg-emerald-50/60" :
-            "border-amber-200/80 bg-amber-50/60"
+            pipelineResult.riskLevel === "High" ? "border-red-200/50 bg-red-50/35" :
+            pipelineResult.riskLevel === "Low" ? "border-emerald-200/50 bg-emerald-50/35" :
+            "border-amber-200/50 bg-amber-50/35"
           )}>
             <div className="flex items-center justify-between">
               <p className="font-bold text-sm text-gray-800">{t("home.analysisDone")}</p>
@@ -786,7 +795,7 @@ export default function Home() {
                 { label: t("ai.riskLabel"), value: pipelineResult.riskLevel, color: pipelineResult.riskLevel === "Low" ? "text-emerald-700" : pipelineResult.riskLevel === "High" ? "text-red-700" : "text-amber-700" },
                 { label: t("ai.yieldLabel"), value: `${pipelineResult.aiYield}%`, color: "text-sky-700" },
               ].map(({ label, value, color }) => (
-                <div key={label} className="text-center p-2.5 bg-white/70 rounded-xl border border-white/80 shadow-sm">
+                <div key={label} className="text-center p-2.5 bg-white/40 rounded-xl border border-white/50 shadow-sm backdrop-blur-sm">
                   <p className="text-[10px] uppercase font-bold text-gray-400 mb-1">{label}</p>
                   <p className={cn("text-lg font-bold", color)}>{value}</p>
                 </div>
@@ -796,11 +805,11 @@ export default function Home() {
             <p className="text-xs text-gray-500 leading-relaxed">{pipelineResult.fertilizerAdvice}</p>
 
             <div className="grid grid-cols-2 gap-2 text-xs">
-              <div className="bg-white/70 rounded-xl border border-white/80 p-2.5 shadow-sm">
+              <div className="bg-white/40 rounded-xl border border-white/50 p-2.5 shadow-sm backdrop-blur-sm">
                 <p className="text-gray-400 mb-0.5">{t("home.cidFilecoin")}</p>
                 <p className="font-mono font-semibold text-[10px] break-all text-blue-600">{pipelineResult.cid.substring(0, 20)}...</p>
               </div>
-              <div className="bg-white/70 rounded-xl border border-white/80 p-2.5 shadow-sm">
+              <div className="bg-white/40 rounded-xl border border-white/50 p-2.5 shadow-sm backdrop-blur-sm">
                 <p className="text-gray-400 mb-0.5">{t("home.rewardEarned")}</p>
                 <p className="font-bold text-amber-600">+{pipelineResult.rewardEarned} FLOW</p>
               </div>
@@ -824,21 +833,68 @@ export default function Home() {
           </div>
         )}
 
-        {/* ── Tech Badge Strip ── */}
-        <div className={cn(glassCard, "p-3")}>
-          <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-2">⚡ Powered By</p>
-          <div className="flex flex-wrap gap-1.5">
+        {/* ── Tech Stack ── */}
+        <div className={cn(glassCard, "p-4 space-y-3")}>
+
+          {/* Header — centered with app logo */}
+          <div className="flex flex-col items-center text-center gap-1.5 pb-1">
+            <img
+              src="/logo.jpeg"
+              alt="Smart Fasal"
+              className="w-12 h-12 rounded-2xl object-cover ring-2 ring-white/80 shadow-md"
+            />
+            <div>
+              <p className="text-sm font-extrabold text-gray-800 leading-tight">Smart Fasal</p>
+              <p className="text-[10px] font-semibold text-emerald-600 leading-tight">The Agriculture Platform</p>
+            </div>
+            <p className="text-[10px] text-gray-400 leading-snug max-w-[220px]">
+              Built on cutting-edge Web3 protocols &amp; decentralized infrastructure
+            </p>
+          </div>
+
+          {/* Protocol Labs — centred banner */}
+          <a
+            href="https://protocol.ai"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex flex-col items-center gap-1.5 w-full px-3 py-3 rounded-xl bg-white/55 border border-white/65 hover:bg-white/75 transition-all group"
+          >
+            <img
+              src="https://avatars.githubusercontent.com/u/6935308"
+              alt="Protocol Labs"
+              className="w-8 h-8 rounded-xl object-cover ring-1 ring-black/8 shadow-sm group-hover:scale-105 transition-transform"
+            />
+            <div className="text-center">
+              <p className="text-xs font-bold text-gray-800 leading-tight">Protocol Labs</p>
+              <p className="text-[9px] text-gray-400 leading-tight">Web3 infrastructure &amp; research</p>
+            </div>
+          </a>
+
+          {/* Protocol grid — 3 × 2, compact */}
+          <div className="grid grid-cols-3 gap-1.5">
             {[
-              { key: "badgeFlow", color: "bg-emerald-50 text-emerald-700 border-emerald-200", emoji: "🌊" },
-              { key: "badgeFilecoin", color: "bg-sky-50 text-sky-700 border-sky-200", emoji: "📦" },
-              { key: "badgeLit", color: "bg-violet-50 text-violet-700 border-violet-200", emoji: "🔐" },
-              { key: "badgeZama", color: "bg-pink-50 text-pink-700 border-pink-200", emoji: "🔒" },
-              { key: "badgeStarknet", color: "bg-orange-50 text-orange-700 border-orange-200", emoji: "⛓" },
-              { key: "badgeHypercerts", color: "bg-amber-50 text-amber-700 border-amber-200", emoji: "🏆" },
-            ].map(({ key, color, emoji }) => (
-              <span key={key} className={cn("text-[9px] font-bold border rounded-full px-2 py-0.5 shadow-sm", color)}>
-                {emoji} {t(`home.${key}`)}
-              </span>
+              { name: "Flow", sub: "Rewards", avatar: "https://avatars.githubusercontent.com/u/62387156", href: "https://flow.com" },
+              { name: "Filecoin", sub: "Storage", avatar: "https://avatars.githubusercontent.com/u/22014611", href: "https://filecoin.io" },
+              { name: "Lit Protocol", sub: "Access", avatar: "https://avatars.githubusercontent.com/u/83147108", href: "https://litprotocol.com" },
+              { name: "Zama", sub: "Privacy", avatar: "https://avatars.githubusercontent.com/u/57671822", href: "https://zama.ai" },
+              { name: "Starknet", sub: "Insurance", avatar: "https://avatars.githubusercontent.com/u/104390117", href: "https://starknet.io" },
+              { name: "HyperCerts", sub: "Impact", avatar: "https://avatars.githubusercontent.com/u/124626532", href: "https://hypercerts.org" },
+            ].map(({ name, sub, avatar, href }) => (
+              <a
+                key={name}
+                href={href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex flex-col items-center gap-1 py-2 px-1 rounded-xl bg-white/40 border border-white/50 hover:bg-white/60 hover:border-white/75 hover:shadow-sm transition-all group"
+              >
+                <img
+                  src={avatar}
+                  alt={name}
+                  className="w-7 h-7 rounded-lg object-cover ring-1 ring-black/8 shadow-sm group-hover:scale-110 transition-transform duration-200"
+                />
+                <p className="text-[9px] font-bold text-gray-700 leading-tight text-center">{name}</p>
+                <p className="text-[8px] text-gray-400 leading-tight text-center">{sub}</p>
+              </a>
             ))}
           </div>
         </div>
