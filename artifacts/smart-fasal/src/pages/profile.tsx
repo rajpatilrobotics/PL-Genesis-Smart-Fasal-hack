@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import {
   Wallet, Award, Database, ShieldCheck, Zap, Lock,
   Users, Globe, Clock, CheckCircle2, AlertTriangle,
-  Leaf, Star, TrendingUp, MapPin, Sprout, Pencil, Save, X, LogOut
+  Leaf, Star, TrendingUp, MapPin, Sprout, Pencil, Save, X, LogOut, LogIn, UserCircle
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { RiskStatus } from "@/lib/wallet-context";
@@ -67,7 +67,7 @@ export default function Profile() {
   const { t } = useTranslation();
   const { walletAddress, flowRewards, contributionCount, dataHistory, certificates, currentRisk, handleConnect } = useWallet();
   const { signOut } = useClerk();
-  const { isSignedIn } = useUser();
+  const { isSignedIn, user: clerkUser } = useUser();
   const [, setLocation] = useLocation();
   const { data: profileData, isLoading } = useUserProfile();
   const { mutateAsync: updateProfile, isPending: isSaving } = useUpdateProfile();
@@ -255,6 +255,40 @@ export default function Profile() {
           )}
         </CardContent>
       </Card>
+
+      {/* Sign In / Account card */}
+      {clerkEnabled && (
+        <Card className={cn("border overflow-hidden", isSignedIn ? "border-primary/20 bg-primary/5" : "border-dashed border-primary/30")}>
+          <CardContent className="p-4 flex items-center gap-4">
+            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+              {isSignedIn ? <UserCircle className="w-5 h-5 text-primary" /> : <LogIn className="w-5 h-5 text-primary" />}
+            </div>
+            {isSignedIn ? (
+              <>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold truncate">
+                    {clerkUser?.firstName || clerkUser?.emailAddresses[0]?.emailAddress?.split("@")[0] || "Farmer"}
+                  </p>
+                  <p className="text-xs text-muted-foreground truncate">{clerkUser?.emailAddresses[0]?.emailAddress}</p>
+                </div>
+                <Button size="sm" variant="outline" onClick={() => signOut()} className="shrink-0 text-destructive border-destructive/30 hover:bg-destructive/5">
+                  <LogOut className="w-3.5 h-3.5 mr-1" /> Sign Out
+                </Button>
+              </>
+            ) : (
+              <>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold">Sign In to your Account</p>
+                  <p className="text-xs text-muted-foreground">Save your profile and access all features</p>
+                </div>
+                <Button size="sm" onClick={() => setLocation("/sign-in")} className="shrink-0 bg-primary text-white hover:bg-primary/90">
+                  <LogIn className="w-3.5 h-3.5 mr-1" /> Sign In
+                </Button>
+              </>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Wallet connect prompt */}
       {!walletAddress && (

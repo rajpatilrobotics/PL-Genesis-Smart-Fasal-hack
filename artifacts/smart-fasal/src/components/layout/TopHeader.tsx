@@ -1,53 +1,11 @@
-import { Wallet, LogOut, Wifi, CheckCircle, Gift, UserCircle, LogIn } from "lucide-react";
+import { Wallet, LogOut, Wifi, CheckCircle, Gift } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useWallet } from "@/lib/wallet-context";
-import { useUser, useClerk } from "@clerk/react";
-import { useLocation } from "wouter";
 import { useTranslation } from "react-i18next";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 
 const MOCK_BALANCE = "100,000";
-const clerkEnabled = !!import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
-
-function ClerkAuthButtonInner() {
-  const { isSignedIn, user } = useUser();
-  const [, setLocation] = useLocation();
-  const { t } = useTranslation();
-
-  if (isSignedIn) {
-    const name = user.firstName || user.emailAddresses[0]?.emailAddress?.split("@")[0] || "Farmer";
-    return (
-      <button
-        onClick={() => setLocation("/profile")}
-        className="flex items-center gap-1.5 text-xs font-semibold text-primary hover:text-primary/80 transition-colors bg-primary/8 border border-primary/15 rounded-full px-2.5 py-1"
-        title={t("header.myProfile")}
-      >
-        {user.imageUrl
-          ? <img src={user.imageUrl} alt={name} className="w-5 h-5 rounded-full object-cover ring-1 ring-primary/30" />
-          : <UserCircle className="w-4 h-4" />}
-        <span className="max-w-[70px] truncate hidden sm:inline">{name}</span>
-      </button>
-    );
-  }
-
-  return (
-    <Button
-      size="sm"
-      variant="outline"
-      className="h-7 text-xs px-2.5 gap-1 rounded-full border-primary/25 text-primary hover:bg-primary/8 hover:border-primary/40 font-semibold"
-      onClick={() => setLocation("/sign-in")}
-    >
-      <LogIn className="w-3 h-3 shrink-0" />
-      <span>{t("header.signIn")}</span>
-    </Button>
-  );
-}
-
-function ClerkAuthButton() {
-  if (!clerkEnabled) return null;
-  return <ClerkAuthButtonInner />;
-}
 
 export default function TopHeader() {
   const { t } = useTranslation();
@@ -95,7 +53,6 @@ export default function TopHeader() {
         {/* Right section */}
         <div className="flex items-center gap-1.5 min-w-0">
           <div className="hidden sm:block"><LanguageSwitcher /></div>
-          <ClerkAuthButton />
 
           {/* CONNECTED STATE */}
           {walletAddress && (
