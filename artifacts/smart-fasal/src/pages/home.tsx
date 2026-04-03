@@ -874,7 +874,7 @@ export default function Home() {
             className="flex flex-col items-center gap-1.5 w-full px-3 py-3 rounded-xl bg-white/55 border border-white/65 hover:bg-white/75 transition-all group"
           >
             <img
-              src="https://logo.clearbit.com/protocol.ai"
+              src="/protocol-labs-logo.svg"
               alt="Protocol Labs"
               className="w-8 h-8 rounded-xl object-contain bg-white p-0.5 ring-1 ring-black/8 shadow-sm group-hover:scale-105 transition-transform"
             />
@@ -887,12 +887,12 @@ export default function Home() {
           {/* Protocol grid — 3 × 2, compact */}
           <div className="grid grid-cols-3 gap-1.5">
             {[
-              { name: "Flow", sub: "Rewards", avatar: "https://logo.clearbit.com/flow.com", href: "https://flow.com" },
-              { name: "Filecoin", sub: "Storage", avatar: "https://logo.clearbit.com/filecoin.io", href: "https://filecoin.io" },
-              { name: "Lit Protocol", sub: "Access", avatar: "https://logo.clearbit.com/litprotocol.com", href: "https://litprotocol.com" },
-              { name: "Zama", sub: "Privacy", avatar: "https://logo.clearbit.com/zama.ai", href: "https://zama.ai" },
-              { name: "Starknet", sub: "Insurance", avatar: "https://logo.clearbit.com/starknet.io", href: "https://starknet.io" },
-              { name: "HyperCerts", sub: "Impact", avatar: "https://logo.clearbit.com/hypercerts.org", href: "https://hypercerts.org" },
+              { name: "Flow", sub: "Rewards", avatar: "/flow-logo.png", href: "https://flow.com" },
+              { name: "Filecoin", sub: "Storage", avatar: "/filecoin-logo.png", href: "https://filecoin.io" },
+              { name: "Lit Protocol", sub: "Access", avatar: "/lit-logo.svg", href: "https://litprotocol.com" },
+              { name: "Zama", sub: "Privacy", avatar: "/zama-logo.webp", href: "https://zama.ai" },
+              { name: "Starknet", sub: "Insurance", avatar: "/starknet-logo.svg", href: "https://starknet.io" },
+              { name: "HyperCerts", sub: "Impact", avatar: "/hypercerts-logo.svg", href: "https://hypercerts.org" },
             ].map(({ name, sub, avatar, href }) => (
               <a
                 key={name}
