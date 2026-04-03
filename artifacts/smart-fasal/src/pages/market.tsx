@@ -12,7 +12,7 @@ import {
   TrendingUp, TrendingDown, Store, MapPin, Tag, ShoppingBag,
   PlusCircle, Lock, CheckCircle2, FileText, ExternalLink,
   RefreshCw, Search, Star, User, Package, Leaf, Droplets,
-  Shield, Database, CloudUpload, ArrowRight, Building2, Copy
+  Shield, Database, CloudUpload, ArrowRight, Building2, Copy, Image
 } from "lucide-react";
 import {
   useGetMarketPrices, getGetMarketPricesQueryKey,
