@@ -15,7 +15,7 @@ paths = [ "/" ]
 localPort = 5000
 
 [services.development]
-run = "pnpm --filter @workspace/smart-fasal run dev"
+run = "pnpm install --frozen-lockfile && pnpm --filter @workspace/smart-fasal run dev"
 
 [services.production]
 build = [ "pnpm", "--filter", "@workspace/smart-fasal", "run", "build" ]
