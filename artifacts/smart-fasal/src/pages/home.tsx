@@ -836,10 +836,20 @@ export default function Home() {
         {/* ── Tech Stack ── */}
         <div className={cn(glassCard, "p-4 space-y-3")}>
 
-          {/* Header text */}
-          <div>
-            <p className="text-sm font-extrabold text-gray-800 leading-tight">Smart Fasal is built on</p>
-            <p className="text-[10px] text-gray-400 mt-0.5">Cutting-edge Web3 protocols &amp; infrastructure</p>
+          {/* Header — centered with app logo */}
+          <div className="flex flex-col items-center text-center gap-1.5 pb-1">
+            <img
+              src="/logo.jpeg"
+              alt="Smart Fasal"
+              className="w-12 h-12 rounded-2xl object-cover ring-2 ring-white/80 shadow-md"
+            />
+            <div>
+              <p className="text-sm font-extrabold text-gray-800 leading-tight">Smart Fasal</p>
+              <p className="text-[10px] font-semibold text-emerald-600 leading-tight">The Agriculture Platform</p>
+            </div>
+            <p className="text-[10px] text-gray-400 leading-snug max-w-[220px]">
+              Built on cutting-edge Web3 protocols &amp; decentralized infrastructure
+            </p>
           </div>
 
           {/* Protocol Labs — full-width horizontal banner */}
