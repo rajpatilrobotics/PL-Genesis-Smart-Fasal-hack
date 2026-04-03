@@ -37,18 +37,50 @@ function stripBase(path: string): string {
     : path;
 }
 
+function AuthBackground() {
+  return (
+    <>
+      {/* Gradient background */}
+      <div className="fixed inset-0 bg-gradient-to-br from-emerald-600 via-green-700 to-teal-800" />
+      {/* Decorative blobs */}
+      <div className="fixed top-0 left-0 w-64 h-64 rounded-full bg-white/5 blur-3xl -translate-x-1/2 -translate-y-1/2" />
+      <div className="fixed bottom-0 right-0 w-80 h-80 rounded-full bg-teal-400/10 blur-3xl translate-x-1/3 translate-y-1/3" />
+      <div className="fixed top-1/2 left-1/4 w-48 h-48 rounded-full bg-emerald-300/10 blur-2xl" />
+      {/* Dot grid overlay */}
+      <div className="fixed inset-0 opacity-20" style={{
+        backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.3) 1px, transparent 1px)",
+        backgroundSize: "28px 28px"
+      }} />
+      {/* Top branding strip */}
+      <div className="fixed top-6 left-0 right-0 flex flex-col items-center z-10">
+        <div className="flex items-center gap-2 mb-1">
+          <img src="/logo.jpeg" alt="Smart Fasal" className="w-10 h-10 rounded-xl object-cover ring-2 ring-white/30 shadow-lg" />
+          <span className="text-2xl font-extrabold text-white tracking-tight drop-shadow">Smart Fasal</span>
+        </div>
+        <p className="text-emerald-100/70 text-xs font-medium">🌾 AI · IoT · Web3 Agriculture Platform</p>
+      </div>
+    </>
+  );
+}
+
 function SignInPage() {
   return (
-    <div className="flex items-center justify-center min-h-screen bg-muted/30 px-4">
-      <SignIn routing="path" path={`${basePath}/sign-in`} signUpUrl={`${basePath}/sign-up`} />
+    <div className="relative flex items-center justify-center min-h-screen px-4">
+      <AuthBackground />
+      <div className="relative z-10 mt-16">
+        <SignIn routing="path" path={`${basePath}/sign-in`} signUpUrl={`${basePath}/sign-up`} />
+      </div>
     </div>
   );
 }
 
 function SignUpPage() {
   return (
-    <div className="flex items-center justify-center min-h-screen bg-muted/30 px-4">
-      <SignUp routing="path" path={`${basePath}/sign-up`} signInUrl={`${basePath}/sign-in`} />
+    <div className="relative flex items-center justify-center min-h-screen px-4">
+      <AuthBackground />
+      <div className="relative z-10 mt-16">
+        <SignUp routing="path" path={`${basePath}/sign-up`} signInUrl={`${basePath}/sign-in`} />
+      </div>
     </div>
   );
 }
@@ -102,9 +134,11 @@ function ClerkQueryClientCacheInvalidator() {
 
 function AppShell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="pb-20 min-h-screen bg-muted/30">
+    <div className="pb-20 min-h-screen dot-grid-bg" style={{
+      background: "linear-gradient(160deg, hsl(145, 40%, 97%) 0%, hsl(120, 30%, 98%) 40%, hsl(200, 35%, 97%) 100%)"
+    }}>
       <TopHeader />
-      <main className="container mx-auto px-4 py-6 max-w-md">
+      <main className="container mx-auto px-4 py-5 max-w-md">
         {children}
       </main>
       <BottomNav />

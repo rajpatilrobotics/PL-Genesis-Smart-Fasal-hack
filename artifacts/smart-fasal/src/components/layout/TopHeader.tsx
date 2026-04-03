@@ -22,17 +22,17 @@ function ClerkAuthButtonInner() {
       <div className="flex items-center gap-1.5">
         <button
           onClick={() => setLocation("/profile")}
-          className="flex items-center gap-1 text-xs font-medium text-primary hover:text-primary/80 transition-colors"
+          className="flex items-center gap-1.5 text-xs font-semibold text-primary hover:text-primary/80 transition-colors bg-primary/8 border border-primary/15 rounded-full px-2.5 py-1"
           title={t("header.myProfile")}
         >
           {user.imageUrl
-            ? <img src={user.imageUrl} alt={name} className="w-5 h-5 rounded-full object-cover" />
+            ? <img src={user.imageUrl} alt={name} className="w-5 h-5 rounded-full object-cover ring-1 ring-primary/30" />
             : <UserCircle className="w-4 h-4" />}
           <span className="max-w-[70px] truncate hidden sm:inline">{name}</span>
         </button>
         <button
           onClick={() => signOut(() => setLocation("/"))}
-          className="text-muted-foreground hover:text-destructive transition-colors"
+          className="text-muted-foreground hover:text-destructive transition-colors p-1 rounded-full hover:bg-destructive/8"
           title={t("header.signOut")}
         >
           <LogOut className="w-3.5 h-3.5" />
@@ -42,7 +42,12 @@ function ClerkAuthButtonInner() {
   }
 
   return (
-    <Button size="sm" variant="outline" className="h-7 text-xs px-2.5 gap-1" onClick={() => setLocation("/sign-in")}>
+    <Button
+      size="sm"
+      variant="outline"
+      className="h-7 text-xs px-3 gap-1.5 rounded-full border-primary/25 text-primary hover:bg-primary/8 hover:border-primary/40 font-semibold"
+      onClick={() => setLocation("/sign-in")}
+    >
       <LogIn className="w-3 h-3" />
       {t("header.signIn")}
     </Button>
@@ -75,20 +80,28 @@ export default function TopHeader() {
     : null;
 
   return (
-    <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-md border-b border-border">
+    <header className="sticky top-0 z-40 border-b border-border/60 bg-white/85 dark:bg-background/85 backdrop-blur-xl shadow-sm">
+      {/* Thin green accent line at very top */}
+      <div className="h-[2.5px] w-full bg-gradient-to-r from-emerald-500 via-green-400 to-teal-500" />
+
       <div className="container mx-auto px-4 flex items-center justify-between gap-3 py-2.5">
 
         {/* Logo */}
         <div className="flex flex-col shrink-0">
-          <div className="flex items-center gap-2 text-primary">
-            <img
-              src="/logo.jpeg"
-              alt="Smart Fasal"
-              className="w-9 h-9 rounded-full object-cover border-2 border-emerald-200 shadow-sm"
-            />
-            <span className="font-bold text-lg tracking-tight">Smart Fasal</span>
+          <div className="flex items-center gap-2">
+            <div className="relative">
+              <img
+                src="/logo.jpeg"
+                alt="Smart Fasal"
+                className="w-8 h-8 rounded-xl object-cover shadow-md ring-2 ring-emerald-200/80"
+              />
+              <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-white shadow-sm" />
+            </div>
+            <div>
+              <span className="font-extrabold text-base tracking-tight text-gradient-green">Smart Fasal</span>
+            </div>
           </div>
-          <span className="text-[9px] font-semibold text-emerald-600 bg-emerald-50 border border-emerald-200 rounded-full px-2 py-px leading-tight">
+          <span className="text-[9px] font-bold text-emerald-600 bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-full px-2 py-px leading-tight mt-0.5 w-fit">
             ⛓ {t("header.poweredBy")}
           </span>
         </div>
@@ -103,13 +116,15 @@ export default function TopHeader() {
             <div className="flex flex-col items-end gap-1 min-w-0">
 
               {/* Address pill */}
-              <div className="flex items-center gap-1.5 bg-primary/10 border border-primary/20 rounded-full px-3 py-1 text-xs">
+              <div className="flex items-center gap-1.5 bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-full px-3 py-1 text-xs shadow-sm">
                 {isManual
-                  ? <CheckCircle className="w-3 h-3 text-green-500 shrink-0" />
-                  : <Wifi className="w-3 h-3 text-green-500 shrink-0" />
+                  ? <CheckCircle className="w-3 h-3 text-emerald-500 shrink-0" />
+                  : <Wifi className="w-3 h-3 text-emerald-500 shrink-0" />
                 }
-                <span className="font-mono font-semibold text-primary truncate max-w-[110px]">{displayAddress}</span>
-                <span className="text-[9px] bg-green-100 text-green-700 font-bold px-1.5 py-px rounded-full shrink-0">{t("header.live")}</span>
+                <span className="font-mono font-semibold text-emerald-800 truncate max-w-[110px]">{displayAddress}</span>
+                <span className="text-[9px] bg-emerald-500 text-white font-bold px-1.5 py-px rounded-full shrink-0 animate-pulse">
+                  {t("header.live")}
+                </span>
                 <button onClick={handleDisconnect} className="ml-0.5 text-muted-foreground hover:text-destructive transition-colors shrink-0" title={t("header.signOut")}>
                   <LogOut className="w-3 h-3" />
                 </button>
@@ -125,16 +140,11 @@ export default function TopHeader() {
                   {t("header.balance")}: <span className="font-semibold text-foreground">{MOCK_BALANCE} FLOW</span>
                 </span>
                 <span className="text-border">·</span>
-                <span className="flex items-center gap-0.5 text-amber-600 font-semibold">
+                <span className="flex items-center gap-0.5 text-amber-600 font-bold">
                   <Gift className="w-3 h-3" />
                   {flowRewards} FLOW
                 </span>
               </div>
-
-              {/* Rewards label */}
-              <span className="text-[8px] text-muted-foreground/70 px-1">
-                {t("header.rewardsPoweredBy")}
-              </span>
             </div>
           )}
 
@@ -149,8 +159,8 @@ export default function TopHeader() {
                 onKeyDown={(e) => e.key === "Enter" && handleManualConnect()}
                 autoFocus
               />
-              <Button size="sm" className="h-8 text-xs px-2.5" onClick={() => handleManualConnect()}>Go</Button>
-              <Button size="sm" variant="ghost" className="h-8 text-xs px-2"
+              <Button size="sm" className="h-8 text-xs px-2.5 rounded-full" onClick={() => handleManualConnect()}>Go</Button>
+              <Button size="sm" variant="ghost" className="h-8 text-xs px-2 rounded-full"
                 onClick={() => { setShowManualInput(false); setManualAddress(""); }}>✕</Button>
             </div>
           )}
@@ -158,8 +168,13 @@ export default function TopHeader() {
           {/* NOT CONNECTED — Connect button */}
           {!walletAddress && !showManualInput && (
             <div className="flex items-center gap-2">
-              <Button onClick={handleConnect} disabled={isConnecting} size="sm" className="rounded-full font-semibold px-4">
-                <Wallet className="w-4 h-4 mr-1.5" />
+              <Button
+                onClick={handleConnect}
+                disabled={isConnecting}
+                size="sm"
+                className="rounded-full font-bold px-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 shadow-md hover:shadow-lg transition-all duration-200 border-0"
+              >
+                <Wallet className="w-3.5 h-3.5 mr-1.5" />
                 {isConnecting ? t("header.connecting") : t("header.connect")}
               </Button>
               <button onClick={() => setShowManualInput(true)}
