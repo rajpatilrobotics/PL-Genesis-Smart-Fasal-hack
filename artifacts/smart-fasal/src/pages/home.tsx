@@ -833,21 +833,62 @@ export default function Home() {
           </div>
         )}
 
-        {/* ── Tech Badge Strip ── */}
-        <div className={cn(glassCard, "p-3")}>
-          <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-2">⚡ Powered By</p>
-          <div className="flex flex-wrap gap-1.5">
+        {/* ── Web3 Partners ── */}
+        <div className={cn(glassCard, "p-4 space-y-3")}>
+
+          {/* Protocol Labs — top anchor */}
+          <a
+            href="https://protocol.ai"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-3 p-2.5 rounded-xl bg-white/50 border border-white/60 hover:bg-white/70 transition-all group"
+          >
+            <img
+              src="https://avatars.githubusercontent.com/u/6935308"
+              alt="Protocol Labs"
+              className="w-8 h-8 rounded-lg object-cover ring-1 ring-black/8 shadow-sm"
+            />
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-bold text-gray-800 leading-tight">Protocol Labs</p>
+              <p className="text-[10px] text-gray-400 leading-tight">The Web3 infrastructure company</p>
+            </div>
+            <ChevronRight className="w-3.5 h-3.5 text-gray-300 group-hover:text-gray-500 transition-colors shrink-0" />
+          </a>
+
+          {/* Divider */}
+          <div className="flex items-center gap-2">
+            <div className="flex-1 h-px bg-black/6" />
+            <span className="text-[9px] text-gray-300 font-semibold tracking-widest uppercase">Built With</span>
+            <div className="flex-1 h-px bg-black/6" />
+          </div>
+
+          {/* Protocol grid — 3 × 2 */}
+          <div className="grid grid-cols-3 gap-2">
             {[
-              { key: "badgeFlow", color: "bg-emerald-50 text-emerald-700 border-emerald-200", emoji: "🌊" },
-              { key: "badgeFilecoin", color: "bg-sky-50 text-sky-700 border-sky-200", emoji: "📦" },
-              { key: "badgeLit", color: "bg-teal-50 text-teal-700 border-teal-200", emoji: "🔐" },
-              { key: "badgeZama", color: "bg-lime-50 text-lime-700 border-lime-200", emoji: "🔒" },
-              { key: "badgeStarknet", color: "bg-orange-50 text-orange-700 border-orange-200", emoji: "⛓" },
-              { key: "badgeHypercerts", color: "bg-amber-50 text-amber-700 border-amber-200", emoji: "🏆" },
-            ].map(({ key, color, emoji }) => (
-              <span key={key} className={cn("text-[9px] font-bold border rounded-full px-2 py-0.5 shadow-sm", color)}>
-                {emoji} {t(`home.${key}`)}
-              </span>
+              { name: "Flow", sub: "Rewards", avatar: "https://avatars.githubusercontent.com/u/62387156", href: "https://flow.com" },
+              { name: "Filecoin", sub: "Storage", avatar: "https://avatars.githubusercontent.com/u/22014611", href: "https://filecoin.io" },
+              { name: "Lit Protocol", sub: "Access", avatar: "https://avatars.githubusercontent.com/u/83147108", href: "https://litprotocol.com" },
+              { name: "Zama", sub: "FHE Privacy", avatar: "https://avatars.githubusercontent.com/u/57671822", href: "https://zama.ai" },
+              { name: "Starknet", sub: "Insurance", avatar: "https://avatars.githubusercontent.com/u/104390117", href: "https://starknet.io" },
+              { name: "HyperCerts", sub: "Impact", avatar: "https://avatars.githubusercontent.com/u/124626532", href: "https://hypercerts.org" },
+            ].map(({ name, sub, avatar, href }) => (
+              <a
+                key={name}
+                href={href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex flex-col items-center gap-1.5 p-2 rounded-xl bg-white/45 border border-white/55 hover:bg-white/65 hover:border-white/80 hover:shadow-sm transition-all group"
+              >
+                <img
+                  src={avatar}
+                  alt={name}
+                  className="w-9 h-9 rounded-xl object-cover ring-1 ring-black/8 shadow-sm group-hover:scale-105 transition-transform"
+                />
+                <div className="text-center">
+                  <p className="text-[10px] font-bold text-gray-700 leading-tight">{name}</p>
+                  <p className="text-[9px] text-gray-400 leading-tight">{sub}</p>
+                </div>
+              </a>
             ))}
           </div>
         </div>
