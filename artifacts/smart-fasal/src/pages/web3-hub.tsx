@@ -2531,32 +2531,32 @@ function HypercertsTab() {
 const TABS = [
   {
     value: "flow", label: "Flow", icon: Coins, color: "text-green-600",
-    logo: "https://avatars.githubusercontent.com/u/62387156",
+    logo: "/flow-logo.png",
     bg: "bg-green-50", ring: "ring-green-200",
   },
   {
     value: "filecoin", label: "Filecoin", icon: Database, color: "text-blue-600",
-    logo: "https://avatars.githubusercontent.com/u/16001298",
+    logo: "/filecoin-logo.png",
     bg: "bg-blue-50", ring: "ring-blue-200",
   },
   {
     value: "lit", label: "Lit", icon: Lock, color: "text-orange-500",
-    logo: "https://avatars.githubusercontent.com/u/79411349",
+    logo: "/lit-logo.svg",
     bg: "bg-orange-50", ring: "ring-orange-200",
   },
   {
     value: "zama", label: "Zama", icon: FlaskConical, color: "text-violet-600",
-    logo: "https://avatars.githubusercontent.com/u/72685663",
+    logo: "/zama-logo.webp",
     bg: "bg-violet-50", ring: "ring-violet-200",
   },
   {
     value: "starknet", label: "Starknet", icon: Shield, color: "text-rose-600",
-    logo: "https://avatars.githubusercontent.com/u/92415069",
+    logo: "/starknet-logo.svg",
     bg: "bg-rose-50", ring: "ring-rose-200",
   },
   {
     value: "hyper", label: "Hyper", icon: Leaf, color: "text-teal-600",
-    logo: "https://avatars.githubusercontent.com/u/106785388",
+    logo: "https://avatars.githubusercontent.com/u/124626532",
     bg: "bg-teal-50", ring: "ring-teal-200",
   },
 ];
@@ -2587,7 +2587,7 @@ export default function Web3Hub() {
             {TABS.map(tab => (
               <div key={tab.value} className="flex items-center gap-1.5 text-[10px] font-semibold bg-white/15 backdrop-blur-sm rounded-full px-2 py-1 border border-white/20">
                 <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse shrink-0" />
-                <img src={tab.logo} alt={tab.label} className="w-3.5 h-3.5 rounded-full object-cover shrink-0" />
+                <img src={tab.logo} alt={tab.label} className="w-3.5 h-3.5 rounded-full object-contain bg-white shrink-0 p-px" />
                 <span className="text-white">{tab.label}</span>
               </div>
             ))}
@@ -2611,7 +2611,7 @@ export default function Web3Hub() {
                 <img
                   src={tab.logo}
                   alt={tab.label}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-contain bg-white p-0.5"
                   onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
                 />
               </div>
