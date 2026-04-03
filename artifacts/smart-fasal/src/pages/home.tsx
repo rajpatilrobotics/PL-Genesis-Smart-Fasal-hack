@@ -833,42 +833,37 @@ export default function Home() {
           </div>
         )}
 
-        {/* ── Web3 Partners ── */}
+        {/* ── Tech Stack ── */}
         <div className={cn(glassCard, "p-4 space-y-3")}>
 
-          {/* Protocol Labs — top anchor */}
-          <a
-            href="https://protocol.ai"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-3 p-2.5 rounded-xl bg-white/50 border border-white/60 hover:bg-white/70 transition-all group"
-          >
-            <img
-              src="https://avatars.githubusercontent.com/u/6935308"
-              alt="Protocol Labs"
-              className="w-8 h-8 rounded-lg object-cover ring-1 ring-black/8 shadow-sm"
-            />
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-bold text-gray-800 leading-tight">Protocol Labs</p>
-              <p className="text-[10px] text-gray-400 leading-tight">The Web3 infrastructure company</p>
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-extrabold text-gray-800 leading-tight">Smart Fasal is built on</p>
+              <p className="text-[10px] text-gray-400 mt-0.5">Cutting-edge Web3 protocols &amp; infrastructure</p>
             </div>
-            <ChevronRight className="w-3.5 h-3.5 text-gray-300 group-hover:text-gray-500 transition-colors shrink-0" />
-          </a>
-
-          {/* Divider */}
-          <div className="flex items-center gap-2">
-            <div className="flex-1 h-px bg-black/6" />
-            <span className="text-[9px] text-gray-300 font-semibold tracking-widest uppercase">Built With</span>
-            <div className="flex-1 h-px bg-black/6" />
+            <a
+              href="https://protocol.ai"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 pl-1.5 pr-2.5 py-1 rounded-full bg-white/60 border border-white/70 hover:bg-white/80 transition-all group shrink-0"
+            >
+              <img
+                src="https://avatars.githubusercontent.com/u/6935308"
+                alt="Protocol Labs"
+                className="w-5 h-5 rounded-full object-cover ring-1 ring-black/8"
+              />
+              <span className="text-[9px] font-bold text-gray-600 group-hover:text-gray-800 transition-colors">Protocol Labs</span>
+            </a>
           </div>
 
-          {/* Protocol grid — 3 × 2 */}
-          <div className="grid grid-cols-3 gap-2">
+          {/* Protocol grid — 3 × 2, compact */}
+          <div className="grid grid-cols-3 gap-1.5">
             {[
               { name: "Flow", sub: "Rewards", avatar: "https://avatars.githubusercontent.com/u/62387156", href: "https://flow.com" },
               { name: "Filecoin", sub: "Storage", avatar: "https://avatars.githubusercontent.com/u/22014611", href: "https://filecoin.io" },
               { name: "Lit Protocol", sub: "Access", avatar: "https://avatars.githubusercontent.com/u/83147108", href: "https://litprotocol.com" },
-              { name: "Zama", sub: "FHE Privacy", avatar: "https://avatars.githubusercontent.com/u/57671822", href: "https://zama.ai" },
+              { name: "Zama", sub: "Privacy", avatar: "https://avatars.githubusercontent.com/u/57671822", href: "https://zama.ai" },
               { name: "Starknet", sub: "Insurance", avatar: "https://avatars.githubusercontent.com/u/104390117", href: "https://starknet.io" },
               { name: "HyperCerts", sub: "Impact", avatar: "https://avatars.githubusercontent.com/u/124626532", href: "https://hypercerts.org" },
             ].map(({ name, sub, avatar, href }) => (
@@ -877,17 +872,15 @@ export default function Home() {
                 href={href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex flex-col items-center gap-1.5 p-2 rounded-xl bg-white/45 border border-white/55 hover:bg-white/65 hover:border-white/80 hover:shadow-sm transition-all group"
+                className="flex flex-col items-center gap-1 py-2 px-1 rounded-xl bg-white/40 border border-white/50 hover:bg-white/60 hover:border-white/75 hover:shadow-sm transition-all group"
               >
                 <img
                   src={avatar}
                   alt={name}
-                  className="w-9 h-9 rounded-xl object-cover ring-1 ring-black/8 shadow-sm group-hover:scale-105 transition-transform"
+                  className="w-7 h-7 rounded-lg object-cover ring-1 ring-black/8 shadow-sm group-hover:scale-110 transition-transform duration-200"
                 />
-                <div className="text-center">
-                  <p className="text-[10px] font-bold text-gray-700 leading-tight">{name}</p>
-                  <p className="text-[9px] text-gray-400 leading-tight">{sub}</p>
-                </div>
+                <p className="text-[9px] font-bold text-gray-700 leading-tight text-center">{name}</p>
+                <p className="text-[8px] text-gray-400 leading-tight text-center">{sub}</p>
               </a>
             ))}
           </div>
