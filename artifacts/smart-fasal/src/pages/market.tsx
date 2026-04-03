@@ -29,97 +29,79 @@ function cidToUrl(cid: string | null | undefined): string | null {
   return `${IPFS_GATEWAY}${cid}`;
 }
 
-// Real buy links for each product ID (Amazon IN, Flipkart, BigHaat, Agribegri, etc.)
+// Real buy links for each product ID — Amazon IN & Flipkart only
 const PRODUCT_BUY_LINKS: Record<number, { label: string; url: string; color: string }[]> = {
   1: [
     { label: "Amazon", url: "https://www.amazon.in/s?k=IFFCO+DAP+fertilizer+50kg", color: "bg-[#FF9900] hover:bg-[#e68a00] text-black" },
     { label: "Flipkart", url: "https://www.flipkart.com/search?q=IFFCO+DAP+fertilizer+50kg", color: "bg-[#2874F0] hover:bg-[#1a5fd4] text-white" },
-    { label: "BigHaat", url: "https://www.bighaat.com/search?q=IFFCO+DAP", color: "bg-green-600 hover:bg-green-700 text-white" },
   ],
   2: [
     { label: "Amazon", url: "https://www.amazon.in/s?k=KRIBHCO+Urea+neem+coated+50kg", color: "bg-[#FF9900] hover:bg-[#e68a00] text-black" },
     { label: "Flipkart", url: "https://www.flipkart.com/search?q=neem+coated+urea+50kg", color: "bg-[#2874F0] hover:bg-[#1a5fd4] text-white" },
-    { label: "BigHaat", url: "https://www.bighaat.com/search?q=KRIBHCO+Urea", color: "bg-green-600 hover:bg-green-700 text-white" },
   ],
   3: [
     { label: "Amazon", url: "https://www.amazon.in/s?k=NPK+12-32-16+fertilizer+Coromandel", color: "bg-[#FF9900] hover:bg-[#e68a00] text-black" },
     { label: "Flipkart", url: "https://www.flipkart.com/search?q=NPK+12+32+16+fertilizer", color: "bg-[#2874F0] hover:bg-[#1a5fd4] text-white" },
-    { label: "BigHaat", url: "https://www.bighaat.com/search?q=NPK+12-32-16", color: "bg-green-600 hover:bg-green-700 text-white" },
   ],
   4: [
     { label: "Amazon", url: "https://www.amazon.in/s?k=zinc+sulphate+fertilizer+1kg+GSFC", color: "bg-[#FF9900] hover:bg-[#e68a00] text-black" },
     { label: "Flipkart", url: "https://www.flipkart.com/search?q=zinc+sulphate+fertilizer+1kg", color: "bg-[#2874F0] hover:bg-[#1a5fd4] text-white" },
-    { label: "Agribegri", url: "https://www.agribegri.com/fertilizers/micronutrient", color: "bg-orange-600 hover:bg-orange-700 text-white" },
   ],
   5: [
     { label: "Amazon", url: "https://www.amazon.in/s?k=Bio+NPK+liquid+fertilizer+PGPR", color: "bg-[#FF9900] hover:bg-[#e68a00] text-black" },
-    { label: "BigHaat", url: "https://www.bighaat.com/search?q=bio+NPK+liquid", color: "bg-green-600 hover:bg-green-700 text-white" },
-    { label: "Agribegri", url: "https://www.agribegri.com/fertilizers/bio-fertilizers", color: "bg-orange-600 hover:bg-orange-700 text-white" },
+    { label: "Flipkart", url: "https://www.flipkart.com/search?q=bio+NPK+liquid+fertilizer", color: "bg-[#2874F0] hover:bg-[#1a5fd4] text-white" },
   ],
   6: [
     { label: "Amazon", url: "https://www.amazon.in/s?k=humic+acid+granules+5kg+fertilizer", color: "bg-[#FF9900] hover:bg-[#e68a00] text-black" },
     { label: "Flipkart", url: "https://www.flipkart.com/search?q=humic+acid+granules+fertilizer", color: "bg-[#2874F0] hover:bg-[#1a5fd4] text-white" },
-    { label: "BigHaat", url: "https://www.bighaat.com/search?q=humic+acid", color: "bg-green-600 hover:bg-green-700 text-white" },
   ],
   7: [
     { label: "Amazon", url: "https://www.amazon.in/s?k=neem+oil+organic+1L+azadirachtin+pesticide", color: "bg-[#FF9900] hover:bg-[#e68a00] text-black" },
     { label: "Flipkart", url: "https://www.flipkart.com/search?q=neem+oil+organic+1+litre", color: "bg-[#2874F0] hover:bg-[#1a5fd4] text-white" },
-    { label: "BigHaat", url: "https://www.bighaat.com/search?q=neem+oil", color: "bg-green-600 hover:bg-green-700 text-white" },
   ],
   8: [
     { label: "Amazon", url: "https://www.amazon.in/s?k=Chlorpyrifos+20EC+500ml+Bayer+insecticide", color: "bg-[#FF9900] hover:bg-[#e68a00] text-black" },
     { label: "Flipkart", url: "https://www.flipkart.com/search?q=Chlorpyrifos+insecticide+Bayer", color: "bg-[#2874F0] hover:bg-[#1a5fd4] text-white" },
-    { label: "BigHaat", url: "https://www.bighaat.com/search?q=chlorpyrifos", color: "bg-green-600 hover:bg-green-700 text-white" },
   ],
   9: [
     { label: "Amazon", url: "https://www.amazon.in/s?k=Mancozeb+75WP+500g+UPL+fungicide", color: "bg-[#FF9900] hover:bg-[#e68a00] text-black" },
     { label: "Flipkart", url: "https://www.flipkart.com/search?q=Mancozeb+fungicide+UPL", color: "bg-[#2874F0] hover:bg-[#1a5fd4] text-white" },
-    { label: "BigHaat", url: "https://www.bighaat.com/search?q=mancozeb", color: "bg-green-600 hover:bg-green-700 text-white" },
   ],
   10: [
     { label: "Amazon", url: "https://www.amazon.in/s?k=Trichoderma+powder+1kg+bio+fungicide", color: "bg-[#FF9900] hover:bg-[#e68a00] text-black" },
-    { label: "BigHaat", url: "https://www.bighaat.com/search?q=trichoderma+powder", color: "bg-green-600 hover:bg-green-700 text-white" },
-    { label: "Agribegri", url: "https://www.agribegri.com/search?q=trichoderma", color: "bg-orange-600 hover:bg-orange-700 text-white" },
+    { label: "Flipkart", url: "https://www.flipkart.com/search?q=trichoderma+powder+bio+fungicide", color: "bg-[#2874F0] hover:bg-[#1a5fd4] text-white" },
   ],
   11: [
     { label: "Amazon", url: "https://www.amazon.in/s?k=Wheat+HD+2967+certified+seeds+IARI", color: "bg-[#FF9900] hover:bg-[#e68a00] text-black" },
-    { label: "BigHaat", url: "https://www.bighaat.com/search?q=HD-2967+wheat+seeds", color: "bg-green-600 hover:bg-green-700 text-white" },
-    { label: "Agribegri", url: "https://www.agribegri.com/seeds/wheat", color: "bg-orange-600 hover:bg-orange-700 text-white" },
+    { label: "Flipkart", url: "https://www.flipkart.com/search?q=HD-2967+wheat+certified+seeds", color: "bg-[#2874F0] hover:bg-[#1a5fd4] text-white" },
   ],
   12: [
     { label: "Amazon", url: "https://www.amazon.in/s?k=Namdhari+tomato+F1+hybrid+seeds", color: "bg-[#FF9900] hover:bg-[#e68a00] text-black" },
     { label: "Flipkart", url: "https://www.flipkart.com/search?q=Namdhari+tomato+F1+hybrid+seeds", color: "bg-[#2874F0] hover:bg-[#1a5fd4] text-white" },
-    { label: "BigHaat", url: "https://www.bighaat.com/search?q=Namdhari+tomato+seeds", color: "bg-green-600 hover:bg-green-700 text-white" },
   ],
   13: [
     { label: "Amazon", url: "https://www.amazon.in/s?k=Moong+Pusa+Vishal+seeds+1kg", color: "bg-[#FF9900] hover:bg-[#e68a00] text-black" },
-    { label: "BigHaat", url: "https://www.bighaat.com/search?q=moong+Pusa+Vishal+seeds", color: "bg-green-600 hover:bg-green-700 text-white" },
-    { label: "Agribegri", url: "https://www.agribegri.com/seeds/pulses", color: "bg-orange-600 hover:bg-orange-700 text-white" },
+    { label: "Flipkart", url: "https://www.flipkart.com/search?q=Moong+Pusa+Vishal+seeds", color: "bg-[#2874F0] hover:bg-[#1a5fd4] text-white" },
   ],
   14: [
     { label: "Amazon", url: "https://www.amazon.in/s?k=Jain+drip+irrigation+kit+1+acre", color: "bg-[#FF9900] hover:bg-[#e68a00] text-black" },
     { label: "Flipkart", url: "https://www.flipkart.com/search?q=drip+irrigation+kit+1+acre+Jain", color: "bg-[#2874F0] hover:bg-[#1a5fd4] text-white" },
-    { label: "Jain Irrigation", url: "https://www.jains.com/agriculture/drip-irrigation", color: "bg-blue-700 hover:bg-blue-800 text-white" },
   ],
   15: [
     { label: "Amazon", url: "https://www.amazon.in/s?k=Netafim+mini+sprinkler+irrigation+set", color: "bg-[#FF9900] hover:bg-[#e68a00] text-black" },
     { label: "Flipkart", url: "https://www.flipkart.com/search?q=sprinkler+irrigation+set+1+acre", color: "bg-[#2874F0] hover:bg-[#1a5fd4] text-white" },
-    { label: "Netafim", url: "https://www.netafim.com/en/products/sprinklers/", color: "bg-blue-700 hover:bg-blue-800 text-white" },
   ],
   16: [
     { label: "Amazon", url: "https://www.amazon.in/s?k=soil+moisture+sensor+kit+4G+data+logger+agriculture", color: "bg-[#FF9900] hover:bg-[#e68a00] text-black" },
     { label: "Flipkart", url: "https://www.flipkart.com/search?q=soil+moisture+sensor+iot+agriculture", color: "bg-[#2874F0] hover:bg-[#1a5fd4] text-white" },
-    { label: "IndiaMart", url: "https://www.indiamart.com/search.mp?ss=soil+moisture+sensor+agriculture", color: "bg-red-600 hover:bg-red-700 text-white" },
   ],
   17: [
     { label: "Amazon", url: "https://www.amazon.in/s?k=agricultural+lime+calcitic+50kg+soil+pH", color: "bg-[#FF9900] hover:bg-[#e68a00] text-black" },
     { label: "Flipkart", url: "https://www.flipkart.com/search?q=agricultural+lime+soil+amendment+50kg", color: "bg-[#2874F0] hover:bg-[#1a5fd4] text-white" },
-    { label: "BigHaat", url: "https://www.bighaat.com/search?q=lime+soil+treatment", color: "bg-green-600 hover:bg-green-700 text-white" },
   ],
   18: [
     { label: "Amazon", url: "https://www.amazon.in/s?k=vermicompost+25kg+organic+fertilizer", color: "bg-[#FF9900] hover:bg-[#e68a00] text-black" },
     { label: "Flipkart", url: "https://www.flipkart.com/search?q=vermicompost+25kg+organic", color: "bg-[#2874F0] hover:bg-[#1a5fd4] text-white" },
-    { label: "BigHaat", url: "https://www.bighaat.com/search?q=vermicompost", color: "bg-green-600 hover:bg-green-700 text-white" },
   ],
 };
 
