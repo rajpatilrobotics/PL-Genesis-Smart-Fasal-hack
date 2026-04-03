@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import {
   useGetWeather, getGetWeatherQueryKey,
@@ -145,23 +145,46 @@ export default function Home() {
     });
   };
 
-  const handleResample = () => {
+  const scanRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const handleResample = useCallback(() => {
     if (isSampling) return;
     setIsSampling(true);
-    const delay = 2000 + Math.random() * 1000;
-    setTimeout(() => {
-      const vary = (base: number, pct = 0.15) =>
-        Math.round(base * (1 - pct + Math.random() * pct * 2));
-      setDisplaySensor({
-        nitrogen: vary(DUMMY_SENSOR_BASE.nitrogen),
-        phosphorus: vary(DUMMY_SENSOR_BASE.phosphorus),
-        potassium: vary(DUMMY_SENSOR_BASE.potassium),
-        ph: Number((DUMMY_SENSOR_BASE.ph + (Math.random() * 0.6 - 0.3)).toFixed(1)),
-        moisture: vary(DUMMY_SENSOR_BASE.moisture),
-      });
-      setIsSampling(false);
-    }, delay);
-  };
+
+    // Capture current values to base variation on
+    setDisplaySensor(current => {
+      const snapshot = { ...current };
+      const finalDelay = 1800 + Math.random() * 700;
+
+      // Rapid flicker every 150ms — bars animate smoothly between each tick
+      scanRef.current = setInterval(() => {
+        setDisplaySensor(prev => ({
+          nitrogen:  Math.max(50,  Math.round(prev.nitrogen  + (Math.random() - 0.5) * 10)),
+          phosphorus: Math.max(10, Math.round(prev.phosphorus + (Math.random() - 0.5) * 5)),
+          potassium: Math.max(50,  Math.round(prev.potassium  + (Math.random() - 0.5) * 12)),
+          ph:   Math.max(4, Math.min(9, Math.round((prev.ph   + (Math.random() - 0.5) * 0.15) * 10) / 10)),
+          moisture: Math.max(5, Math.min(100, Math.round(prev.moisture + (Math.random() - 0.5) * 4))),
+        }));
+      }, 150);
+
+      // After delay, stop flickering and settle on a new realistic reading
+      setTimeout(() => {
+        if (scanRef.current) clearInterval(scanRef.current);
+        const vary = (base: number, pct = 0.07) =>
+          Math.round(base * (1 - pct + Math.random() * pct * 2));
+        setDisplaySensor({
+          nitrogen:  vary(snapshot.nitrogen),
+          phosphorus: vary(snapshot.phosphorus),
+          potassium: vary(snapshot.potassium),
+          ph:   Math.round((snapshot.ph + (Math.random() * 0.3 - 0.15)) * 10) / 10,
+          moisture: vary(snapshot.moisture),
+        });
+        setIsSampling(false);
+      }, finalDelay);
+
+      return current; // no immediate change — scanning handles it
+    });
+  }, [isSampling]);
 
   const updateStep = useCallback((id: string, update: Partial<PipelineStep>) => {
     setSteps(prev => prev.map(s => s.id === id ? { ...s, ...update } : s));
@@ -456,7 +479,19 @@ export default function Home() {
               <div className="flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse inline-block" />
                 <p className="text-sm font-semibold">{t("home.liveSoilReadings")}</p>
-                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-red-500 text-white tracking-wide">LIVE</span>
+                <button
+                  onMouseEnter={handleResample}
+                  onClick={handleResample}
+                  disabled={isSampling}
+                  className={cn(
+                    "text-[9px] font-bold px-1.5 py-0.5 rounded tracking-wide text-white transition-all duration-200 select-none",
+                    isSampling
+                      ? "bg-amber-500 animate-pulse cursor-wait scale-105"
+                      : "bg-red-500 hover:bg-red-600 hover:scale-105 cursor-pointer active:scale-95"
+                  )}
+                >
+                  {isSampling ? "SCAN..." : "LIVE"}
+                </button>
               </div>
               <div className="flex items-center gap-1.5 mt-0.5">
                 {/* Signal bars */}
@@ -490,7 +525,10 @@ export default function Home() {
                 <span className="font-semibold">{value} <span className="text-muted-foreground font-normal">{unit}</span></span>
               </div>
               <div className="h-2 bg-muted rounded-full overflow-hidden">
-                <div className={cn("h-full rounded-full transition-all duration-700", color)} style={{ width: `${Math.min(100, (value / max) * 100)}%` }} />
+                <div
+                  className={cn("h-full rounded-full", color, isSampling ? "transition-all duration-300" : "transition-all duration-700")}
+                  style={{ width: `${Math.min(100, (value / max) * 100)}%` }}
+                />
               </div>
             </div>
           ))}
@@ -520,7 +558,7 @@ export default function Home() {
                 <div className="bg-muted h-full flex-1" />
               </div>
               <div
-                className="absolute top-0 h-full w-1 bg-blue-500 rounded-full transition-all duration-700"
+                className={cn("absolute top-0 h-full w-1 bg-blue-500 rounded-full", isSampling ? "transition-all duration-300" : "transition-all duration-700")}
                 style={{ left: `calc(${Math.min(100, (displaySensor.ph / 14) * 100)}% - 2px)` }}
               />
             </div>
@@ -539,7 +577,9 @@ export default function Home() {
             </div>
             <div className="h-2 bg-muted rounded-full overflow-hidden">
               <div
-                className={cn("h-full rounded-full transition-all duration-700",
+                className={cn(
+                  "h-full rounded-full",
+                  isSampling ? "transition-all duration-300" : "transition-all duration-700",
                   displaySensor.moisture < 30 ? "bg-red-400" : displaySensor.moisture > 70 ? "bg-blue-500" : "bg-cyan-500"
                 )}
                 style={{ width: `${Math.min(100, displaySensor.moisture)}%` }}
