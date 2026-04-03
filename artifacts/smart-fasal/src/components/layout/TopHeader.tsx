@@ -144,43 +144,50 @@ export default function TopHeader() {
             </div>
           )}
 
-          {/* NOT CONNECTED — Manual input */}
+          {/* NOT CONNECTED — Address input form */}
           {!walletAddress && showManualInput && (
-            <div className="flex items-center gap-1.5">
-              <Input
-                value={manualAddress}
-                onChange={(e) => setManualAddress(e.target.value)}
-                placeholder="0x... Flow address"
-                className="h-8 text-xs w-36"
-                onKeyDown={(e) => e.key === "Enter" && handleManualConnect()}
-                autoFocus
-              />
-              <Button size="sm" className="h-8 text-xs px-2.5 rounded-full" onClick={() => handleManualConnect()}>Go</Button>
-              <Button size="sm" variant="ghost" className="h-8 text-xs px-2 rounded-full"
-                onClick={() => { setShowManualInput(false); setManualAddress(""); }}>✕</Button>
+            <div className="flex flex-col gap-1.5 min-w-0">
+              <div className="flex items-center gap-1.5">
+                <Input
+                  value={manualAddress}
+                  onChange={(e) => setManualAddress(e.target.value)}
+                  placeholder="0x... Flow wallet address"
+                  className="h-8 text-xs w-40"
+                  onKeyDown={(e) => e.key === "Enter" && handleManualConnect()}
+                  autoFocus
+                />
+                <Button
+                  size="sm"
+                  className="h-8 text-xs px-3 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold border-0"
+                  onClick={() => handleManualConnect()}
+                  disabled={!manualAddress.trim()}
+                >
+                  Connect
+                </Button>
+                <Button size="sm" variant="ghost" className="h-8 w-8 p-0 rounded-full"
+                  onClick={() => { setShowManualInput(false); setManualAddress(""); }}>✕</Button>
+              </div>
+              <button
+                onClick={() => { setShowManualInput(false); handleConnect(); }}
+                disabled={isConnecting}
+                className="text-[10px] text-emerald-600 hover:text-emerald-800 underline underline-offset-2 text-left pl-1 transition-colors"
+              >
+                {isConnecting ? "Opening Flow wallet…" : "Use Flow Wallet app instead"}
+              </button>
             </div>
           )}
 
           {/* NOT CONNECTED — Connect button */}
           {!walletAddress && !showManualInput && (
-            <div className="flex items-center gap-1.5">
-              <Button
-                onClick={handleConnect}
-                disabled={isConnecting}
-                size="sm"
-                className="rounded-full font-bold px-3 h-8 text-xs bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 shadow-lg hover:shadow-xl transition-all duration-200 border-0 text-white whitespace-nowrap"
-              >
-                <Wallet className="w-3.5 h-3.5 mr-1 shrink-0" />
-                <span className="hidden sm:inline">{isConnecting ? "Connecting…" : "Connect Wallet"}</span>
-                <span className="sm:hidden">{isConnecting ? "…" : "Connect"}</span>
-              </Button>
-              <button
-                onClick={() => setShowManualInput(true)}
-                className="text-[10px] text-muted-foreground hover:text-foreground transition-colors hidden md:block"
-              >
-                Manual
-              </button>
-            </div>
+            <Button
+              onClick={() => setShowManualInput(true)}
+              size="sm"
+              className="rounded-full font-bold px-3 h-8 text-xs bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 shadow-lg hover:shadow-xl transition-all duration-200 border-0 text-white whitespace-nowrap"
+            >
+              <Wallet className="w-3.5 h-3.5 mr-1 shrink-0" />
+              <span className="hidden sm:inline">Connect Wallet</span>
+              <span className="sm:hidden">Connect</span>
+            </Button>
           )}
         </div>
       </div>
