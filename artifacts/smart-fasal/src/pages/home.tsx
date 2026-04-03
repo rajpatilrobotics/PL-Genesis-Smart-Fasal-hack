@@ -426,34 +426,34 @@ export default function Home() {
         <div className="absolute -top-4 -right-4 w-24 h-24 rounded-full bg-white/10 blur-lg" />
         <div className="absolute top-2 right-12 w-14 h-14 rounded-full bg-white/8 blur-md" />
 
-        <div className="relative p-4">
+        <div className="relative p-3">
           {loadingWeather ? (
-            <div className="space-y-2">
-              <Skeleton className="h-4 w-20 bg-white/20" />
-              <Skeleton className="h-8 w-32 bg-white/20" />
+            <div className="space-y-1.5">
+              <Skeleton className="h-3 w-16 bg-white/20" />
+              <Skeleton className="h-6 w-24 bg-white/20" />
             </div>
           ) : weather ? (
             <div className="flex items-center justify-between">
               <div>
-                <div className="flex items-center gap-1.5 mb-1.5">
-                  <CloudRain className="w-3.5 h-3.5 text-white/80" />
-                  <span className="text-[10px] font-bold text-white/80 uppercase tracking-wider">{t("home.weather")} · Punjab, India</span>
+                <div className="flex items-center gap-1 mb-1">
+                  <CloudRain className="w-3 h-3 text-white/80" />
+                  <span className="text-[9px] font-bold text-white/80 uppercase tracking-wider">{t("home.weather")} · Punjab, India</span>
                 </div>
-                <p className="text-3xl font-extrabold text-white tracking-tight">{weather.temperature}°C</p>
-                <p className="text-sm text-white/70 capitalize mt-0.5">{weather.description}</p>
+                <p className="text-2xl font-extrabold text-white tracking-tight">{weather.temperature}°C</p>
+                <p className="text-xs text-white/70 capitalize mt-0.5">{weather.description}</p>
               </div>
-              <div className="flex flex-col items-end gap-2">
-                <div className="flex items-center gap-1.5 bg-white/15 backdrop-blur-sm rounded-full px-2.5 py-1">
-                  <Droplets className="w-3 h-3 text-blue-200" />
-                  <span className="text-xs font-semibold text-white">{weather.humidity}%</span>
+              <div className="flex flex-col items-end gap-1.5">
+                <div className="flex items-center gap-1 bg-white/15 backdrop-blur-sm rounded-full px-2 py-0.5">
+                  <Droplets className="w-2.5 h-2.5 text-blue-200" />
+                  <span className="text-[11px] font-semibold text-white">{weather.humidity}%</span>
                 </div>
-                <div className="flex items-center gap-1.5 bg-white/15 backdrop-blur-sm rounded-full px-2.5 py-1">
-                  <Wind className="w-3 h-3 text-blue-200" />
-                  <span className="text-xs font-semibold text-white">{weather.windSpeed} m/s</span>
+                <div className="flex items-center gap-1 bg-white/15 backdrop-blur-sm rounded-full px-2 py-0.5">
+                  <Wind className="w-2.5 h-2.5 text-blue-200" />
+                  <span className="text-[11px] font-semibold text-white">{weather.windSpeed} m/s</span>
                 </div>
-                <div className="flex items-center gap-1.5 bg-white/15 backdrop-blur-sm rounded-full px-2.5 py-1">
-                  <Thermometer className="w-3 h-3 text-orange-300" />
-                  <span className="text-xs font-semibold text-white">{t("home.feels")} {weather.feelsLike ?? weather.temperature}°C</span>
+                <div className="flex items-center gap-1 bg-white/15 backdrop-blur-sm rounded-full px-2 py-0.5">
+                  <Thermometer className="w-2.5 h-2.5 text-orange-300" />
+                  <span className="text-[11px] font-semibold text-white">{t("home.feels")} {weather.feelsLike ?? weather.temperature}°C</span>
                 </div>
               </div>
             </div>
