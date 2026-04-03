@@ -584,18 +584,11 @@ export default function Market() {
                   <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse inline-block" />
                   LIVE · AGMARKNET
                 </span>
-              ) : (
-                <span className="inline-flex items-center gap-1 text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full">
-                  <span className="w-1.5 h-1.5 bg-amber-400 rounded-full inline-block" />
-                  Simulated
-                </span>
-              )}
+              ) : null}
               <p className="text-[10px] text-muted-foreground">
                 {priceStatus?.isLive
                   ? `Arrival date: ${priceStatus.arrivalDate ?? "today"} · data.gov.in`
-                  : priceStatus?.apiConfigured === false
-                    ? "Add DATA_GOV_IN_API_KEY to go live"
-                    : "Realistic base prices · ±2% drift · hourly refresh"}
+                  : "Mandi prices · Hourly refresh"}
               </p>
             </div>
             <Button
