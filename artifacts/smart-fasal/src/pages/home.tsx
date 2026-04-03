@@ -95,19 +95,34 @@ export default function Home() {
   const [steps, setSteps] = useState<PipelineStep[]>([]);
   const [displaySensor, setDisplaySensor] = useState({ ...DUMMY_SENSOR_BASE });
   const [isSampling, setIsSampling] = useState(false);
+  const [tick, setTick] = useState(0);
+
+  useEffect(() => {
+    const id = setInterval(() => setTick(t => t + 1), 1000);
+    return () => clearInterval(id);
+  }, []);
 
   const { data: weather, isLoading: loadingWeather } = useGetWeather({}, {
     query: { queryKey: getGetWeatherQueryKey({}) }
   });
 
   const { data: sensorData, isLoading: loadingSensor } = useGetLatestSensorData({
-    query: { queryKey: getGetLatestSensorDataQueryKey(), refetchInterval: 10000 }
+    query: { queryKey: getGetLatestSensorDataQueryKey(), refetchInterval: 5000 }
   });
 
   const { data: insuranceRisk } = useGetInsuranceRisk();
 
   useEffect(() => {
-    if (sensorData) setLastUpdated(new Date());
+    if (sensorData) {
+      setLastUpdated(new Date());
+      setDisplaySensor({
+        nitrogen: sensorData.nitrogen,
+        phosphorus: sensorData.phosphorus,
+        potassium: sensorData.potassium,
+        ph: sensorData.ph,
+        moisture: sensorData.moisture,
+      });
+    }
   }, [sensorData]);
 
   const getAiRec = useGetAiRecommendation();
@@ -433,18 +448,32 @@ export default function Home() {
         </CardContent>
       </Card>
 
-      {/* Live Soil Readings — NPK + pH + Moisture bars (dummy hardware sensor data) */}
+      {/* Live Soil Readings — NPK + pH + Moisture bars (ESP32 hardware sensor data) */}
       <Card className="border-emerald-100">
         <CardContent className="p-4 space-y-3">
           <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-semibold flex items-center gap-1.5">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse inline-block" />
-                {t("home.liveSoilReadings")}
-              </p>
-              <p className="text-[10px] text-muted-foreground mt-0.5">{t("home.hardwareSensor")}</p>
+                <p className="text-sm font-semibold">{t("home.liveSoilReadings")}</p>
+                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-red-500 text-white tracking-wide">LIVE</span>
+              </div>
+              <div className="flex items-center gap-1.5 mt-0.5">
+                {/* Signal bars */}
+                <div className="flex items-end gap-px h-3">
+                  <span className="w-1 bg-emerald-400 rounded-sm" style={{ height: "30%" }} />
+                  <span className="w-1 bg-emerald-400 rounded-sm" style={{ height: "55%" }} />
+                  <span className="w-1 bg-emerald-400 rounded-sm" style={{ height: "80%" }} />
+                  <span className="w-1 bg-emerald-500 rounded-sm" style={{ height: "100%" }} />
+                </div>
+                <p className="text-[10px] text-muted-foreground font-mono">ESP32-FARM-001</p>
+                <span className="text-[9px] text-muted-foreground/60">·</span>
+                <p className="text-[10px] text-muted-foreground">
+                  {lastUpdated ? `${Math.round((Date.now() - lastUpdated.getTime() + tick * 0) / 1000)}s ago` : "connecting..."}
+                </p>
+              </div>
             </div>
-            <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded-full border", getRiskColor(riskToDisplay))}>
+            <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded-full border shrink-0", getRiskColor(riskToDisplay))}>
               {riskToDisplay} Risk
             </span>
           </div>
