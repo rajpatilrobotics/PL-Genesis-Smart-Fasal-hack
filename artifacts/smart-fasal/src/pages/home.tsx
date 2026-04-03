@@ -396,7 +396,8 @@ export default function Home() {
   return (
     <div className="space-y-5 animate-in fade-in slide-in-from-bottom-4 duration-500">
 
-      {/* Hero Header */}
+      {/* Hero Header + Weather grouped tightly */}
+      <div className="space-y-2">
       <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-emerald-600 via-green-600 to-teal-700 p-4 shadow-lg">
         {/* Decorative circles */}
         <div className="absolute -top-6 -right-6 w-28 h-28 rounded-full bg-white/10 blur-xl" />
@@ -460,6 +461,7 @@ export default function Home() {
           ) : <p className="text-xs text-white/60">Unavailable</p>}
         </div>
       </div>
+      </div>{/* end tight group */}
 
       {/* Visual Risk Banner */}
       <div className={cn(

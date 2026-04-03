@@ -109,7 +109,6 @@ type WalletContextType = {
   walletAddress: string | null;
   isManual: boolean;
   isConnecting: boolean;
-  showManualInput: boolean;
   manualAddress: string;
   flowRewards: number;
   contributionCount: number;
@@ -130,7 +129,6 @@ type WalletContextType = {
   addDataEntry: (entry: DataEntry) => void;
   setCurrentRisk: (risk: RiskStatus) => void;
   setManualAddress: (addr: string) => void;
-  setShowManualInput: (show: boolean) => void;
   mintNFT: (nft: NFT) => void;
   mintCarbonCredit: (credit: CarbonCredit) => void;
   publishDataListing: (listing: DataListing) => void;
@@ -161,7 +159,6 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
   const { toast } = useToast();
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
-  const [showManualInput, setShowManualInput] = useState(false);
   const [manualAddress, setManualAddress] = useState("");
   const [isManual, setIsManual] = useState(false);
   const [flowRewards, setFlowRewards] = useState(INITIAL_REWARDS);
@@ -202,24 +199,20 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
         );
       } else if (!isManualRef.current) {
         setWalletAddress(null);
+        setIsConnecting(false);
       }
     });
     return () => unsub();
   }, []);
 
   const handleConnect = async () => {
+    if (isConnecting) return;
     setIsConnecting(true);
     try {
       await fcl.authenticate();
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : String(err);
-      if (!message.includes("Declined") && !message.includes("Halted")) {
-        toast({
-          title: "Wallet popup blocked",
-          description: "Use 'Enter address manually' below to connect instead.",
-          variant: "destructive",
-        });
-      }
+    } catch (_) {
+      try { fcl.unauthenticate(); } catch (__) { /* ignore */ }
+    } finally {
       setIsConnecting(false);
     }
   };
@@ -228,7 +221,6 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     if (!isManual) fcl.unauthenticate();
     setWalletAddress(null);
     setIsManual(false);
-    setShowManualInput(false);
     setManualAddress("");
     setFlowRewards(INITIAL_REWARDS);
     setContributionCount(0);
@@ -248,7 +240,6 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     if (!trimmed) return;
     setWalletAddress(trimmed);
     setIsManual(true);
-    setShowManualInput(false);
     connectWalletMutation.mutate(
       { data: { walletAddress: trimmed } },
       {
@@ -314,7 +305,6 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
         walletAddress,
         isManual,
         isConnecting,
-        showManualInput,
         manualAddress,
         flowRewards,
         contributionCount,
@@ -335,7 +325,6 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
         addDataEntry,
         setCurrentRisk,
         setManualAddress,
-        setShowManualInput,
         mintNFT,
         mintCarbonCredit,
         publishDataListing,
