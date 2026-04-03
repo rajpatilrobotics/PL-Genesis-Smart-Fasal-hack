@@ -836,26 +836,30 @@ export default function Home() {
         {/* ── Tech Stack ── */}
         <div className={cn(glassCard, "p-4 space-y-3")}>
 
-          {/* Header */}
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-extrabold text-gray-800 leading-tight">Smart Fasal is built on</p>
-              <p className="text-[10px] text-gray-400 mt-0.5">Cutting-edge Web3 protocols &amp; infrastructure</p>
-            </div>
-            <a
-              href="https://protocol.ai"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-1.5 pl-1.5 pr-2.5 py-1 rounded-full bg-white/60 border border-white/70 hover:bg-white/80 transition-all group shrink-0"
-            >
-              <img
-                src="https://avatars.githubusercontent.com/u/6935308"
-                alt="Protocol Labs"
-                className="w-5 h-5 rounded-full object-cover ring-1 ring-black/8"
-              />
-              <span className="text-[9px] font-bold text-gray-600 group-hover:text-gray-800 transition-colors">Protocol Labs</span>
-            </a>
+          {/* Header text */}
+          <div>
+            <p className="text-sm font-extrabold text-gray-800 leading-tight">Smart Fasal is built on</p>
+            <p className="text-[10px] text-gray-400 mt-0.5">Cutting-edge Web3 protocols &amp; infrastructure</p>
           </div>
+
+          {/* Protocol Labs — full-width horizontal banner */}
+          <a
+            href="https://protocol.ai"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl bg-white/55 border border-white/65 hover:bg-white/75 transition-all group"
+          >
+            <img
+              src="https://avatars.githubusercontent.com/u/6935308"
+              alt="Protocol Labs"
+              className="w-7 h-7 rounded-lg object-cover ring-1 ring-black/8 shadow-sm shrink-0"
+            />
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-bold text-gray-800 leading-tight">Protocol Labs</p>
+              <p className="text-[9px] text-gray-400 leading-tight">Web3 infrastructure &amp; research</p>
+            </div>
+            <ChevronRight className="w-3 h-3 text-gray-300 group-hover:text-gray-500 transition-colors shrink-0" />
+          </a>
 
           {/* Protocol grid — 3 × 2, compact */}
           <div className="grid grid-cols-3 gap-1.5">
