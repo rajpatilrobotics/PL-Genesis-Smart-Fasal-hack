@@ -2557,7 +2557,6 @@ export default function Web3Hub() {
               🟢 All Protocols Live
             </span>
           </div>
-          <h2 className="text-xl font-extrabold text-white tracking-tight">{t("web3.title")}</h2>
           <p className="text-blue-100/70 text-xs mt-0.5">{t("web3.subtitle")}</p>
           {/* Protocol pills */}
           <div className="flex gap-1.5 flex-wrap mt-3">
