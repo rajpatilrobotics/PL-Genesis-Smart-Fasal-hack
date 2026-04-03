@@ -60,18 +60,18 @@ export default function TopHeader() {
         <div className="container mx-auto px-3 flex items-center justify-between gap-2 py-2">
 
           {/* Logo */}
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-3 shrink-0">
             <div className="relative">
               <img
                 src="/logo.jpeg"
                 alt="Smart Fasal"
-                className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl object-cover shadow-md ring-2 ring-emerald-200/80"
+                className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl object-cover shadow-lg ring-2 ring-emerald-200/80"
               />
-              <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-white shadow-sm" />
+              <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 rounded-full border-2 border-white shadow-sm" />
             </div>
-            <div className="flex flex-col">
-              <span className="font-extrabold text-sm sm:text-base tracking-tight text-gradient-green leading-tight">Smart Fasal</span>
-              <span className="text-[9px] sm:text-[10px] font-semibold text-emerald-600 leading-tight">The Agriculture Platform</span>
+            <div className="flex flex-col gap-0.5">
+              <span className="font-extrabold text-lg sm:text-xl tracking-tight text-gradient-green leading-tight">Smart Fasal</span>
+              <span className="text-[11px] sm:text-xs font-semibold text-emerald-600 leading-tight">The Agriculture Platform</span>
             </div>
           </div>
 
