@@ -358,5 +358,27 @@
     "good": "Good",
     "average": "Average",
     "poor": "Poor"
+  },
+  "onboarding": {
+    "welcome": "Welcome to Smart Fasal",
+    "subtitle": "Let's set up your farmer profile — it only takes a minute.",
+    "personalDetails": "Personal Details",
+    "fullName": "Full Name *",
+    "phone": "Phone Number",
+    "continue": "Continue",
+    "farmLocation": "Farm Location",
+    "village": "Village / Town",
+    "district": "District",
+    "state": "State",
+    "selectState": "Select state...",
+    "back": "Back",
+    "farmDetails": "Farm Details",
+    "farmSize": "Farm Size (in acres)",
+    "primaryCrop": "Primary Crop",
+    "selectCrop": "Select crop...",
+    "experience": "Farming Experience (years)",
+    "finish": "Finish Setup",
+    "saving": "Saving...",
+    "saveError": "Could not save profile. Please try again."
   }
 }
