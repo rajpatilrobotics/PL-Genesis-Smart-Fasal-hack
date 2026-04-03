@@ -559,6 +559,16 @@ export type GetWeatherParams = {
   lon?: number;
 };
 
+export type CancelInsurancePolicy200 = {
+  success: boolean;
+  policy?: InsurancePolicy;
+};
+
+export type ResetInsuranceDemo200 = {
+  success: boolean;
+  message: string;
+};
+
 export type GetLitVaultRecordsParams = {
   farmerWallet: string;
 };

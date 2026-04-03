@@ -268,6 +268,43 @@ export const CreateInsurancePolicyBody = zod.object({
 });
 
 /**
+ * @summary Cancel an active insurance policy
+ */
+export const CancelInsurancePolicyParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const CancelInsurancePolicyResponse = zod.object({
+  success: zod.boolean(),
+  policy: zod
+    .object({
+      id: zod.number(),
+      plan: zod.string(),
+      coveredEvents: zod.string(),
+      premiumAnnual: zod.number(),
+      maxPayout: zod.number(),
+      acresCovered: zod.string(),
+      cropType: zod.string(),
+      status: zod.string(),
+      ipfsCid: zod.string().nullish(),
+      ipfsUrl: zod.string().nullish(),
+      walletAddress: zod.string().nullish(),
+      startDate: zod.coerce.date().optional(),
+      endDate: zod.coerce.date().optional(),
+      createdAt: zod.coerce.date(),
+    })
+    .optional(),
+});
+
+/**
+ * @summary Reset all insurance data for demo purposes
+ */
+export const ResetInsuranceDemoResponse = zod.object({
+  success: zod.boolean(),
+  message: zod.string(),
+});
+
+/**
  * @summary Get live weather oracle data used for claim validation
  */
 export const GetInsuranceWeatherResponse = zod.object({

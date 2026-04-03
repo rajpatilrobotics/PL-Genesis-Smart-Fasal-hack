@@ -23,6 +23,7 @@ import type {
   AiRecommendationInput,
   AnalyticsSummary,
   AskExpertInput,
+  CancelInsurancePolicy200,
   ChatMessage,
   CommunityPost,
   ConfirmDeliveryInput,
@@ -60,6 +61,7 @@ import type {
   MarketListing,
   MarketPrice,
   ProductRecommendation,
+  ResetInsuranceDemo200,
   RewardsInfo,
   SendMessageInput,
   SensorData,
@@ -1224,6 +1226,174 @@ export const useCreateInsurancePolicy = <
   TContext
 > => {
   return useMutation(getCreateInsurancePolicyMutationOptions(options));
+};
+
+/**
+ * @summary Cancel an active insurance policy
+ */
+export const getCancelInsurancePolicyUrl = (id: number) => {
+  return `/api/insurance/policies/${id}`;
+};
+
+export const cancelInsurancePolicy = async (
+  id: number,
+  options?: RequestInit,
+): Promise<CancelInsurancePolicy200> => {
+  return customFetch<CancelInsurancePolicy200>(
+    getCancelInsurancePolicyUrl(id),
+    {
+      ...options,
+      method: "DELETE",
+    },
+  );
+};
+
+export const getCancelInsurancePolicyMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof cancelInsurancePolicy>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof cancelInsurancePolicy>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  const mutationKey = ["cancelInsurancePolicy"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof cancelInsurancePolicy>>,
+    { id: number }
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return cancelInsurancePolicy(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CancelInsurancePolicyMutationResult = NonNullable<
+  Awaited<ReturnType<typeof cancelInsurancePolicy>>
+>;
+
+export type CancelInsurancePolicyMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Cancel an active insurance policy
+ */
+export const useCancelInsurancePolicy = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof cancelInsurancePolicy>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof cancelInsurancePolicy>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  return useMutation(getCancelInsurancePolicyMutationOptions(options));
+};
+
+/**
+ * @summary Reset all insurance data for demo purposes
+ */
+export const getResetInsuranceDemoUrl = () => {
+  return `/api/insurance/reset`;
+};
+
+export const resetInsuranceDemo = async (
+  options?: RequestInit,
+): Promise<ResetInsuranceDemo200> => {
+  return customFetch<ResetInsuranceDemo200>(getResetInsuranceDemoUrl(), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export const getResetInsuranceDemoMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof resetInsuranceDemo>>,
+    TError,
+    void,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof resetInsuranceDemo>>,
+  TError,
+  void,
+  TContext
+> => {
+  const mutationKey = ["resetInsuranceDemo"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof resetInsuranceDemo>>,
+    void
+  > = () => {
+    return resetInsuranceDemo(requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type ResetInsuranceDemoMutationResult = NonNullable<
+  Awaited<ReturnType<typeof resetInsuranceDemo>>
+>;
+
+export type ResetInsuranceDemoMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Reset all insurance data for demo purposes
+ */
+export const useResetInsuranceDemo = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof resetInsuranceDemo>>,
+    TError,
+    void,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof resetInsuranceDemo>>,
+  TError,
+  void,
+  TContext
+> => {
+  return useMutation(getResetInsuranceDemoMutationOptions(options));
 };
 
 /**

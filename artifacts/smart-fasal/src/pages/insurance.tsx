@@ -4,6 +4,8 @@ import {
   useCreateInsuranceClaim,
   useGetInsurancePolicies, getGetInsurancePoliciesQueryKey,
   useCreateInsurancePolicy,
+  useCancelInsurancePolicy,
+  useResetInsuranceDemo,
   useGetInsuranceWeather, getGetInsuranceWeatherQueryKey,
 } from "@workspace/api-client-react";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -19,7 +21,8 @@ import { useToast } from "@/hooks/use-toast";
 import {
   ShieldAlert, ShieldCheck, AlertCircle, FileText, CheckCircle2, Zap,
   CloudRain, Thermometer, Droplets, ExternalLink, Star, TrendingUp,
-  Satellite, BadgeCheck, Clock, IndianRupee, Calculator, Leaf
+  Satellite, BadgeCheck, Clock, IndianRupee, Calculator, Leaf,
+  XCircle, RotateCcw, Trash2
 } from "lucide-react";
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -107,6 +110,36 @@ export default function Insurance() {
 
   const createClaim = useCreateInsuranceClaim();
   const createPolicy = useCreateInsurancePolicy();
+  const cancelPolicy = useCancelInsurancePolicy();
+  const resetDemo = useResetInsuranceDemo();
+
+  const handleCancelPolicy = (policyId: number) => {
+    if (!confirm("Cancel this policy? You can purchase a new one afterwards.")) return;
+    cancelPolicy.mutate({ id: policyId }, {
+      onSuccess: () => {
+        toast({ title: "Policy Cancelled", description: "Your policy has been cancelled. You can purchase a new one." });
+        queryClient.invalidateQueries({ queryKey: getGetInsurancePoliciesQueryKey() });
+        queryClient.invalidateQueries({ queryKey: getGetInsuranceClaimsQueryKey() });
+      },
+      onError: () => {
+        toast({ title: "Error", description: "Failed to cancel policy.", variant: "destructive" });
+      }
+    });
+  };
+
+  const handleDemoReset = () => {
+    if (!confirm("Reset ALL insurance data? This will delete all policies and claims for a clean demo.")) return;
+    resetDemo.mutate(undefined, {
+      onSuccess: () => {
+        toast({ title: "🔄 Demo Reset Complete", description: "All policies and claims cleared. Ready for a fresh demo!" });
+        queryClient.invalidateQueries({ queryKey: getGetInsurancePoliciesQueryKey() });
+        queryClient.invalidateQueries({ queryKey: getGetInsuranceClaimsQueryKey() });
+      },
+      onError: () => {
+        toast({ title: "Error", description: "Failed to reset demo data.", variant: "destructive" });
+      }
+    });
+  };
 
   const activePolicy = policies?.find((p) => p.status === "active");
   const activePlanDetails = activePolicy ? PLAN_DETAILS[activePolicy.plan as keyof typeof PLAN_DETAILS] : null;
@@ -305,6 +338,19 @@ export default function Insurance() {
                     <ExternalLink className="w-3 h-3" /> IPFS Policy
                   </a>
                 )}
+              </div>
+
+              <div className="mt-3 pt-3 border-t border-dashed">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full text-red-600 border-red-200 hover:bg-red-50 hover:border-red-400 gap-1.5 text-xs"
+                  disabled={cancelPolicy.isPending}
+                  onClick={() => handleCancelPolicy(activePolicy.id)}
+                >
+                  <XCircle className="w-3.5 h-3.5" />
+                  {cancelPolicy.isPending ? "Cancelling…" : "Cancel This Policy"}
+                </Button>
               </div>
             </CardContent>
           </Card>
@@ -846,6 +892,30 @@ export default function Insurance() {
           </CardContent>
         </Card>
       )}
+
+      {/* ── Demo Reset ─────────────────────────────────────────────────────── */}
+      <Card className="border border-dashed border-orange-300 bg-orange-50/50">
+        <CardContent className="p-4 flex items-center justify-between gap-3">
+          <div>
+            <p className="text-xs font-bold text-orange-700 flex items-center gap-1">
+              <RotateCcw className="w-3.5 h-3.5" /> Demo Reset
+            </p>
+            <p className="text-[11px] text-orange-600 mt-0.5">
+              Wipe all policies &amp; claims to demo the full flow from scratch.
+            </p>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            className="shrink-0 text-orange-700 border-orange-300 hover:bg-orange-100 gap-1.5 text-xs"
+            disabled={resetDemo.isPending}
+            onClick={handleDemoReset}
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+            {resetDemo.isPending ? "Resetting…" : "Reset All Data"}
+          </Button>
+        </CardContent>
+      </Card>
     </div>
   );
 }
