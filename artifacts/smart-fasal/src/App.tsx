@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import { Switch, Route, Router as WouterRouter, useLocation, Redirect } from "wouter";
 import { QueryClient, QueryClientProvider, useQueryClient } from "@tanstack/react-query";
-import { ClerkProvider, SignIn, SignUp, Show, useClerk, useUser } from "@clerk/react";
+import { ClerkProvider, SignIn, SignUp, useClerk, useUser } from "@clerk/react";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import BottomNav from "@/components/layout/BottomNav";
@@ -59,6 +59,17 @@ function AuthBackground() {
         </div>
         <p className="text-emerald-100/70 text-xs font-medium">🌾 AI · IoT · Web3 Agriculture Platform</p>
       </div>
+      {/* Bottom credit strip */}
+      <div className="fixed bottom-4 left-0 right-0 flex justify-center z-10">
+        <a
+          href="https://www.linkedin.com/in/raj-patil-a492a1155/?skipRedirect=true"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-white/50 text-xs hover:text-white/80 transition-colors"
+        >
+          Developed by Raj Patil
+        </a>
+      </div>
     </>
   );
 }
@@ -101,16 +112,11 @@ function ProfileGuard({ children }: { children: React.ReactNode }) {
 }
 
 function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
-  return (
-    <>
-      <Show when="signed-in">
-        <Component />
-      </Show>
-      <Show when="signed-out">
-        <Redirect to="/sign-in" />
-      </Show>
-    </>
-  );
+  const { isSignedIn, isLoaded } = useUser();
+
+  if (!isLoaded) return null;
+  if (!isSignedIn) return <Redirect to="/sign-in" />;
+  return <Component />;
 }
 
 function ClerkQueryClientCacheInvalidator() {
