@@ -151,39 +151,39 @@ export default function Home() {
     if (isSampling) return;
     setIsSampling(true);
 
-    // Capture current values to base variation on
-    setDisplaySensor(current => {
-      const snapshot = { ...current };
-      const finalDelay = 1800 + Math.random() * 700;
+    // Pick final target values upfront
+    const vary = (base: number, pct = 0.07) =>
+      Math.round(base * (1 - pct + Math.random() * pct * 2));
+    const target = {
+      nitrogen:   vary(DUMMY_SENSOR_BASE.nitrogen),
+      phosphorus: vary(DUMMY_SENSOR_BASE.phosphorus),
+      potassium:  vary(DUMMY_SENSOR_BASE.potassium),
+      ph:   Math.round((DUMMY_SENSOR_BASE.ph + (Math.random() * 0.3 - 0.15)) * 10) / 10,
+      moisture: vary(DUMMY_SENSOR_BASE.moisture),
+    };
 
-      // Rapid flicker every 150ms — bars animate smoothly between each tick
-      scanRef.current = setInterval(() => {
-        setDisplaySensor(prev => ({
-          nitrogen:  Math.max(50,  Math.round(prev.nitrogen  + (Math.random() - 0.5) * 10)),
-          phosphorus: Math.max(10, Math.round(prev.phosphorus + (Math.random() - 0.5) * 5)),
-          potassium: Math.max(50,  Math.round(prev.potassium  + (Math.random() - 0.5) * 12)),
-          ph:   Math.max(4, Math.min(9, Math.round((prev.ph   + (Math.random() - 0.5) * 0.15) * 10) / 10)),
-          moisture: Math.max(5, Math.min(100, Math.round(prev.moisture + (Math.random() - 0.5) * 4))),
-        }));
-      }, 150);
+    // Start from 0
+    setDisplaySensor({ nitrogen: 0, phosphorus: 0, potassium: 0, ph: 0, moisture: 0 });
 
-      // After delay, stop flickering and settle on a new realistic reading
-      setTimeout(() => {
-        if (scanRef.current) clearInterval(scanRef.current);
-        const vary = (base: number, pct = 0.07) =>
-          Math.round(base * (1 - pct + Math.random() * pct * 2));
-        setDisplaySensor({
-          nitrogen:  vary(snapshot.nitrogen),
-          phosphorus: vary(snapshot.phosphorus),
-          potassium: vary(snapshot.potassium),
-          ph:   Math.round((snapshot.ph + (Math.random() * 0.3 - 0.15)) * 10) / 10,
-          moisture: vary(snapshot.moisture),
-        });
-        setIsSampling(false);
-      }, finalDelay);
+    const finalDelay = 1800 + Math.random() * 700;
 
-      return current; // no immediate change — scanning handles it
-    });
+    // Each tick: creep toward target (easing) + tiny noise so it looks like a live probe
+    scanRef.current = setInterval(() => {
+      setDisplaySensor(prev => ({
+        nitrogen:   Math.round(prev.nitrogen   + (target.nitrogen   - prev.nitrogen)   * 0.18 + (Math.random() - 0.4) * 3),
+        phosphorus: Math.round(prev.phosphorus + (target.phosphorus - prev.phosphorus) * 0.18 + (Math.random() - 0.4) * 1.5),
+        potassium:  Math.round(prev.potassium  + (target.potassium  - prev.potassium)  * 0.18 + (Math.random() - 0.4) * 4),
+        ph:   Math.round((prev.ph + (target.ph - prev.ph) * 0.18 + (Math.random() - 0.4) * 0.05) * 10) / 10,
+        moisture: Math.round(prev.moisture + (target.moisture - prev.moisture) * 0.18 + (Math.random() - 0.4) * 1),
+      }));
+    }, 80);
+
+    // After delay, snap to exact final values and stop
+    setTimeout(() => {
+      if (scanRef.current) clearInterval(scanRef.current);
+      setDisplaySensor(target);
+      setIsSampling(false);
+    }, finalDelay);
   }, [isSampling]);
 
   const updateStep = useCallback((id: string, update: Partial<PipelineStep>) => {
