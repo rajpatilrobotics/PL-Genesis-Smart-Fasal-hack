@@ -393,193 +393,199 @@ export default function Home() {
 
   const riskToDisplay: RiskStatus = pipelineResult?.riskLevel ?? (insuranceRisk?.riskLevel === "HIGH" ? "High" : insuranceRisk?.riskLevel === "LOW" ? "Low" : "Medium");
 
+  const glassCard = "rounded-2xl border border-white/70 bg-white/60 backdrop-blur-xl shadow-lg transition-all duration-200 hover:-translate-y-1 hover:shadow-xl hover:shadow-emerald-200/50 active:translate-y-0 active:shadow-lg";
+
   return (
-    <div className="space-y-5 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="relative -mx-4 -mt-5 min-h-screen animate-in fade-in slide-in-from-bottom-4 duration-500"
+      style={{ background: "linear-gradient(170deg, #e0f2fe 0%, #dcfce7 30%, #fef9c3 65%, #fef3c7 100%)" }}>
 
-      {/* Hero Header + Weather grouped tightly */}
-      <div className="space-y-2">
-      <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-emerald-600 via-green-600 to-teal-700 p-4 shadow-lg">
-        {/* Decorative circles */}
-        <div className="absolute -top-6 -right-6 w-28 h-28 rounded-full bg-white/10 blur-xl" />
-        <div className="absolute bottom-0 left-0 w-20 h-20 rounded-full bg-teal-400/20 blur-lg" />
-
-        <div className="relative flex items-center justify-between">
-          <div>
-            <h2 className="text-xl font-extrabold text-white tracking-tight">{t("home.farmDashboard")}</h2>
-            <p className="text-emerald-100/80 text-xs mt-0.5">AI · IoT · Web3 Powered</p>
-          </div>
-          <button
-            onClick={handleSimulateSensor}
-            className="flex items-center gap-1.5 text-xs font-semibold text-emerald-700 bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-full hover:bg-white transition-all shadow-md"
-          >
-            <RefreshCw className={cn("w-3 h-3", submitSensor.isPending && "animate-spin")} />
-            <span>{lastUpdated.toLocaleTimeString()}</span>
-          </button>
-        </div>
+      {/* Nature ambient blobs */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute -top-16 -right-16 w-64 h-64 rounded-full bg-sky-300/30 blur-3xl" />
+        <div className="absolute top-1/3 -left-12 w-52 h-52 rounded-full bg-emerald-300/25 blur-3xl" />
+        <div className="absolute bottom-1/3 right-0 w-44 h-44 rounded-full bg-amber-300/25 blur-3xl" />
       </div>
 
-      {/* Weather card */}
-      <div className="relative rounded-2xl overflow-hidden border border-blue-200/60 card-glow-blue shadow-md">
-        {/* Sky gradient background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-sky-400 via-blue-500 to-indigo-500" />
-        <div className="absolute inset-0 bg-gradient-to-t from-blue-900/20 to-transparent" />
-        {/* Decorative cloud circles */}
-        <div className="absolute -top-4 -right-4 w-24 h-24 rounded-full bg-white/10 blur-lg" />
-        <div className="absolute top-2 right-12 w-14 h-14 rounded-full bg-white/8 blur-md" />
+      <div className="relative space-y-4 px-4 pt-5 pb-28">
 
-        <div className="relative p-3">
-          {loadingWeather ? (
-            <div className="space-y-1.5">
-              <Skeleton className="h-3 w-16 bg-white/20" />
-              <Skeleton className="h-6 w-24 bg-white/20" />
+        {/* ── Hero Header ── */}
+        <div className="relative rounded-2xl overflow-hidden p-4 shadow-xl transition-all duration-200 hover:-translate-y-1 hover:shadow-2xl hover:shadow-green-400/40 active:translate-y-0"
+          style={{ background: "linear-gradient(135deg, #16a34a 0%, #15803d 40%, #166534 100%)", border: "1px solid rgba(255,255,255,0.25)" }}>
+          <div className="absolute -top-6 -right-6 w-32 h-32 rounded-full bg-white/10 blur-2xl" />
+          <div className="absolute bottom-0 left-0 w-20 h-20 rounded-full bg-yellow-300/15 blur-xl" />
+          <div className="relative flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-extrabold text-white tracking-tight">{t("home.farmDashboard")}</h2>
+              <p className="text-green-200/80 text-xs mt-0.5">AI · IoT · Web3 Powered</p>
             </div>
-          ) : weather ? (
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="flex items-center gap-1 mb-1">
-                  <CloudRain className="w-3 h-3 text-white/80" />
-                  <span className="text-[9px] font-bold text-white/80 uppercase tracking-wider">{t("home.weather")} · Punjab, India</span>
-                </div>
-                <p className="text-2xl font-extrabold text-white tracking-tight">{weather.temperature}°C</p>
-                <p className="text-xs text-white/70 capitalize mt-0.5">{weather.description}</p>
+            <button
+              onClick={handleSimulateSensor}
+              className="flex items-center gap-1.5 text-xs font-bold text-green-800 bg-white/85 backdrop-blur-sm px-3 py-1.5 rounded-full hover:bg-white transition-all border border-white/60 shadow-md"
+            >
+              <RefreshCw className={cn("w-3 h-3", submitSensor.isPending && "animate-spin")} />
+              <span>{lastUpdated.toLocaleTimeString()}</span>
+            </button>
+          </div>
+        </div>
+
+        {/* ── Weather ── */}
+        <div className="relative rounded-2xl overflow-hidden shadow-lg transition-all duration-200 hover:-translate-y-1 hover:shadow-2xl hover:shadow-sky-300/50 active:translate-y-0"
+          style={{ background: "linear-gradient(135deg, #0ea5e9 0%, #38bdf8 50%, #7dd3fc 100%)", border: "1px solid rgba(255,255,255,0.35)" }}>
+          <div className="absolute -top-4 -right-4 w-24 h-24 rounded-full bg-white/20 blur-2xl" />
+          <div className="relative p-3.5">
+            {loadingWeather ? (
+              <div className="space-y-1.5">
+                <Skeleton className="h-3 w-16 bg-white/30" />
+                <Skeleton className="h-7 w-24 bg-white/30" />
               </div>
-              <div className="flex flex-col items-end gap-1.5">
-                <div className="flex items-center gap-1 bg-white/15 backdrop-blur-sm rounded-full px-2 py-0.5">
-                  <Droplets className="w-2.5 h-2.5 text-blue-200" />
-                  <span className="text-[11px] font-semibold text-white">{weather.humidity}%</span>
+            ) : weather ? (
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="flex items-center gap-1 mb-1">
+                    <CloudRain className="w-3 h-3 text-white/80" />
+                    <span className="text-[9px] font-bold text-white/75 uppercase tracking-wider">{t("home.weather")} · Punjab, India</span>
+                  </div>
+                  <p className="text-3xl font-extrabold text-white tracking-tight drop-shadow">{weather.temperature}°C</p>
+                  <p className="text-xs text-white/70 capitalize mt-0.5">{weather.description}</p>
                 </div>
-                <div className="flex items-center gap-1 bg-white/15 backdrop-blur-sm rounded-full px-2 py-0.5">
-                  <Wind className="w-2.5 h-2.5 text-blue-200" />
-                  <span className="text-[11px] font-semibold text-white">{weather.windSpeed} m/s</span>
-                </div>
-                <div className="flex items-center gap-1 bg-white/15 backdrop-blur-sm rounded-full px-2 py-0.5">
-                  <Thermometer className="w-2.5 h-2.5 text-orange-300" />
-                  <span className="text-[11px] font-semibold text-white">{t("home.feels")} {weather.feelsLike ?? weather.temperature}°C</span>
+                <div className="flex flex-col items-end gap-1.5">
+                  <div className="flex items-center gap-1 bg-white/25 backdrop-blur-sm rounded-full px-2.5 py-1">
+                    <Droplets className="w-2.5 h-2.5 text-white" />
+                    <span className="text-[11px] font-bold text-white">{weather.humidity}%</span>
+                  </div>
+                  <div className="flex items-center gap-1 bg-white/25 backdrop-blur-sm rounded-full px-2.5 py-1">
+                    <Wind className="w-2.5 h-2.5 text-white" />
+                    <span className="text-[11px] font-bold text-white">{weather.windSpeed} m/s</span>
+                  </div>
+                  <div className="flex items-center gap-1 bg-white/25 backdrop-blur-sm rounded-full px-2.5 py-1">
+                    <Thermometer className="w-2.5 h-2.5 text-amber-200" />
+                    <span className="text-[11px] font-bold text-white">{t("home.feels")} {weather.feelsLike ?? weather.temperature}°C</span>
+                  </div>
                 </div>
               </div>
+            ) : <p className="text-xs text-white/60">Unavailable</p>}
+          </div>
+        </div>
+
+        {/* ── Risk Banner ── */}
+        <div className={cn(
+          glassCard,
+          "flex items-center justify-between px-4 py-3.5",
+          riskToDisplay === "Low" ? "border-emerald-200/80 bg-emerald-50/70" :
+          riskToDisplay === "Medium" ? "border-amber-200/80 bg-amber-50/70" :
+          "border-red-200/80 bg-red-50/70"
+        )}>
+          <div className="flex items-center gap-3">
+            <div className={cn(
+              "w-9 h-9 rounded-xl flex items-center justify-center shrink-0 shadow-sm",
+              riskToDisplay === "Low" ? "bg-emerald-100 border border-emerald-200" :
+              riskToDisplay === "Medium" ? "bg-amber-100 border border-amber-200" :
+              "bg-red-100 border border-red-200"
+            )}>
+              <span className={cn("w-2.5 h-2.5 rounded-full animate-pulse", getRiskDot(riskToDisplay))} />
             </div>
-          ) : <p className="text-xs text-white/60">Unavailable</p>}
+            <div>
+              <p className={cn("text-sm font-bold",
+                riskToDisplay === "Low" ? "text-emerald-700" :
+                riskToDisplay === "Medium" ? "text-amber-700" : "text-red-700"
+              )}>
+                {riskToDisplay === "High" ? t("home.highRiskDetected") : riskToDisplay === "Medium" ? t("home.mediumRisk") : t("home.allClear")}
+              </p>
+              <p className="text-xs text-gray-500 mt-0.5">
+                {riskToDisplay === "High" ? t("home.insuranceAutoTriggered") :
+                 riskToDisplay === "Medium" ? t("home.monitorMoisture") :
+                 t("home.farmOptimal")}
+              </p>
+            </div>
+          </div>
+          {riskToDisplay === "High" && pipelineResult?.insuranceTriggered && (
+            <div className="text-right">
+              <p className="text-[10px] text-red-600 font-bold">{t("home.estPayout")}</p>
+              <p className="text-sm font-bold text-red-700">&#8377;{pipelineResult.estimatedPayout?.toLocaleString()}</p>
+            </div>
+          )}
+          {riskToDisplay !== "High" && (
+            <span className={cn(
+              "text-[10px] font-bold px-2.5 py-1 rounded-full border",
+              riskToDisplay === "Low" ? "border-emerald-300 text-emerald-700 bg-emerald-100" : "border-amber-300 text-amber-700 bg-amber-100"
+            )}>
+              {riskToDisplay}
+            </span>
+          )}
         </div>
-      </div>
-      </div>{/* end tight group */}
 
-      {/* Visual Risk Banner */}
-      <div className={cn(
-        "flex items-center justify-between rounded-2xl border px-4 py-3.5 transition-all shadow-sm",
-        riskToDisplay === "Low"
-          ? "bg-gradient-to-r from-emerald-50 to-green-50 border-emerald-200 card-glow-green"
-          : riskToDisplay === "Medium"
-          ? "bg-gradient-to-r from-amber-50 to-yellow-50 border-amber-200"
-          : "bg-gradient-to-r from-red-50 to-rose-50 border-red-200"
-      )}>
-        <div className="flex items-center gap-3">
-          <div className={cn(
-            "w-9 h-9 rounded-xl flex items-center justify-center shrink-0 shadow-sm",
-            riskToDisplay === "Low" ? "bg-emerald-100 text-emerald-600" :
-            riskToDisplay === "Medium" ? "bg-amber-100 text-amber-600" :
-            "bg-red-100 text-red-600"
-          )}>
-            <span className={cn("w-2.5 h-2.5 rounded-full animate-pulse", getRiskDot(riskToDisplay))} />
-          </div>
-          <div>
-            <p className={cn("text-sm font-bold", getRiskColor(riskToDisplay).split(" ")[0])}>
-              {riskToDisplay === "High" ? t("home.highRiskDetected") : riskToDisplay === "Medium" ? t("home.mediumRisk") : t("home.allClear")}
-            </p>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              {riskToDisplay === "High" ? t("home.insuranceAutoTriggered") :
-               riskToDisplay === "Medium" ? t("home.monitorMoisture") :
-               t("home.farmOptimal")}
-            </p>
-          </div>
-        </div>
-        {riskToDisplay === "High" && pipelineResult?.insuranceTriggered && (
-          <div className="text-right">
-            <p className="text-xs text-red-600 font-bold">{t("home.estPayout")}</p>
-            <p className="text-sm font-bold text-red-700">₹{pipelineResult.estimatedPayout?.toLocaleString()}</p>
-          </div>
-        )}
-        {riskToDisplay !== "High" && (
-          <Badge variant="outline" className={cn(
-            "text-xs font-bold rounded-full",
-            riskToDisplay === "Low" ? "border-emerald-300 text-emerald-700 bg-emerald-50" : "border-amber-300 text-amber-700 bg-amber-50"
-          )}>
-            {riskToDisplay}
-          </Badge>
-        )}
-      </div>
-
-      {/* Live Soil Readings — NPK + pH + Moisture bars (ESP32 hardware sensor data) */}
-      <Card className="border-emerald-100/80 shadow-md card-glow-green">
-        <CardContent className="p-4 space-y-3">
+        {/* ── Live Soil Readings ── */}
+        <div className={cn(glassCard, "p-4 space-y-3")}>
           <div className="flex items-center justify-between">
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse inline-block" />
-                <p className="text-sm font-semibold">{t("home.liveSoilReadings")}</p>
+                <p className="text-sm font-semibold text-gray-800">{t("home.liveSoilReadings")}</p>
                 <button
                   onMouseEnter={handleResample}
                   onClick={handleResample}
                   disabled={isSampling}
                   className={cn(
                     "text-[9px] font-bold px-1.5 py-0.5 rounded tracking-wide text-white transition-all duration-200 select-none bg-red-500",
-                    isSampling ? "opacity-70 cursor-wait" : "hover:bg-red-600 hover:scale-105 cursor-pointer active:scale-95"
+                    isSampling ? "opacity-60 cursor-wait" : "hover:bg-red-600 hover:scale-105 cursor-pointer active:scale-95"
                   )}
                 >
                   LIVE
                 </button>
               </div>
               <div className="flex items-center gap-1.5 mt-0.5">
-                {/* Signal bars */}
                 <div className="flex items-end gap-px h-3">
                   <span className="w-1 bg-emerald-400 rounded-sm" style={{ height: "30%" }} />
-                  <span className="w-1 bg-emerald-400 rounded-sm" style={{ height: "55%" }} />
-                  <span className="w-1 bg-emerald-400 rounded-sm" style={{ height: "80%" }} />
-                  <span className="w-1 bg-emerald-500 rounded-sm" style={{ height: "100%" }} />
+                  <span className="w-1 bg-emerald-500 rounded-sm" style={{ height: "55%" }} />
+                  <span className="w-1 bg-emerald-500 rounded-sm" style={{ height: "80%" }} />
+                  <span className="w-1 bg-emerald-600 rounded-sm" style={{ height: "100%" }} />
                 </div>
-                <p className="text-[10px] text-muted-foreground font-mono">ESP32-FARM-001</p>
-                <span className="text-[9px] text-muted-foreground/60">·</span>
-                <p className="text-[10px] text-muted-foreground">
+                <p className="text-[10px] text-gray-400 font-mono">ESP32-FARM-001</p>
+                <span className="text-[9px] text-gray-300">·</span>
+                <p className="text-[10px] text-gray-400">
                   {lastUpdated ? `${Math.round((Date.now() - lastUpdated.getTime() + tick * 0) / 1000)}s ago` : "connecting..."}
                 </p>
               </div>
             </div>
-            <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded-full border shrink-0", getRiskColor(riskToDisplay))}>
+            <span className={cn(
+              "text-[10px] font-bold px-2 py-0.5 rounded-full border shrink-0",
+              riskToDisplay === "Low" ? "border-emerald-300 text-emerald-700 bg-emerald-100" :
+              riskToDisplay === "Medium" ? "border-amber-300 text-amber-700 bg-amber-100" :
+              "border-red-300 text-red-700 bg-red-100"
+            )}>
               {riskToDisplay} Risk
             </span>
           </div>
 
-          {/* NPK bars */}
           {[
-            { labelKey: "home.nitrogen", value: displaySensor.nitrogen, max: 200, gradient: "from-emerald-400 to-green-600", dotColor: "bg-emerald-500", unit: "mg/kg", symbol: "N" },
+            { labelKey: "home.nitrogen", value: displaySensor.nitrogen, max: 200, gradient: "from-emerald-400 to-green-600", dotColor: "bg-emerald-600", unit: "mg/kg", symbol: "N" },
             { labelKey: "home.phosphorus", value: displaySensor.phosphorus, max: 100, gradient: "from-orange-400 to-amber-600", dotColor: "bg-orange-500", unit: "mg/kg", symbol: "P" },
-            { labelKey: "home.potassium", value: displaySensor.potassium, max: 300, gradient: "from-violet-400 to-purple-600", dotColor: "bg-violet-500", unit: "mg/kg", symbol: "K" },
+            { labelKey: "home.potassium", value: displaySensor.potassium, max: 300, gradient: "from-violet-400 to-purple-600", dotColor: "bg-violet-600", unit: "mg/kg", symbol: "K" },
           ].map(({ labelKey, value, max, gradient, dotColor, unit, symbol }) => (
             <div key={labelKey} className="space-y-1.5">
               <div className="flex justify-between items-center text-xs">
                 <div className="flex items-center gap-1.5">
-                  <span className={cn("w-5 h-5 rounded-md flex items-center justify-center text-[9px] font-black text-white shrink-0", dotColor)}>
+                  <span className={cn("w-5 h-5 rounded-md flex items-center justify-center text-[9px] font-black text-white shrink-0 shadow-sm", dotColor)}>
                     {symbol}
                   </span>
-                  <span className="text-muted-foreground font-medium">{t(labelKey)}</span>
+                  <span className="text-gray-500 font-medium">{t(labelKey)}</span>
                 </div>
-                <span className="font-bold text-foreground">{value} <span className="text-muted-foreground font-normal text-[10px]">{unit}</span></span>
+                <span className="font-bold text-gray-800">{value} <span className="text-gray-400 font-normal text-[10px]">{unit}</span></span>
               </div>
-              <div className="h-2.5 bg-muted/60 rounded-full overflow-hidden">
+              <div className="h-2.5 bg-black/8 rounded-full overflow-hidden">
                 <div
-                  className={cn("h-full rounded-full bg-gradient-to-r", gradient, isSampling ? "transition-all duration-300" : "transition-all duration-700")}
+                  className={cn("h-full rounded-full bg-gradient-to-r shadow-sm", gradient, isSampling ? "transition-all duration-300" : "transition-all duration-700")}
                   style={{ width: `${Math.min(100, (value / max) * 100)}%` }}
                 />
               </div>
             </div>
           ))}
 
-          {/* Divider */}
-          <div className="border-t border-dashed border-muted-foreground/20 pt-1" />
+          <div className="border-t border-black/8 pt-1" />
 
-          {/* pH bar with optimal zone */}
           <div className="space-y-1">
             <div className="flex justify-between text-xs">
-              <span className="text-muted-foreground">
+              <span className="text-gray-500">
                 {t("home.soilPh")}
                 <span className={cn("ml-1.5 text-[10px] font-semibold px-1.5 py-0 rounded-full",
                   displaySensor.ph >= 6.0 && displaySensor.ph <= 7.5
@@ -589,44 +595,41 @@ export default function Home() {
                   {displaySensor.ph >= 6.0 && displaySensor.ph <= 7.5 ? t("home.optimal") : displaySensor.ph < 6.0 ? t("home.acidic") : t("home.alkaline")}
                 </span>
               </span>
-              <span className="font-semibold">{displaySensor.ph} <span className="text-muted-foreground font-normal">pH</span></span>
+              <span className="font-semibold text-gray-800">{displaySensor.ph} <span className="text-gray-400 font-normal">pH</span></span>
             </div>
-            <div className="relative h-2 bg-muted rounded-full overflow-hidden">
+            <div className="relative h-2 bg-black/8 rounded-full overflow-hidden">
               <div className="absolute inset-0 flex">
-                <div className="bg-muted h-full" style={{ width: `${(6.0 / 14) * 100}%` }} />
+                <div className="bg-black/5 h-full" style={{ width: `${(6.0 / 14) * 100}%` }} />
                 <div className="bg-emerald-200 h-full" style={{ width: `${((7.5 - 6.0) / 14) * 100}%` }} />
-                <div className="bg-muted h-full flex-1" />
+                <div className="bg-black/5 h-full flex-1" />
               </div>
               <div
-                className={cn("absolute top-0 h-full w-1 bg-blue-500 rounded-full", isSampling ? "transition-all duration-300" : "transition-all duration-700")}
+                className={cn("absolute top-0 h-full w-1 bg-blue-500 rounded-full shadow", isSampling ? "transition-all duration-300" : "transition-all duration-700")}
                 style={{ left: `calc(${Math.min(100, (displaySensor.ph / 14) * 100)}% - 2px)` }}
               />
             </div>
-            <div className="flex justify-between text-[9px] text-muted-foreground/70">
+            <div className="flex justify-between text-[9px] text-gray-400">
               <span>0 ({t("home.acid")})</span>
               <span className="text-emerald-600">{t("home.optimal")} 6–7.5</span>
               <span>14 ({t("home.alkaline")})</span>
             </div>
           </div>
 
-          {/* Moisture bar */}
           <div className="space-y-1.5">
             <div className="flex justify-between items-center text-xs">
               <div className="flex items-center gap-1.5">
                 <span className={cn(
-                  "w-5 h-5 rounded-md flex items-center justify-center text-[9px] font-black text-white shrink-0",
+                  "w-5 h-5 rounded-md flex items-center justify-center text-[9px] font-black text-white shrink-0 shadow-sm",
                   displaySensor.moisture < 30 ? "bg-red-500" : displaySensor.moisture > 70 ? "bg-blue-600" : "bg-cyan-500"
-                )}>
-                  H₂O
-                </span>
-                <span className="text-muted-foreground font-medium">{t("home.soilMoisture")}</span>
+                )}>H₂O</span>
+                <span className="text-gray-500 font-medium">{t("home.soilMoisture")}</span>
               </div>
-              <span className="font-bold text-foreground">{displaySensor.moisture}<span className="text-muted-foreground font-normal text-[10px]">%</span></span>
+              <span className="font-bold text-gray-800">{displaySensor.moisture}<span className="text-gray-400 font-normal text-[10px]">%</span></span>
             </div>
-            <div className="h-2.5 bg-muted/60 rounded-full overflow-hidden">
+            <div className="h-2.5 bg-black/8 rounded-full overflow-hidden">
               <div
                 className={cn(
-                  "h-full rounded-full bg-gradient-to-r",
+                  "h-full rounded-full bg-gradient-to-r shadow-sm",
                   isSampling ? "transition-all duration-300" : "transition-all duration-700",
                   displaySensor.moisture < 30 ? "from-red-400 to-rose-600" : displaySensor.moisture > 70 ? "from-blue-400 to-blue-600" : "from-cyan-400 to-sky-600"
                 )}
@@ -634,156 +637,141 @@ export default function Home() {
               />
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
 
-      {/* Pipeline Controls */}
-      <Card className="border border-emerald-200/60 bg-gradient-to-br from-emerald-50/60 to-teal-50/40 shadow-md overflow-hidden relative">
-        <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-emerald-200/30 to-transparent rounded-full -translate-y-8 translate-x-8" />
-        <CardHeader className="pb-3 pt-4 relative">
-          <CardTitle className="text-base flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-sm">
-              <Brain className="w-4 h-4 text-white" />
-            </div>
-            <span className="font-extrabold">{t("home.analyzeFarm")}</span>
-            <Badge className="text-[10px] ml-auto bg-emerald-100 text-emerald-700 border-emerald-200 font-bold">{t("home.web3Pipeline")}</Badge>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4 pb-4">
-
-          {/* Privacy Toggle */}
-          <div className="flex items-center justify-between">
+        {/* ── Analyze Farm Pipeline ── */}
+        <div className="relative rounded-2xl overflow-hidden shadow-xl transition-all duration-200 hover:-translate-y-1 hover:shadow-2xl hover:shadow-green-700/40 active:translate-y-0"
+          style={{ background: "linear-gradient(135deg, #14532d 0%, #166534 45%, #15803d 100%)", border: "1px solid rgba(255,255,255,0.2)" }}>
+          <div className="absolute top-0 right-0 w-32 h-32 bg-yellow-300/10 rounded-full blur-2xl -translate-y-8 translate-x-8" />
+          <div className="relative p-4 space-y-4">
             <div className="flex items-center gap-2">
-              <Lock className="w-4 h-4 text-muted-foreground" />
-              <div>
-                <p className="text-sm font-medium">{t("home.privacyMode")}</p>
-                <p className="text-[10px] text-muted-foreground">{t("home.poweredByZama")}</p>
+              <div className="w-8 h-8 rounded-xl bg-white/15 backdrop-blur-sm flex items-center justify-center shadow-md border border-white/20">
+                <Brain className="w-4 h-4 text-white" />
+              </div>
+              <span className="font-extrabold text-base text-white">{t("home.analyzeFarm")}</span>
+              <span className="text-[10px] ml-auto font-bold bg-white/15 text-green-100 border border-white/20 px-2 py-0.5 rounded-full">{t("home.web3Pipeline")}</span>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Lock className="w-4 h-4 text-green-200/70" />
+                <div>
+                  <p className="text-sm font-medium text-white">{t("home.privacyMode")}</p>
+                  <p className="text-[10px] text-green-200/60">{t("home.poweredByZama")}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setPrivacyEnabled(!privacyEnabled)}
+                className={cn(
+                  "relative w-11 h-6 rounded-full transition-colors duration-200",
+                  privacyEnabled ? "bg-emerald-400" : "bg-white/20"
+                )}
+              >
+                <span className={cn(
+                  "absolute top-1 left-1 w-4 h-4 rounded-full bg-white shadow-md transition-transform duration-200",
+                  privacyEnabled && "translate-x-5"
+                )} />
+              </button>
+            </div>
+
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <Shield className="w-4 h-4 text-green-200/70" />
+                <p className="text-sm font-medium text-white">Access Level <span className="text-[10px] text-green-200/60 font-normal">via Lit Protocol</span></p>
+              </div>
+              <div className="flex gap-2">
+                {ACCESS_OPTIONS.map(({ value, icon: Icon, label }) => (
+                  <button
+                    key={value}
+                    onClick={() => setAccessLevel(value)}
+                    className={cn(
+                      "flex-1 flex flex-col items-center gap-1 py-2.5 rounded-xl border text-xs font-semibold transition-all",
+                      accessLevel === value
+                        ? "border-white/50 bg-white/20 text-white shadow-md"
+                        : "border-white/15 bg-white/8 text-white/50 hover:bg-white/15 hover:text-white/70"
+                    )}
+                  >
+                    <Icon className="w-4 h-4" />
+                    {label}
+                  </button>
+                ))}
               </div>
             </div>
+
             <button
-              onClick={() => setPrivacyEnabled(!privacyEnabled)}
+              onClick={runPipeline}
+              disabled={!sensorData || pipelineRunning}
               className={cn(
-                "relative w-11 h-6 rounded-full transition-colors duration-200",
-                privacyEnabled ? "bg-primary" : "bg-muted"
+                "w-full h-12 font-bold text-base rounded-xl transition-all duration-200 flex items-center justify-center gap-2",
+                "bg-amber-400 text-green-900 shadow-xl shadow-amber-400/30",
+                "hover:bg-amber-300 hover:shadow-amber-300/50 hover:scale-[1.01]",
+                "disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
               )}
             >
-              <span className={cn(
-                "absolute top-1 left-1 w-4 h-4 rounded-full bg-white shadow transition-transform duration-200",
-                privacyEnabled && "translate-x-5"
-              )} />
+              {pipelineRunning ? (
+                <><Loader2 className="w-5 h-5 animate-spin" />{t("home.running")}</>
+              ) : (
+                <>
+                  <Zap className="w-5 h-5" />
+                  {t("home.analyzeFarm")}
+                  {walletAddress && <span className="text-xs bg-green-900/25 rounded-full px-2 py-0.5 font-bold">+20 FLOW</span>}
+                </>
+              )}
             </button>
-          </div>
 
-          {/* Access Level */}
-          <div>
-            <div className="flex items-center gap-2 mb-2">
-              <Shield className="w-4 h-4 text-muted-foreground" />
-              <p className="text-sm font-medium">Access Level <span className="text-[10px] text-muted-foreground font-normal">via Lit Protocol</span></p>
-            </div>
-            <div className="flex gap-2">
-              {ACCESS_OPTIONS.map(({ value, icon: Icon, label, color }) => (
-                <button
-                  key={value}
-                  onClick={() => setAccessLevel(value)}
-                  className={cn(
-                    "flex-1 flex flex-col items-center gap-1 py-2.5 rounded-xl border text-xs font-semibold transition-all",
-                    accessLevel === value
-                      ? "border-primary bg-primary/5 text-primary shadow-sm"
-                      : "border-border bg-muted/30 text-muted-foreground hover:bg-muted/60"
-                  )}
-                >
-                  <Icon className={cn("w-4 h-4", accessLevel === value ? "text-primary" : color)} />
-                  {label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Main Pipeline Button */}
-          <Button
-            className="w-full h-12 font-bold text-base relative overflow-hidden rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 border-0 shadow-lg hover:shadow-xl transition-all duration-200"
-            onClick={runPipeline}
-            disabled={!sensorData || pipelineRunning}
-          >
-            {pipelineRunning ? (
-              <span className="flex items-center gap-2">
-                <Loader2 className="w-5 h-5 animate-spin" />
-                {t("home.running")}
-              </span>
-            ) : (
-              <span className="flex items-center gap-2">
-                <Zap className="w-5 h-5" />
-                {t("home.analyzeFarm")}
-                {walletAddress && (
-                  <span className="text-xs bg-white/20 rounded-full px-2 py-0.5 font-bold">+20 FLOW</span>
-                )}
-              </span>
+            {!sensorData && (
+              <p className="text-center text-xs text-green-200/50">Tap the clock above to sync sensor data first</p>
             )}
-          </Button>
+          </div>
+        </div>
 
-          {!sensorData && (
-            <p className="text-center text-xs text-muted-foreground">Tap the clock above to sync sensor data first</p>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Pipeline Progress */}
-      {steps.length > 0 && (
-        <Card className="overflow-hidden">
-          <CardHeader className="pb-2 pt-4">
-            <CardTitle className="text-sm flex items-center gap-2 text-muted-foreground">
-              <Activity className="w-4 h-4" />
-              {pipelineRunning ? t("home.pipelineRunning") : t("home.pipelineComplete")}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pb-4 space-y-2">
+        {/* ── Pipeline Progress ── */}
+        {steps.length > 0 && (
+          <div className={cn(glassCard, "p-4 space-y-2")}>
+            <div className="flex items-center gap-2 mb-1">
+              <Activity className="w-4 h-4 text-gray-400" />
+              <p className="text-sm font-semibold text-gray-600">{pipelineRunning ? t("home.pipelineRunning") : t("home.pipelineComplete")}</p>
+            </div>
             {steps.map((step) => (
               <div
                 key={step.id}
                 className={cn(
                   "flex items-start gap-3 p-2.5 rounded-xl transition-all duration-300",
-                  step.status === "done" ? "bg-green-50/80" :
-                  step.status === "running" ? "bg-blue-50/80 animate-pulse" :
-                  "bg-muted/30 opacity-50"
+                  step.status === "done" ? "bg-emerald-50/80 border border-emerald-200/60" :
+                  step.status === "running" ? "bg-sky-50/80 border border-sky-200/60 animate-pulse" :
+                  "bg-black/3 opacity-50"
                 )}
               >
                 <div className="mt-0.5 shrink-0">
-                  {step.status === "done" && <CheckCircle2 className="w-4 h-4 text-green-600" />}
-                  {step.status === "running" && <Loader2 className="w-4 h-4 text-blue-500 animate-spin" />}
+                  {step.status === "done" && <CheckCircle2 className="w-4 h-4 text-emerald-600" />}
+                  {step.status === "running" && <Loader2 className="w-4 h-4 text-sky-500 animate-spin" />}
                   {(step.status === "idle" || step.status === "pending") && (
-                    <div className="w-4 h-4 rounded-full border-2 border-muted-foreground/30" />
+                    <div className="w-4 h-4 rounded-full border-2 border-gray-300" />
                   )}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className={cn(
-                    "text-xs font-semibold",
-                    step.status === "done" ? "text-green-700" :
-                    step.status === "running" ? "text-blue-700" : "text-muted-foreground"
+                  <p className={cn("text-xs font-semibold",
+                    step.status === "done" ? "text-emerald-700" :
+                    step.status === "running" ? "text-sky-700" : "text-gray-400"
                   )}>{step.label}</p>
-                  {step.status === "done" && step.result && (
-                    <p className="text-[10px] text-green-600 mt-0.5">{step.result}</p>
-                  )}
-                  {step.status === "running" && (
-                    <p className="text-[10px] text-blue-500 mt-0.5">{step.description}</p>
-                  )}
+                  {step.status === "done" && step.result && <p className="text-[10px] text-emerald-600 mt-0.5">{step.result}</p>}
+                  {step.status === "running" && <p className="text-[10px] text-sky-600 mt-0.5">{step.description}</p>}
                 </div>
               </div>
             ))}
-          </CardContent>
-        </Card>
-      )}
+          </div>
+        )}
 
-      {/* Pipeline Result Summary */}
-      {pipelineResult && !pipelineRunning && (
-        <Card className={cn(
-          "border-2",
-          pipelineResult.riskLevel === "High" ? "border-red-200 bg-red-50/50" :
-          pipelineResult.riskLevel === "Low" ? "border-green-200 bg-green-50/50" :
-          "border-yellow-200 bg-yellow-50/50"
-        )}>
-          <CardContent className="p-4 space-y-4">
+        {/* ── Pipeline Result ── */}
+        {pipelineResult && !pipelineRunning && (
+          <div className={cn(
+            glassCard, "p-4 space-y-4",
+            pipelineResult.riskLevel === "High" ? "border-red-200/80 bg-red-50/60" :
+            pipelineResult.riskLevel === "Low" ? "border-emerald-200/80 bg-emerald-50/60" :
+            "border-amber-200/80 bg-amber-50/60"
+          )}>
             <div className="flex items-center justify-between">
-              <p className="font-bold text-sm">{t("home.analysisDone")}</p>
+              <p className="font-bold text-sm text-gray-800">{t("home.analysisDone")}</p>
               {pipelineResult.riskLevel === "High" && (
                 <div className="flex items-center gap-1.5 text-red-600 text-xs font-bold bg-red-100 border border-red-200 px-2.5 py-1 rounded-full">
                   <AlertTriangle className="w-3.5 h-3.5" />
@@ -793,72 +781,68 @@ export default function Home() {
             </div>
 
             <div className="grid grid-cols-3 gap-2">
-              <div className="text-center p-2.5 bg-white rounded-xl border">
-                <p className="text-[10px] uppercase font-bold text-muted-foreground mb-1">{t("ai.healthLabel")}</p>
-                <p className="text-xl font-bold text-primary">{pipelineResult.aiHealth}%</p>
-              </div>
-              <div className="text-center p-2.5 bg-white rounded-xl border">
-                <p className="text-[10px] uppercase font-bold text-muted-foreground mb-1">{t("ai.riskLabel")}</p>
-                <p className={cn("text-sm font-bold mt-0.5",
-                  pipelineResult.riskLevel === "Low" ? "text-green-600" :
-                  pipelineResult.riskLevel === "High" ? "text-red-600" : "text-yellow-600"
-                )}>{pipelineResult.riskLevel}</p>
-              </div>
-              <div className="text-center p-2.5 bg-white rounded-xl border">
-                <p className="text-[10px] uppercase font-bold text-muted-foreground mb-1">{t("ai.yieldLabel")}</p>
-                <p className="text-xl font-bold text-primary">{pipelineResult.aiYield}%</p>
-              </div>
+              {[
+                { label: t("ai.healthLabel"), value: `${pipelineResult.aiHealth}%`, color: "text-emerald-700" },
+                { label: t("ai.riskLabel"), value: pipelineResult.riskLevel, color: pipelineResult.riskLevel === "Low" ? "text-emerald-700" : pipelineResult.riskLevel === "High" ? "text-red-700" : "text-amber-700" },
+                { label: t("ai.yieldLabel"), value: `${pipelineResult.aiYield}%`, color: "text-sky-700" },
+              ].map(({ label, value, color }) => (
+                <div key={label} className="text-center p-2.5 bg-white/70 rounded-xl border border-white/80 shadow-sm">
+                  <p className="text-[10px] uppercase font-bold text-gray-400 mb-1">{label}</p>
+                  <p className={cn("text-lg font-bold", color)}>{value}</p>
+                </div>
+              ))}
             </div>
 
-            <p className="text-xs text-muted-foreground leading-relaxed">{pipelineResult.fertilizerAdvice}</p>
+            <p className="text-xs text-gray-500 leading-relaxed">{pipelineResult.fertilizerAdvice}</p>
 
             <div className="grid grid-cols-2 gap-2 text-xs">
-              <div className="bg-white rounded-xl border p-2.5">
-                <p className="text-muted-foreground mb-0.5">{t("home.cidFilecoin")}</p>
-                <p className="font-mono font-semibold text-[10px] break-all">{pipelineResult.cid.substring(0, 20)}...</p>
+              <div className="bg-white/70 rounded-xl border border-white/80 p-2.5 shadow-sm">
+                <p className="text-gray-400 mb-0.5">{t("home.cidFilecoin")}</p>
+                <p className="font-mono font-semibold text-[10px] break-all text-blue-600">{pipelineResult.cid.substring(0, 20)}...</p>
               </div>
-              <div className="bg-white rounded-xl border p-2.5">
-                <p className="text-muted-foreground mb-0.5">{t("home.rewardEarned")}</p>
+              <div className="bg-white/70 rounded-xl border border-white/80 p-2.5 shadow-sm">
+                <p className="text-gray-400 mb-0.5">{t("home.rewardEarned")}</p>
                 <p className="font-bold text-amber-600">+{pipelineResult.rewardEarned} FLOW</p>
               </div>
             </div>
 
             {pipelineResult.riskLevel === "High" && pipelineResult.estimatedPayout && (
-              <div className="bg-red-100 border border-red-200 rounded-xl p-3 flex items-center justify-between">
+              <div className="bg-red-50 border border-red-200 rounded-xl p-3 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Shield className="w-4 h-4 text-red-600" />
                   <div>
                     <p className="text-xs font-bold text-red-700">{t("home.starknetInsurance")}</p>
-                    <p className="text-[10px] text-red-600">{t("home.autoTriggeredClaim")}</p>
+                    <p className="text-[10px] text-red-600/70">{t("home.autoTriggeredClaim")}</p>
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-xs text-red-600">{t("home.estPayout")}</p>
-                  <p className="text-sm font-bold text-red-700">₹{pipelineResult.estimatedPayout.toLocaleString()}</p>
+                  <p className="text-xs text-red-500">{t("home.estPayout")}</p>
+                  <p className="text-sm font-bold text-red-700">&#8377;{pipelineResult.estimatedPayout.toLocaleString()}</p>
                 </div>
               </div>
             )}
-          </CardContent>
-        </Card>
-      )}
+          </div>
+        )}
 
-      {/* Tech Badge Strip */}
-      <div className="rounded-2xl border border-border/50 bg-white/60 backdrop-blur-sm p-3">
-        <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider mb-2">⚡ Powered By</p>
-        <div className="flex flex-wrap gap-1.5">
-          {[
-            { key: "badgeFlow", color: "bg-gradient-to-r from-green-50 to-emerald-50 text-green-700 border-green-200", emoji: "🌊" },
-            { key: "badgeFilecoin", color: "bg-gradient-to-r from-blue-50 to-sky-50 text-blue-700 border-blue-200", emoji: "📦" },
-            { key: "badgeLit", color: "bg-gradient-to-r from-purple-50 to-violet-50 text-purple-700 border-purple-200", emoji: "🔐" },
-            { key: "badgeZama", color: "bg-gradient-to-r from-pink-50 to-rose-50 text-pink-700 border-pink-200", emoji: "🔒" },
-            { key: "badgeStarknet", color: "bg-gradient-to-r from-orange-50 to-amber-50 text-orange-700 border-orange-200", emoji: "⛓" },
-            { key: "badgeHypercerts", color: "bg-gradient-to-r from-amber-50 to-yellow-50 text-amber-700 border-amber-200", emoji: "🏆" },
-          ].map(({ key, color, emoji }) => (
-            <span key={key} className={cn("text-[9px] font-bold border rounded-full px-2 py-0.5 shadow-sm", color)}>
-              {emoji} {t(`home.${key}`)}
-            </span>
-          ))}
+        {/* ── Tech Badge Strip ── */}
+        <div className={cn(glassCard, "p-3")}>
+          <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-2">⚡ Powered By</p>
+          <div className="flex flex-wrap gap-1.5">
+            {[
+              { key: "badgeFlow", color: "bg-emerald-50 text-emerald-700 border-emerald-200", emoji: "🌊" },
+              { key: "badgeFilecoin", color: "bg-sky-50 text-sky-700 border-sky-200", emoji: "📦" },
+              { key: "badgeLit", color: "bg-violet-50 text-violet-700 border-violet-200", emoji: "🔐" },
+              { key: "badgeZama", color: "bg-pink-50 text-pink-700 border-pink-200", emoji: "🔒" },
+              { key: "badgeStarknet", color: "bg-orange-50 text-orange-700 border-orange-200", emoji: "⛓" },
+              { key: "badgeHypercerts", color: "bg-amber-50 text-amber-700 border-amber-200", emoji: "🏆" },
+            ].map(({ key, color, emoji }) => (
+              <span key={key} className={cn("text-[9px] font-bold border rounded-full px-2 py-0.5 shadow-sm", color)}>
+                {emoji} {t(`home.${key}`)}
+              </span>
+            ))}
+          </div>
         </div>
+
       </div>
     </div>
   );
