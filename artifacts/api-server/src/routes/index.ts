@@ -15,6 +15,7 @@ import diseaseIntelRouter from "./disease-intel";
 import fheRouter from "./fhe";
 import starknetRouter from "./starknet";
 import loansRouter from "./loans";
+import retroactiveRouter from "./retroactive.js";
 
 const router: IRouter = Router();
 
@@ -34,5 +35,6 @@ router.use(diseaseIntelRouter);
 router.use(fheRouter);
 router.use(starknetRouter);
 router.use(loansRouter);
+router.use(retroactiveRouter);
 
 export default router;

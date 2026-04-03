@@ -11,3 +11,4 @@ export * from "./disease-scans";
 export * from "./lit-vault";
 export * from "./disease-intel";
 export * from "./loans";
+export * from "./retroactive";
