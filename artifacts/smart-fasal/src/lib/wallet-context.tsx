@@ -210,23 +210,24 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
 
   const handleConnect = async () => {
     setIsConnecting(true);
+
     const timeout = setTimeout(() => {
+      try { fcl.unauthenticate(); } catch (_) { /* ignore */ }
       setIsConnecting(false);
-    }, 30000);
+      setShowManualInput(true);
+      toast({
+        title: "Wallet not detected",
+        description: "Enter your Flow address manually below to connect.",
+      });
+    }, 8000);
+
     try {
       await fcl.authenticate();
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : String(err);
-      if (!message.includes("Declined") && !message.includes("Halted")) {
-        toast({
-          title: "Wallet popup blocked",
-          description: "Use 'Enter address manually' below to connect instead.",
-          variant: "destructive",
-        });
-      }
-      setIsConnecting(false);
-    } finally {
       clearTimeout(timeout);
+    } catch (err: unknown) {
+      clearTimeout(timeout);
+      try { fcl.unauthenticate(); } catch (_) { /* ignore */ }
+      setIsConnecting(false);
     }
   };
 
