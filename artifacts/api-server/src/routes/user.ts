@@ -63,6 +63,7 @@ router.put("/user/profile", requireAuth, async (req, res): Promise<void> => {
       res.json({ profile: created });
     }
   } catch (err) {
+    console.error("[PUT /user/profile] Error:", err);
     res.status(500).json({ error: "Failed to save profile" });
   }
 });

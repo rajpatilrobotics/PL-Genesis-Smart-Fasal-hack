@@ -5,6 +5,7 @@ const clerkEnabled = !!process.env.CLERK_SECRET_KEY;
 
 export function requireAuth(req: Request, res: Response, next: NextFunction): void {
   if (!clerkEnabled) {
+    (req as any).userId = "dev-user";
     next();
     return;
   }
