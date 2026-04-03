@@ -16,6 +16,38 @@ export default function SignIn() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [guestLoading, setGuestLoading] = useState(false);
+  const [walletLoading, setWalletLoading] = useState(false);
+
+  async function handleWalletSignIn() {
+    setWalletLoading(true);
+    setError("");
+    try {
+      const eth = (window as any).ethereum;
+      if (!eth) {
+        setError("No Ethereum wallet detected. Install MetaMask to sign in with your wallet.");
+        return;
+      }
+      const accounts: string[] = await eth.request({ method: "eth_requestAccounts" });
+      if (!accounts.length) {
+        setError("No wallet account selected.");
+        return;
+      }
+      const address = accounts[0];
+      const message = `Sign in to Smart Fasal\nWallet: ${address}\nTimestamp: ${Date.now()}`;
+      const signature = await eth.request({ method: "personal_sign", params: [message, address] });
+      if (signature) {
+        setError("Wallet connected! Full on-chain sign-in coming soon.");
+      }
+    } catch (err: any) {
+      if (err?.code === 4001) {
+        setError("Wallet connection cancelled.");
+      } else {
+        setError("Wallet sign-in failed. Please try again.");
+      }
+    } finally {
+      setWalletLoading(false);
+    }
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -78,6 +110,35 @@ export default function SignIn() {
             </div>
             <h1 className="text-2xl font-bold text-gray-900">Welcome back</h1>
             <p className="text-sm text-gray-500 mt-1">Sign in to your farm account</p>
+          </div>
+
+          {/* Ethereum Wallet */}
+          <Button
+            type="button"
+            onClick={handleWalletSignIn}
+            disabled={loading || guestLoading || walletLoading}
+            variant="outline"
+            className="w-full h-11 border-gray-200 rounded-xl font-medium text-gray-700 hover:bg-gray-50 mb-4"
+          >
+            {walletLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : (
+              <>
+                <svg className="w-4 h-4 mr-2" viewBox="0 0 256 417" fill="none">
+                  <polygon fill="#343434" points="128.0,0 126.6,4.8 126.6,285.2 128.0,286.5 255.9,212.3"/>
+                  <polygon fill="#8C8C8C" points="128.0,0 0,212.3 128.0,286.5 128.0,153.5"/>
+                  <polygon fill="#3C3C3B" points="128.0,311.0 126.4,313.0 126.4,412.7 128.0,416.9 256.0,237.5"/>
+                  <polygon fill="#8C8C8C" points="128.0,416.9 128.0,311.0 0,237.5"/>
+                  <polygon fill="#141414" points="128.0,286.5 255.9,212.3 128.0,153.5"/>
+                  <polygon fill="#393939" points="0,212.3 128.0,286.5 128.0,153.5"/>
+                </svg>
+                Sign in with Ethereum Wallet
+              </>
+            )}
+          </Button>
+
+          <div className="flex items-center gap-3 mb-4">
+            <div className="flex-1 h-px bg-gray-200" />
+            <span className="text-xs text-gray-400 font-medium">or use email</span>
+            <div className="flex-1 h-px bg-gray-200" />
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
