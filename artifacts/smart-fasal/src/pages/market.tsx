@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -427,6 +428,7 @@ function ProductCard({ product }: {
 }
 
 export default function Market() {
+  const { t } = useTranslation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -570,9 +572,9 @@ export default function Market() {
 
       <Tabs defaultValue="mandi" className="w-full">
         <TabsList className="grid w-full grid-cols-3 h-auto p-1">
-          <TabsTrigger value="mandi" className="py-1.5 text-xs">📊 Mandi Prices</TabsTrigger>
-          <TabsTrigger value="p2p" className="py-1.5 text-xs">🏪 P2P Trade</TabsTrigger>
-          <TabsTrigger value="products" className="py-1.5 text-xs">🌿 Agri Inputs</TabsTrigger>
+          <TabsTrigger value="mandi" className="py-1.5 text-xs">📊 {t("market.mandiPrices")}</TabsTrigger>
+          <TabsTrigger value="p2p" className="py-1.5 text-xs">🏪 {t("market.p2pTrade")}</TabsTrigger>
+          <TabsTrigger value="products" className="py-1.5 text-xs">🌿 {t("market.agriInputs")}</TabsTrigger>
         </TabsList>
 
         {/* ── MANDI PRICES ─────────────────────────────────────────────────── */}

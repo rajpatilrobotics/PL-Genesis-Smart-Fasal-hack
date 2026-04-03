@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -39,6 +40,7 @@ type EvidenceRecord = {
 };
 
 export default function AiHub() {
+  const { t } = useTranslation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { walletAddress, addFlowReward } = useWallet();
@@ -287,7 +289,7 @@ export default function AiHub() {
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div>
-        <h2 className="text-2xl font-bold tracking-tight">AI Farm Hub</h2>
+        <h2 className="text-2xl font-bold tracking-tight">{t("ai.title")}</h2>
         <p className="text-muted-foreground text-sm">Powered insights for better yields</p>
         {walletAddress && (
           <div className="mt-2 flex items-center gap-1.5 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-1.5 w-fit">
@@ -299,15 +301,15 @@ export default function AiHub() {
 
       <Tabs defaultValue="recommendations" className="w-full">
         <TabsList className="grid w-full grid-cols-2 mb-6">
-          <TabsTrigger value="recommendations">Recommendations</TabsTrigger>
-          <TabsTrigger value="disease">Disease Scanner</TabsTrigger>
+          <TabsTrigger value="recommendations">{t("ai.recommendations")}</TabsTrigger>
+          <TabsTrigger value="disease">{t("ai.diseaseScanner")}</TabsTrigger>
         </TabsList>
 
         {/* ── Recommendations Tab ── */}
         <TabsContent value="recommendations" className="space-y-6">
           <Card>
             <CardHeader className="pb-4">
-              <CardTitle className="text-lg">Manual Analysis</CardTitle>
+              <CardTitle className="text-lg">{t("ai.manualAnalysis")}</CardTitle>
               <CardDescription>Enter soil parameters for custom advice</CardDescription>
             </CardHeader>
             <CardContent>
@@ -337,7 +339,7 @@ export default function AiHub() {
                 </div>
                 <Button type="submit" className="w-full relative" disabled={getAiRec.isPending}>
                   <Sparkles className="w-4 h-4 mr-2" />
-                  {getAiRec.isPending ? "Analyzing..." : "Generate Insights"}
+                  {getAiRec.isPending ? t("ai.analyzing") : t("ai.generateInsights")}
                   {walletAddress && <span className="absolute right-3 text-[9px] bg-white/20 px-1.5 py-px rounded-full">+10 FLOW</span>}
                 </Button>
               </form>
@@ -425,7 +427,7 @@ export default function AiHub() {
 
           {recHistory && recHistory.length > 0 && (
             <div className="space-y-3">
-              <h3 className="font-bold text-lg px-1">Past Recommendations</h3>
+              <h3 className="font-bold text-lg px-1">{t("ai.pastRecommendations")}</h3>
               {recHistory.slice(0, 3).map(rec => (
                 <Card key={rec.id} className="cursor-pointer hover:border-primary transition-colors">
                   <CardContent className="p-4 flex items-center justify-between">

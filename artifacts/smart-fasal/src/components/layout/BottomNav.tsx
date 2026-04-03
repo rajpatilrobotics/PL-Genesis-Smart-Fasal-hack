@@ -1,17 +1,19 @@
 import { Link, useLocation } from "wouter";
 import { Home, Brain, ShoppingCart, Sparkles, UserCircle2, Wallet } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
 export default function BottomNav() {
   const [location] = useLocation();
+  const { t } = useTranslation();
 
   const links = [
-    { href: "/", icon: Home, label: "Home" },
-    { href: "/ai", icon: Brain, label: "AI Hub" },
-    { href: "/market", icon: ShoppingCart, label: "Market" },
-    { href: "/web3", icon: Sparkles, label: "Web3" },
-    { href: "/finance", icon: Wallet, label: "Finance" },
-    { href: "/profile", icon: UserCircle2, label: "Profile" },
+    { href: "/", icon: Home, label: t("nav.home") },
+    { href: "/ai", icon: Brain, label: t("nav.aiHub") },
+    { href: "/market", icon: ShoppingCart, label: t("nav.market") },
+    { href: "/web3", icon: Sparkles, label: t("nav.web3") },
+    { href: "/finance", icon: Wallet, label: t("nav.finance") },
+    { href: "/profile", icon: UserCircle2, label: t("nav.profile") },
   ];
 
   return (
@@ -30,7 +32,6 @@ export default function BottomNav() {
                   "flex flex-col items-center justify-center flex-1 h-full space-y-0.5 text-[10px] font-medium transition-colors hover:text-primary",
                   isActive ? "text-primary" : "text-muted-foreground"
                 )}
-                data-testid={`nav-${link.label.toLowerCase().replace(" ", "-")}`}
               >
                 <div className={cn(
                   "p-1 rounded-full transition-all duration-300",
