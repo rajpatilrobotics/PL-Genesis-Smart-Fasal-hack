@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, lazy, Suspense } from "react";
+const RetroactivePage = lazy(() => import("@/pages/retroactive"));
 import { litEncrypt, litDecrypt, getLitClient, shortCipher, getEphemeralWallet, type LitEncryptResult } from "@/lib/lit";
 import {
   useStoreOnFilecoin,
@@ -2317,11 +2318,11 @@ function StarknetTab() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// HYPERCERTS TAB — Carbon Credits & Impact
+// HYPERCERTS TAB — Carbon Credits & RPGF
 // ─────────────────────────────────────────────────────────────────────────────
-function HypercertsTab() {
+function CarbonCreditsPanel() {
   const { toast } = useToast();
-  const { walletAddress, carbonCredits, mintCarbonCredit, dataHistory, contributionCount } = useWallet();
+  const { walletAddress, carbonCredits, mintCarbonCredit, contributionCount } = useWallet();
   const [minting, setMinting] = useState(false);
 
   const totalTonnes = carbonCredits.reduce((s, c) => s + c.tonnes, 0);
@@ -2379,7 +2380,6 @@ function HypercertsTab() {
         </CardContent>
       </Card>
 
-      {/* Eligible Activities */}
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-sm flex items-center gap-2">
@@ -2405,7 +2405,6 @@ function HypercertsTab() {
         </CardContent>
       </Card>
 
-      {/* Hypercert Gallery */}
       {carbonCredits.length > 0 && (
         <div>
           <h3 className="text-sm font-bold mb-2 flex items-center gap-1.5"><ScrollText className="w-4 h-4 text-green-500" /> My Hypercerts</h3>
@@ -2446,7 +2445,6 @@ function HypercertsTab() {
         </div>
       )}
 
-      {/* Impact Score breakdown */}
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-sm flex items-center gap-2">
@@ -2475,6 +2473,53 @@ function HypercertsTab() {
           )}
         </CardContent>
       </Card>
+    </div>
+  );
+}
+
+function HypercertsTab() {
+  const [subTab, setSubTab] = useState<"credits" | "rpgf">("credits");
+  return (
+    <div className="space-y-3">
+      <div className="flex gap-1 p-1 bg-muted/60 rounded-xl">
+        <button
+          onClick={() => setSubTab("credits")}
+          className={cn(
+            "flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-semibold transition-all duration-200",
+            subTab === "credits"
+              ? "bg-white shadow text-green-700 border border-green-200"
+              : "text-muted-foreground hover:text-foreground"
+          )}
+        >
+          <Leaf className="w-3.5 h-3.5" />
+          Carbon Credits
+        </button>
+        <button
+          onClick={() => setSubTab("rpgf")}
+          className={cn(
+            "flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-semibold transition-all duration-200",
+            subTab === "rpgf"
+              ? "bg-white shadow text-violet-700 border border-violet-200"
+              : "text-muted-foreground hover:text-foreground"
+          )}
+        >
+          <Trophy className="w-3.5 h-3.5" />
+          RPGF
+        </button>
+      </div>
+
+      {subTab === "credits" && <CarbonCreditsPanel />}
+
+      {subTab === "rpgf" && (
+        <Suspense fallback={
+          <div className="flex flex-col items-center justify-center py-16 gap-3">
+            <Loader2 className="w-8 h-8 animate-spin text-violet-500" />
+            <p className="text-sm text-muted-foreground">Loading RPGF…</p>
+          </div>
+        }>
+          <RetroactivePage />
+        </Suspense>
+      )}
     </div>
   );
 }
