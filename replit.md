@@ -172,13 +172,31 @@ Real on-chain minting on Optimism Sepolia:
 - Wallet: `0x1C9d29F655E2674665eFD84B3997c8E76F1f88Cc` (Optimism Sepolia)
 - Needs OP Sepolia ETH to mint: https://app.optimism.io/faucet
 
+## Starknet USDC Escrow — P2P Trade Payments
+
+Real Web3 escrow flow for P2P produce trade. Replaces Filecoin FVM escrow:
+- **Live USDC/INR rate**: Fetched from CoinGecko free API every 10 min
+- **USDC token (Starknet Sepolia)**: `0x053b40a647cedfca6ca84f542a0fe36736031905a9639a7f19a3c1e66bfd5080` (6 decimals)
+- **Oracle/escrow address**: `0x17ecda611fa4c7f75758f669a2cf0a0d1091032b1e3172bc9f293f462818d9c`
+- **Cairo contract**: `contracts/smart-fasal-escrow/src/lib.cairo` (deploy with Scarb + starknet-deploy)
+- **API routes**: `/api/market/escrow/rate`, `/api/market/escrow/:id/init`, `/api/market/escrow/:id/confirm-payment`, `/api/market/escrow/:id/release`
+- **Frontend**: 3-step dialog in market.tsx — price breakdown → payment instructions → tx hash submit
+- **DB columns added**: `buyer_wallet`, `starknet_tx_hash`, `release_tx_hash`, `usdc_amount`, `escrow_id`
+- **Explorer**: https://sepolia.voyager.online
+
+### Marketplace — Real Data
+- **FPO listings**: NAFED, Sahyadri, Lasalgaon, Wayanad, Mithila Makhana, etc. (market.ts)
+- **Brand products**: IFFCO, Bayer, Syngenta, UPL, Coromandel, Jain Irrigation, NSC (market.ts)
+- **Live mandi prices**: DATA_GOV_IN_API_KEY → AGMARKNET API → real arrival-date prices
+
 ## Key Design Decisions
 
+- **Starknet escrow**: Backend-oracle pattern — oracle wallet holds USDC, releases on delivery confirmation
 - **Filecoin storage**: Real uploads via Lighthouse SDK (API key set)
 - **Chat encryption**: XOR cipher + base64 (simulated E2E)
 - **Flow rewards**: +10 pts wallet connect, +5 pts posts, +50 pts claims
 - **Weather**: Simulated data for Punjab, India with realistic variation
-- **Mandi prices**: Seeded with real Indian crop prices, dynamically fluctuated
+- **Mandi prices**: Live from AGMARKNET (DATA_GOV_IN_API_KEY) or seeded fallback
 - **Insurance risk**: LOW/MEDIUM/HIGH based on moisture (<30%) and temperature (>35°C)
 - **OpenAI**: Uses Replit AI proxy — import from `@workspace/integrations-openai-ai-server`
 

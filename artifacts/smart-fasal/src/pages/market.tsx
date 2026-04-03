@@ -12,13 +12,13 @@ import {
   TrendingUp, TrendingDown, Store, MapPin, Tag, ShoppingBag,
   PlusCircle, Lock, CheckCircle2, FileText, ExternalLink,
   RefreshCw, Search, Star, User, Package, Leaf, Droplets,
-  Shield, Database, CloudUpload, ArrowRight, Building2
+  Shield, Database, CloudUpload, ArrowRight, Building2, Copy
 } from "lucide-react";
 import {
   useGetMarketPrices, getGetMarketPricesQueryKey,
   useGetMarketListings, getGetMarketListingsQueryKey,
   useGetProductRecommendations, getGetProductRecommendationsQueryKey,
-  useCreateMarketListing, useBuyMarketListing, useConfirmDelivery,
+  useCreateMarketListing,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -100,25 +100,45 @@ function ProtocolBadge({ cid, label, icon }: { cid: string; label: string; icon?
   );
 }
 
+function StarknetTxBadge({ txHash, label, icon }: { txHash: string; label: string; icon?: React.ReactNode }) {
+  const voyagerUrl = `https://sepolia.voyager.online/tx/${txHash}`;
+  return (
+    <a
+      href={voyagerUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="inline-flex items-center gap-1 text-[10px] text-violet-700 hover:text-violet-900 hover:underline transition-colors font-mono bg-violet-50 border border-violet-200 rounded px-1.5 py-0.5"
+    >
+      {icon ?? <span>⬡</span>}
+      <span className="not-italic font-medium">{label}:</span>
+      <span>{truncateCid(txHash)}</span>
+      <ExternalLink className="w-2.5 h-2.5" />
+    </a>
+  );
+}
+
 function DataProvenanceTrail({ listing }: { listing: { imageCid?: string | null; receiptCid?: string | null; escrowStatus: string } }) {
-  const steps: { label: string; cid: string | null | undefined; icon: React.ReactNode; done: boolean }[] = [
-    { label: "Photo on IPFS", cid: listing.imageCid, icon: <CloudUpload className="w-3 h-3" />, done: !!listing.imageCid },
-    { label: "Escrow on Filecoin", cid: listing.escrowStatus === "escrowed" ? listing.receiptCid : null, icon: <Lock className="w-3 h-3" />, done: listing.escrowStatus === "escrowed" || listing.escrowStatus === "released" },
-    { label: "Trade Receipt", cid: listing.escrowStatus === "released" ? listing.receiptCid : null, icon: <FileText className="w-3 h-3" />, done: listing.escrowStatus === "released" },
+  const hasTxHash = listing.receiptCid && listing.receiptCid.startsWith("0x");
+  const steps: { label: string; cid: string | null | undefined; txHash: string | null | undefined; icon: React.ReactNode; done: boolean }[] = [
+    { label: "Photo on IPFS", cid: listing.imageCid, txHash: null, icon: <CloudUpload className="w-3 h-3" />, done: !!listing.imageCid },
+    { label: "USDC on Starknet", cid: null, txHash: (listing.escrowStatus === "escrowed" || listing.escrowStatus === "released") && hasTxHash ? listing.receiptCid : null, icon: <Lock className="w-3 h-3" />, done: listing.escrowStatus === "escrowed" || listing.escrowStatus === "released" },
+    { label: "Escrow Released", cid: null, txHash: listing.escrowStatus === "released" && hasTxHash ? listing.receiptCid : null, icon: <FileText className="w-3 h-3" />, done: listing.escrowStatus === "released" },
   ];
 
   if (!steps.some(s => s.done)) return null;
 
   return (
     <div className="pt-2 border-t border-muted space-y-1">
-      <p className="text-[10px] font-semibold text-blue-700 flex items-center gap-1 uppercase tracking-wide">
-        <span>⬡</span> Protocol Labs Data Trail
+      <p className="text-[10px] font-semibold text-violet-700 flex items-center gap-1 uppercase tracking-wide">
+        <span>⬡</span> Starknet Onchain Trail
       </p>
       <div className="flex flex-wrap gap-1">
         {steps.map((step, i) => (
           step.done && (
             <div key={i} className="flex items-center gap-1">
-              {step.cid ? (
+              {step.txHash ? (
+                <StarknetTxBadge txHash={step.txHash} label={step.label} icon={step.icon} />
+              ) : step.cid ? (
                 <ProtocolBadge cid={step.cid} label={step.label} icon={step.icon} />
               ) : (
                 <span className="inline-flex items-center gap-1 text-[10px] text-green-700 bg-green-50 border border-green-200 rounded px-1.5 py-0.5">
@@ -264,19 +284,19 @@ function ListingCard({
         <DataProvenanceTrail listing={listing} />
       </CardContent>
 
-      <CardFooter className="p-3.5 pt-0">
+      <CardFooter className="p-3.5 pt-0 flex flex-col gap-2">
         {listing.status !== "sold" ? (
-          <Button className="w-full h-8 text-xs gap-1.5" onClick={onBuy} disabled={isBuying}>
-            <Lock className="w-3 h-3" /> {isBuying ? "Creating Escrow…" : "Buy with Filecoin Escrow"}
+          <Button className="w-full h-8 text-xs gap-1.5 bg-violet-600 hover:bg-violet-700" onClick={onBuy} disabled={isBuying}>
+            <Lock className="w-3 h-3" /> {isBuying ? "Opening Escrow…" : "⬡ Buy with USDC · Starknet"}
           </Button>
         ) : listing.escrowStatus === "escrowed" ? (
-          <Button className="w-full h-8 text-xs gap-1.5" variant="outline" onClick={onConfirm} disabled={isConfirming}>
+          <Button className="w-full h-8 text-xs gap-1.5 border-violet-300 text-violet-700 hover:bg-violet-50" variant="outline" onClick={onConfirm} disabled={isConfirming}>
             <CheckCircle2 className="w-3 h-3" />
-            {isConfirming ? "Minting Receipt…" : "Confirm Delivery & Release Escrow"}
+            {isConfirming ? "Releasing USDC…" : "Confirm Delivery → Release USDC"}
           </Button>
         ) : listing.escrowStatus === "released" ? (
           <div className="w-full text-center text-xs text-green-600 font-semibold flex items-center justify-center gap-1 py-1">
-            <CheckCircle2 className="w-3.5 h-3.5" /> Trade Complete · Permanent Filecoin Receipt
+            <CheckCircle2 className="w-3.5 h-3.5" /> Trade Complete · USDC Released on Starknet
           </div>
         ) : (
           <Button className="w-full h-8 text-xs" variant="secondary" disabled>Sold</Button>
@@ -388,6 +408,17 @@ function ProductCard({ product }: {
   );
 }
 
+type EscrowInfo = {
+  escrowId: string;
+  escrowAddress: string;
+  usdcAddress: string;
+  usdcAmount: number;
+  totalInr: number;
+  exchangeRate: number;
+  instructions: string[];
+  voyagerEscrowLink: string;
+};
+
 export default function Market() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -395,7 +426,14 @@ export default function Market() {
 
   const [listingOpen, setListingOpen] = useState(false);
   const [buyDialogId, setBuyDialogId] = useState<number | null>(null);
+  const [buyStep, setBuyStep] = useState<1 | 2 | 3>(1);
   const [buyerNameInput, setBuyerNameInput] = useState("");
+  const [buyerWalletInput, setBuyerWalletInput] = useState("");
+  const [buyerTxHash, setBuyerTxHash] = useState("");
+  const [escrowInfo, setEscrowInfo] = useState<EscrowInfo | null>(null);
+  const [isInitingEscrow, setIsInitingEscrow] = useState(false);
+  const [isVerifyingPayment, setIsVerifyingPayment] = useState(false);
+  const [isReleasingEscrow, setIsReleasingEscrow] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [priceCategory, setPriceCategory] = useState<string>("All");
   const [listingSearch, setListingSearch] = useState("");
@@ -432,8 +470,6 @@ export default function Market() {
   });
 
   const createListing = useCreateMarketListing();
-  const buyListing = useBuyMarketListing();
-  const confirmDelivery = useConfirmDelivery();
 
   const filteredPrices = prices?.filter(p =>
     priceCategory === "All" || (p as { category?: string | null }).category === priceCategory
@@ -474,7 +510,7 @@ export default function Market() {
       }
     }, {
       onSuccess: () => {
-        toast({ title: "⬡ Listed on IPFS + Filecoin", description: "Your produce is now live on the decentralized market." });
+        toast({ title: "Listed on IPFS + Filecoin", description: "Your produce is now live on the decentralized market." });
         setListingOpen(false);
         setPreviewImage(null);
         setListingForm({ title: "", description: "", crop: "", price: "", quantity: "", unit: "kg", sellerName: "", location: "", imageBase64: "" });
@@ -484,30 +520,93 @@ export default function Market() {
     });
   };
 
-  const handleBuy = () => {
-    if (buyDialogId == null) return;
-    buyListing.mutate(
-      { id: buyDialogId, data: { buyerName: buyerNameInput || "Anonymous Buyer" } },
-      {
-        onSuccess: () => {
-          toast({ title: "⬡ Funds Locked in Filecoin Escrow", description: "Release after confirming delivery. Agreement stored on IPFS." });
-          setBuyDialogId(null);
-          setBuyerNameInput("");
-          queryClient.invalidateQueries({ queryKey: getGetMarketListingsQueryKey() });
-        },
-        onError: () => toast({ title: "Error", description: "Purchase failed.", variant: "destructive" }),
-      }
-    );
+  // ── USDC Starknet Escrow flow ─────────────────────────────────────────────
+
+  const handleOpenBuy = (id: number) => {
+    setBuyDialogId(id);
+    setBuyStep(1);
+    setEscrowInfo(null);
+    setBuyerNameInput("");
+    setBuyerWalletInput("");
+    setBuyerTxHash("");
   };
 
-  const handleConfirmDelivery = (id: number) => {
-    confirmDelivery.mutate({ id }, {
-      onSuccess: (data) => {
-        toast({ title: "✓ Delivery Confirmed — Escrow Released!", description: `Permanent Filecoin receipt minted: ${data.receiptCid ? truncateCid(data.receiptCid) : "stored"}` });
+  const handleInitEscrow = async () => {
+    if (buyDialogId == null) return;
+    setIsInitingEscrow(true);
+    try {
+      const res = await fetch(`/api/market/escrow/${buyDialogId}/init`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ buyerName: buyerNameInput || "Anonymous Buyer", buyerWallet: buyerWalletInput || undefined }),
+      });
+      const data = await res.json() as EscrowInfo;
+      setEscrowInfo(data);
+      setBuyStep(2);
+    } catch {
+      toast({ title: "Error", description: "Could not initialise escrow", variant: "destructive" });
+    } finally {
+      setIsInitingEscrow(false);
+    }
+  };
+
+  const handleConfirmPayment = async () => {
+    if (buyDialogId == null || !buyerTxHash.trim()) return;
+    setIsVerifyingPayment(true);
+    try {
+      const res = await fetch(`/api/market/escrow/${buyDialogId}/confirm-payment`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ txHash: buyerTxHash.trim() }),
+      });
+      const data = await res.json() as { success: boolean; voyagerLink?: string; message?: string };
+      if (res.ok && data.success) {
+        toast({
+          title: "✅ Payment Verified on Starknet!",
+          description: `USDC locked in escrow. ${data.voyagerLink ? "View on Voyager." : ""}`,
+        });
+        setBuyDialogId(null);
         queryClient.invalidateQueries({ queryKey: getGetMarketListingsQueryKey() });
-      },
-      onError: () => toast({ title: "Error", description: "Confirmation failed.", variant: "destructive" }),
-    });
+      } else {
+        toast({ title: "Verification failed", description: "Could not verify this transaction hash.", variant: "destructive" });
+      }
+    } catch {
+      toast({ title: "Error", description: "Payment verification failed.", variant: "destructive" });
+    } finally {
+      setIsVerifyingPayment(false);
+    }
+  };
+
+  const handleReleaseEscrow = async (id: number) => {
+    setIsReleasingEscrow(true);
+    try {
+      const res = await fetch(`/api/market/escrow/${id}/release`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+      const data = await res.json() as { success: boolean; releaseTxHash?: string; voyagerLink?: string; usdcAmount?: number };
+      if (res.ok) {
+        toast({
+          title: "✅ Escrow Released — USDC Sent to Seller!",
+          description: data.releaseTxHash
+            ? `${data.usdcAmount} USDC transferred on Starknet · Tx: ${truncateCid(data.releaseTxHash)}`
+            : "Escrow released successfully.",
+        });
+        queryClient.invalidateQueries({ queryKey: getGetMarketListingsQueryKey() });
+      } else {
+        toast({ title: "Error", description: "Release failed.", variant: "destructive" });
+      }
+    } catch {
+      toast({ title: "Error", description: "Release failed.", variant: "destructive" });
+    } finally {
+      setIsReleasingEscrow(false);
+    }
+  };
+
+  const copyToClipboard = (text: string, label: string) => {
+    navigator.clipboard.writeText(text).then(() =>
+      toast({ title: `${label} copied`, description: text.slice(0, 24) + "…" })
+    );
   };
 
   const selectedListing = listings?.find(l => l.id === buyDialogId);
@@ -518,15 +617,15 @@ export default function Market() {
       <div className="flex justify-between items-end">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">Marketplace</h2>
-          <p className="text-muted-foreground text-xs">Live Mandi prices · P2P trade · Filecoin escrow · IPFS storage</p>
+          <p className="text-muted-foreground text-xs">Live Mandi prices · P2P trade · USDC escrow on Starknet</p>
         </div>
         <a
-          href="https://lighthouse.storage"
+          href="https://sepolia.voyager.online"
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center gap-1 text-[10px] text-blue-700 font-semibold bg-blue-50 border border-blue-200 rounded-full px-2.5 py-1 hover:bg-blue-100 transition-colors"
+          className="flex items-center gap-1 text-[10px] text-violet-700 font-semibold bg-violet-50 border border-violet-200 rounded-full px-2.5 py-1 hover:bg-violet-100 transition-colors"
         >
-          <span>⬡</span> Protocol Labs
+          <span>⬡</span> Starknet
         </a>
       </div>
 
@@ -613,16 +712,16 @@ export default function Market() {
 
         {/* ── P2P TRADE ────────────────────────────────────────────────────── */}
         <TabsContent value="p2p" className="space-y-4 mt-4">
-          {/* Protocol Labs info banner */}
-          <div className="rounded-xl border border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50 p-3">
-            <p className="text-xs font-semibold text-blue-800 flex items-center gap-1 mb-1">
-              ⬡ Powered by Protocol Labs — Decentralized Market
+          {/* Starknet USDC Escrow info banner */}
+          <div className="rounded-xl border border-violet-200 bg-gradient-to-r from-violet-50 to-purple-50 p-3">
+            <p className="text-xs font-semibold text-violet-800 flex items-center gap-1 mb-1">
+              ⬡ Starknet USDC Escrow — Trustless P2P Trade
             </p>
-            <div className="flex flex-wrap gap-2 text-[10px] text-blue-700">
+            <div className="flex flex-wrap gap-2 text-[10px] text-violet-700">
+              <span className="flex items-center gap-1"><Lock className="w-3 h-3" /> USDC locked on Starknet</span>
               <span className="flex items-center gap-1"><CloudUpload className="w-3 h-3" /> Photos on IPFS</span>
-              <span className="flex items-center gap-1"><Lock className="w-3 h-3" /> Escrow on FVM</span>
-              <span className="flex items-center gap-1"><FileText className="w-3 h-3" /> Receipts on Filecoin</span>
-              <span className="flex items-center gap-1"><Database className="w-3 h-3" /> Metadata permanent</span>
+              <span className="flex items-center gap-1"><FileText className="w-3 h-3" /> Auto-release on delivery</span>
+              <span className="flex items-center gap-1"><Database className="w-3 h-3" /> Sepolia explorer</span>
             </div>
           </div>
 
@@ -715,46 +814,187 @@ export default function Market() {
             </Dialog>
           </div>
 
-          {/* Buy escrow dialog */}
+          {/* USDC Starknet Escrow dialog — 3 steps */}
           <Dialog open={buyDialogId != null} onOpenChange={(open) => { if (!open) setBuyDialogId(null); }}>
-            <DialogContent>
+            <DialogContent className="max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-2">
-                  <Lock className="w-4 h-4 text-amber-600" /> Lock Funds in Filecoin Escrow
+                  <Lock className="w-4 h-4 text-violet-600" />
+                  {buyStep === 1 && "Pay with USDC — Starknet Escrow"}
+                  {buyStep === 2 && "Send USDC to Escrow"}
+                  {buyStep === 3 && "Confirm Your Payment"}
                 </DialogTitle>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Payment locked in a Filecoin FVM escrow contract. Released to seller only after you confirm delivery.
-                  Agreement stored permanently on IPFS.
-                </p>
-              </DialogHeader>
-              {selectedListing && (
-                <div className="space-y-4 pt-2">
-                  <div className="rounded-xl bg-muted/60 p-3.5 space-y-1">
-                    <p className="font-semibold text-sm">{selectedListing.title}</p>
-                    <p className="text-xs text-muted-foreground">{selectedListing.quantity} {selectedListing.unit} of {selectedListing.crop}</p>
-                    <p className="text-muted-foreground text-xs">Seller: {selectedListing.sellerName} · {selectedListing.location}</p>
-                    <p className="text-primary font-black text-2xl mt-1">
-                      ₹{(selectedListing.price * selectedListing.quantity).toLocaleString("en-IN")}
-                    </p>
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-xs">Your Name (Buyer)</Label>
-                    <Input value={buyerNameInput} onChange={e => setBuyerNameInput(e.target.value)} placeholder="Enter your name" />
-                  </div>
-                  <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800 flex items-start gap-2">
-                    <Lock className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
-                    <div>
-                      <p className="font-semibold mb-0.5">How Filecoin Escrow works:</p>
-                      <p>1. Your payment is locked in a smart contract on Filecoin FVM</p>
-                      <p>2. The escrow agreement is stored permanently on IPFS</p>
-                      <p>3. Funds release to the seller only after you confirm delivery</p>
-                    </div>
-                  </div>
-                  <Button className="w-full gap-2" onClick={handleBuy} disabled={buyListing.isPending}>
-                    <Lock className="w-4 h-4" />
-                    {buyListing.isPending ? "Creating Filecoin Escrow…" : "⬡ Lock in Filecoin Escrow"}
-                  </Button>
+                <div className="flex gap-1.5 mt-2">
+                  {[1,2,3].map(s => (
+                    <div key={s} className={`flex-1 h-1 rounded-full transition-colors ${buyStep >= s ? "bg-violet-500" : "bg-muted"}`} />
+                  ))}
                 </div>
+              </DialogHeader>
+
+              {selectedListing && (
+                <>
+                  {/* ── Step 1: Overview ── */}
+                  {buyStep === 1 && (
+                    <div className="space-y-4 pt-2">
+                      <div className="rounded-xl bg-muted/60 p-3.5 space-y-1">
+                        <p className="font-semibold text-sm">{selectedListing.title}</p>
+                        <p className="text-xs text-muted-foreground">{selectedListing.quantity} {selectedListing.unit} · {selectedListing.crop} · {selectedListing.location}</p>
+                        <div className="flex items-end gap-3 mt-2">
+                          <div>
+                            <p className="text-[10px] text-muted-foreground uppercase font-semibold">Total (INR)</p>
+                            <p className="text-primary font-black text-xl">
+                              ₹{(selectedListing.price * selectedListing.quantity).toLocaleString("en-IN")}
+                            </p>
+                          </div>
+                          <div className="text-muted-foreground text-lg font-light">=</div>
+                          <div>
+                            <p className="text-[10px] text-muted-foreground uppercase font-semibold">Paid in USDC</p>
+                            <p className="text-violet-600 font-black text-xl">
+                              ~{((selectedListing.price * selectedListing.quantity) / 84).toFixed(2)} USDC
+                            </p>
+                          </div>
+                        </div>
+                        <p className="text-[10px] text-muted-foreground">Rate fetched live from CoinGecko · locked at time of payment</p>
+                      </div>
+
+                      <div className="rounded-xl border border-violet-200 bg-violet-50 p-3 text-xs text-violet-800 space-y-1.5">
+                        <p className="font-semibold flex items-center gap-1"><Lock className="w-3 h-3" /> How Starknet Escrow works:</p>
+                        <p>1. USDC is transferred to the Smart Fasal escrow wallet on Starknet Sepolia</p>
+                        <p>2. Funds are held until you confirm delivery — the seller cannot withdraw early</p>
+                        <p>3. On delivery confirmation, oracle releases USDC to seller wallet automatically</p>
+                        <p>4. All transactions are verifiable on Voyager explorer</p>
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Your Name</Label>
+                        <Input value={buyerNameInput} onChange={e => setBuyerNameInput(e.target.value)} placeholder="Enter your name" />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Your Starknet Wallet (optional)</Label>
+                        <Input
+                          value={buyerWalletInput}
+                          onChange={e => setBuyerWalletInput(e.target.value)}
+                          placeholder="0x… (Argent X / Braavos)"
+                          className="font-mono text-xs"
+                        />
+                        <p className="text-[10px] text-muted-foreground">Argent X: argent.xyz · Braavos: braavos.app</p>
+                      </div>
+
+                      <Button
+                        className="w-full gap-2 bg-violet-600 hover:bg-violet-700"
+                        onClick={handleInitEscrow}
+                        disabled={isInitingEscrow}
+                      >
+                        <Lock className="w-4 h-4" />
+                        {isInitingEscrow ? "Fetching live USDC rate…" : "Get Payment Instructions"}
+                      </Button>
+                    </div>
+                  )}
+
+                  {/* ── Step 2: Payment instructions ── */}
+                  {buyStep === 2 && escrowInfo && (
+                    <div className="space-y-4 pt-2">
+                      <div className="rounded-xl bg-violet-50 border border-violet-200 p-3.5 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-[10px] text-muted-foreground uppercase font-semibold">Send exactly</p>
+                            <p className="text-2xl font-black text-violet-700">{escrowInfo.usdcAmount} USDC</p>
+                            <p className="text-[10px] text-muted-foreground">
+                              = ₹{escrowInfo.totalInr.toLocaleString("en-IN")} · Rate: ₹{escrowInfo.exchangeRate.toFixed(2)}/USDC
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-[10px] text-muted-foreground">Network</p>
+                            <p className="text-xs font-semibold text-violet-700">Starknet Sepolia</p>
+                          </div>
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <p className="text-[10px] font-semibold text-muted-foreground uppercase">Escrow Address (recipient)</p>
+                          <div className="flex items-center gap-2 bg-white rounded-lg border border-violet-200 p-2">
+                            <code className="text-[10px] font-mono text-violet-800 flex-1 break-all">{escrowInfo.escrowAddress}</code>
+                            <button
+                              onClick={() => copyToClipboard(escrowInfo.escrowAddress, "Escrow address")}
+                              className="text-violet-500 hover:text-violet-700 flex-shrink-0 p-1 rounded"
+                            >
+                              <Copy className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <p className="text-[10px] font-semibold text-muted-foreground uppercase">USDC Token Address</p>
+                          <div className="flex items-center gap-2 bg-white rounded-lg border border-violet-200 p-2">
+                            <code className="text-[10px] font-mono text-violet-800 flex-1 break-all">{escrowInfo.usdcAddress}</code>
+                            <button
+                              onClick={() => copyToClipboard(escrowInfo.usdcAddress, "USDC address")}
+                              className="text-violet-500 hover:text-violet-700 flex-shrink-0 p-1 rounded"
+                            >
+                              <Copy className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="rounded-xl bg-amber-50 border border-amber-200 p-3 text-xs text-amber-800 space-y-1">
+                        <p className="font-semibold">Steps in Argent X / Braavos:</p>
+                        {escrowInfo.instructions.map((step, i) => (
+                          <p key={i}>{step}</p>
+                        ))}
+                      </div>
+
+                      <div className="flex gap-2">
+                        <a
+                          href={escrowInfo.voyagerEscrowLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex-1 inline-flex items-center justify-center gap-1 text-xs border border-violet-300 text-violet-700 rounded-lg px-3 py-2 hover:bg-violet-50 transition-colors"
+                        >
+                          <ExternalLink className="w-3 h-3" /> View on Voyager
+                        </a>
+                        <Button
+                          className="flex-1 gap-2 bg-violet-600 hover:bg-violet-700"
+                          onClick={() => setBuyStep(3)}
+                        >
+                          I've Sent USDC →
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ── Step 3: Submit tx hash ── */}
+                  {buyStep === 3 && (
+                    <div className="space-y-4 pt-2">
+                      <div className="rounded-xl bg-muted/60 p-3 text-xs text-muted-foreground">
+                        <p className="font-semibold text-foreground mb-1">Paste your Starknet transaction hash</p>
+                        <p>After sending {escrowInfo?.usdcAmount} USDC, copy the transaction hash from Argent X / Braavos and paste it below. We'll verify it on Starknet Sepolia.</p>
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Transaction Hash (0x…)</Label>
+                        <Input
+                          value={buyerTxHash}
+                          onChange={e => setBuyerTxHash(e.target.value)}
+                          placeholder="0x…"
+                          className="font-mono text-xs"
+                        />
+                      </div>
+                      <Button
+                        className="w-full gap-2 bg-violet-600 hover:bg-violet-700"
+                        onClick={handleConfirmPayment}
+                        disabled={isVerifyingPayment || !buyerTxHash.trim()}
+                      >
+                        <Lock className="w-4 h-4" />
+                        {isVerifyingPayment ? "Verifying on Starknet…" : "Verify & Lock Escrow"}
+                      </Button>
+                      <button
+                        className="w-full text-xs text-muted-foreground hover:underline"
+                        onClick={() => setBuyStep(2)}
+                      >
+                        ← Back to payment instructions
+                      </button>
+                    </div>
+                  )}
+                </>
               )}
             </DialogContent>
           </Dialog>
@@ -774,10 +1014,10 @@ export default function Market() {
                   <ListingCard
                     key={listing.id}
                     listing={listing}
-                    onBuy={() => setBuyDialogId(listing.id)}
-                    onConfirm={() => handleConfirmDelivery(listing.id)}
-                    isBuying={buyListing.isPending}
-                    isConfirming={confirmDelivery.isPending}
+                    onBuy={() => handleOpenBuy(listing.id)}
+                    onConfirm={() => handleReleaseEscrow(listing.id)}
+                    isBuying={isInitingEscrow && buyDialogId === listing.id}
+                    isConfirming={isReleasingEscrow}
                   />
                 ))}
           </div>
