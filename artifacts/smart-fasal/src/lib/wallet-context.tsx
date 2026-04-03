@@ -215,11 +215,10 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
       const message = err instanceof Error ? err.message : String(err);
       if (!message.includes("Declined") && !message.includes("Halted")) {
         toast({
-          title: "Connection Failed",
-          description: "Could not connect. Try entering your address manually.",
+          title: "Wallet popup blocked",
+          description: "Use 'Enter address manually' below to connect instead.",
           variant: "destructive",
         });
-        setShowManualInput(true);
       }
       setIsConnecting(false);
     }

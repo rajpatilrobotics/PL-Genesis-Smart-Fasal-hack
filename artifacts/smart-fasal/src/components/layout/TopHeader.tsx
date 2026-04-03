@@ -12,32 +12,22 @@ const clerkEnabled = !!import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
 function ClerkAuthButtonInner() {
   const { isSignedIn, user } = useUser();
-  const { signOut } = useClerk();
   const [, setLocation] = useLocation();
   const { t } = useTranslation();
 
   if (isSignedIn) {
     const name = user.firstName || user.emailAddresses[0]?.emailAddress?.split("@")[0] || "Farmer";
     return (
-      <div className="flex items-center gap-1.5">
-        <button
-          onClick={() => setLocation("/profile")}
-          className="flex items-center gap-1.5 text-xs font-semibold text-primary hover:text-primary/80 transition-colors bg-primary/8 border border-primary/15 rounded-full px-2.5 py-1"
-          title={t("header.myProfile")}
-        >
-          {user.imageUrl
-            ? <img src={user.imageUrl} alt={name} className="w-5 h-5 rounded-full object-cover ring-1 ring-primary/30" />
-            : <UserCircle className="w-4 h-4" />}
-          <span className="max-w-[70px] truncate hidden sm:inline">{name}</span>
-        </button>
-        <button
-          onClick={() => signOut(() => setLocation("/"))}
-          className="text-muted-foreground hover:text-destructive transition-colors p-1 rounded-full hover:bg-destructive/8"
-          title={t("header.signOut")}
-        >
-          <LogOut className="w-3.5 h-3.5" />
-        </button>
-      </div>
+      <button
+        onClick={() => setLocation("/profile")}
+        className="flex items-center gap-1.5 text-xs font-semibold text-primary hover:text-primary/80 transition-colors bg-primary/8 border border-primary/15 rounded-full px-2.5 py-1"
+        title={t("header.myProfile")}
+      >
+        {user.imageUrl
+          ? <img src={user.imageUrl} alt={name} className="w-5 h-5 rounded-full object-cover ring-1 ring-primary/30" />
+          : <UserCircle className="w-4 h-4" />}
+        <span className="max-w-[70px] truncate hidden sm:inline">{name}</span>
+      </button>
     );
   }
 
@@ -144,15 +134,15 @@ export default function TopHeader() {
             </div>
           )}
 
-          {/* NOT CONNECTED — Address input form */}
+          {/* NOT CONNECTED — Manual address fallback */}
           {!walletAddress && showManualInput && (
-            <div className="flex flex-col gap-1.5 min-w-0">
+            <div className="flex flex-col gap-1 min-w-0">
               <div className="flex items-center gap-1.5">
                 <Input
                   value={manualAddress}
                   onChange={(e) => setManualAddress(e.target.value)}
-                  placeholder="0x... Flow wallet address"
-                  className="h-8 text-xs w-40"
+                  placeholder="0x... Flow address"
+                  className="h-8 text-xs w-36"
                   onKeyDown={(e) => e.key === "Enter" && handleManualConnect()}
                   autoFocus
                 />
@@ -162,32 +152,43 @@ export default function TopHeader() {
                   onClick={() => handleManualConnect()}
                   disabled={!manualAddress.trim()}
                 >
-                  Connect
+                  Go
                 </Button>
                 <Button size="sm" variant="ghost" className="h-8 w-8 p-0 rounded-full"
                   onClick={() => { setShowManualInput(false); setManualAddress(""); }}>✕</Button>
               </div>
-              <button
-                onClick={() => { setShowManualInput(false); handleConnect(); }}
-                disabled={isConnecting}
-                className="text-[10px] text-emerald-600 hover:text-emerald-800 underline underline-offset-2 text-left pl-1 transition-colors"
-              >
-                {isConnecting ? "Opening Flow wallet…" : "Use Flow Wallet app instead"}
-              </button>
             </div>
           )}
 
-          {/* NOT CONNECTED — Connect button */}
+          {/* NOT CONNECTED — Connect button (triggers QR popup immediately) */}
           {!walletAddress && !showManualInput && (
-            <Button
-              onClick={() => setShowManualInput(true)}
-              size="sm"
-              className="rounded-full font-bold px-3 h-8 text-xs bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 shadow-lg hover:shadow-xl transition-all duration-200 border-0 text-white whitespace-nowrap"
-            >
-              <Wallet className="w-3.5 h-3.5 mr-1 shrink-0" />
-              <span className="hidden sm:inline">Connect Wallet</span>
-              <span className="sm:hidden">Connect</span>
-            </Button>
+            <div className="flex flex-col items-end gap-0.5">
+              <Button
+                onClick={handleConnect}
+                disabled={isConnecting}
+                size="sm"
+                className="rounded-full font-bold px-3 h-8 text-xs bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 shadow-lg hover:shadow-xl transition-all duration-200 border-0 text-white whitespace-nowrap"
+              >
+                {isConnecting ? (
+                  <>
+                    <span className="w-3 h-3 mr-1.5 border-2 border-white/40 border-t-white rounded-full animate-spin inline-block shrink-0" />
+                    Opening…
+                  </>
+                ) : (
+                  <>
+                    <Wallet className="w-3.5 h-3.5 mr-1 shrink-0" />
+                    <span className="hidden sm:inline">Connect Wallet</span>
+                    <span className="sm:hidden">Connect</span>
+                  </>
+                )}
+              </Button>
+              <button
+                onClick={() => setShowManualInput(true)}
+                className="text-[9px] text-muted-foreground hover:text-emerald-700 underline underline-offset-2 transition-colors"
+              >
+                Enter address manually
+              </button>
+            </div>
           )}
         </div>
       </div>
