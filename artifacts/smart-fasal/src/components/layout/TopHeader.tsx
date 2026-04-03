@@ -65,13 +65,13 @@ export default function TopHeader() {
               <img
                 src="/logo.jpeg"
                 alt="Smart Fasal"
-                className="w-12 h-12 sm:w-14 sm:h-14 rounded-full object-cover shadow-lg ring-2 ring-emerald-200/80"
+                className="w-14 h-14 sm:w-16 sm:h-16 rounded-full object-cover shadow-lg ring-[3px] ring-emerald-300/80"
               />
               <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 rounded-full border-2 border-white shadow-sm" />
             </div>
-            <div className="flex flex-col gap-0.5">
-              <span className="font-extrabold text-lg sm:text-xl tracking-tight text-gradient-green leading-tight">Smart Fasal</span>
-              <span className="text-[11px] sm:text-xs font-semibold text-emerald-600 leading-tight">The Agriculture Platform</span>
+            <div className="flex flex-col gap-1">
+              <span className="font-extrabold text-xl sm:text-2xl tracking-tight text-gradient-green leading-tight">Smart Fasal</span>
+              <span className="text-xs sm:text-[13px] font-semibold text-emerald-600 leading-tight">The Agriculture Platform</span>
             </div>
           </div>
 
