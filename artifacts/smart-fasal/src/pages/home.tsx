@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import {
   useGetWeather, getGetWeatherQueryKey,
   useGetLatestSensorData, getGetLatestSensorDataQueryKey,
@@ -82,6 +83,7 @@ const DUMMY_SENSOR_BASE = {
 };
 
 export default function Home() {
+  const { t } = useTranslation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { walletAddress, addFlowReward, addDataEntry } = useWallet();
@@ -365,7 +367,7 @@ export default function Home() {
 
       {/* Header row */}
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold tracking-tight">Farm Dashboard</h2>
+        <h2 className="text-2xl font-bold tracking-tight">{t("home.farmDashboard")}</h2>
         <button
           onClick={handleSimulateSensor}
           className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground bg-muted px-2.5 py-1 rounded-full hover:bg-muted/80"
@@ -386,18 +388,18 @@ export default function Home() {
           <span className={cn("w-3 h-3 rounded-full animate-pulse shrink-0", getRiskDot(riskToDisplay))} />
           <div>
             <p className={cn("text-sm font-bold", getRiskColor(riskToDisplay).split(" ")[0])}>
-              {riskToDisplay === "High" ? "High Risk Detected" : riskToDisplay === "Medium" ? "Medium Risk" : "All Clear"}
+              {riskToDisplay === "High" ? t("home.highRiskDetected") : riskToDisplay === "Medium" ? t("home.mediumRisk") : t("home.allClear")}
             </p>
             <p className="text-xs text-muted-foreground">
-              {riskToDisplay === "High" ? "Insurance auto-triggered via Starknet" :
-               riskToDisplay === "Medium" ? "Monitor moisture & temperature" :
-               "Farm conditions are optimal"}
+              {riskToDisplay === "High" ? t("home.insuranceAutoTriggered") :
+               riskToDisplay === "Medium" ? t("home.monitorMoisture") :
+               t("home.farmOptimal")}
             </p>
           </div>
         </div>
         {riskToDisplay === "High" && pipelineResult?.insuranceTriggered && (
           <div className="text-right">
-            <p className="text-xs text-red-600 font-bold">Est. Payout</p>
+            <p className="text-xs text-red-600 font-bold">{t("home.estPayout")}</p>
             <p className="text-sm font-bold text-red-700">₹{pipelineResult.estimatedPayout?.toLocaleString()}</p>
           </div>
         )}
@@ -416,15 +418,15 @@ export default function Home() {
               <div>
                 <div className="flex items-center gap-1 mb-1">
                   <CloudRain className="w-3.5 h-3.5 text-blue-500" />
-                  <span className="text-[10px] font-semibold text-blue-600 uppercase">Weather</span>
+                  <span className="text-[10px] font-semibold text-blue-600 uppercase">{t("home.weather")}</span>
                 </div>
                 <p className="text-2xl font-bold">{weather.temperature}°C</p>
                 <p className="text-xs text-muted-foreground capitalize mt-0.5">{weather.description}</p>
               </div>
               <div className="flex flex-col items-end gap-2 text-xs text-muted-foreground">
-                <span className="flex items-center gap-1"><Droplets className="w-3.5 h-3.5 text-blue-400" />{weather.humidity}% humidity</span>
-                <span className="flex items-center gap-1"><Wind className="w-3.5 h-3.5" />{weather.windSpeed} m/s wind</span>
-                <span className="flex items-center gap-1"><Thermometer className="w-3.5 h-3.5 text-orange-400" />Feels {weather.feelsLike ?? weather.temperature}°C</span>
+                <span className="flex items-center gap-1"><Droplets className="w-3.5 h-3.5 text-blue-400" />{weather.humidity}% {t("home.humidity")}</span>
+                <span className="flex items-center gap-1"><Wind className="w-3.5 h-3.5" />{weather.windSpeed} m/s {t("home.wind")}</span>
+                <span className="flex items-center gap-1"><Thermometer className="w-3.5 h-3.5 text-orange-400" />{t("home.feels")} {weather.feelsLike ?? weather.temperature}°C</span>
               </div>
             </div>
           ) : <p className="text-xs text-muted-foreground">Unavailable</p>}
@@ -438,9 +440,9 @@ export default function Home() {
             <div>
               <p className="text-sm font-semibold flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse inline-block" />
-                Live Soil Readings
+                {t("home.liveSoilReadings")}
               </p>
-              <p className="text-[10px] text-muted-foreground mt-0.5">5-in-1 hardware sensor · NPK + pH + Moisture</p>
+              <p className="text-[10px] text-muted-foreground mt-0.5">{t("home.hardwareSensor")}</p>
             </div>
             <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded-full border", getRiskColor(riskToDisplay))}>
               {riskToDisplay} Risk
@@ -449,13 +451,13 @@ export default function Home() {
 
           {/* NPK bars */}
           {[
-            { label: "Nitrogen (N)", value: displaySensor.nitrogen, max: 200, color: "bg-green-500", unit: "mg/kg" },
-            { label: "Phosphorus (P)", value: displaySensor.phosphorus, max: 100, color: "bg-orange-500", unit: "mg/kg" },
-            { label: "Potassium (K)", value: displaySensor.potassium, max: 300, color: "bg-purple-500", unit: "mg/kg" },
-          ].map(({ label, value, max, color, unit }) => (
-            <div key={label} className="space-y-1">
+            { labelKey: "home.nitrogen", value: displaySensor.nitrogen, max: 200, color: "bg-green-500", unit: "mg/kg" },
+            { labelKey: "home.phosphorus", value: displaySensor.phosphorus, max: 100, color: "bg-orange-500", unit: "mg/kg" },
+            { labelKey: "home.potassium", value: displaySensor.potassium, max: 300, color: "bg-purple-500", unit: "mg/kg" },
+          ].map(({ labelKey, value, max, color, unit }) => (
+            <div key={labelKey} className="space-y-1">
               <div className="flex justify-between text-xs">
-                <span className="text-muted-foreground">{label}</span>
+                <span className="text-muted-foreground">{t(labelKey)}</span>
                 <span className="font-semibold">{value} <span className="text-muted-foreground font-normal">{unit}</span></span>
               </div>
               <div className="h-2 bg-muted rounded-full overflow-hidden">
@@ -471,13 +473,13 @@ export default function Home() {
           <div className="space-y-1">
             <div className="flex justify-between text-xs">
               <span className="text-muted-foreground">
-                Soil pH
+                {t("home.soilPh")}
                 <span className={cn("ml-1.5 text-[10px] font-semibold px-1.5 py-0 rounded-full",
                   displaySensor.ph >= 6.0 && displaySensor.ph <= 7.5
                     ? "bg-emerald-100 text-emerald-700"
                     : "bg-amber-100 text-amber-700"
                 )}>
-                  {displaySensor.ph >= 6.0 && displaySensor.ph <= 7.5 ? "Optimal" : displaySensor.ph < 6.0 ? "Acidic" : "Alkaline"}
+                  {displaySensor.ph >= 6.0 && displaySensor.ph <= 7.5 ? t("home.optimal") : displaySensor.ph < 6.0 ? t("home.acidic") : t("home.alkaline")}
                 </span>
               </span>
               <span className="font-semibold">{displaySensor.ph} <span className="text-muted-foreground font-normal">pH</span></span>
@@ -494,16 +496,16 @@ export default function Home() {
               />
             </div>
             <div className="flex justify-between text-[9px] text-muted-foreground/70">
-              <span>0 (Acid)</span>
-              <span className="text-emerald-600">Optimal 6–7.5</span>
-              <span>14 (Alkaline)</span>
+              <span>0 ({t("home.acid")})</span>
+              <span className="text-emerald-600">{t("home.optimal")} 6–7.5</span>
+              <span>14 ({t("home.alkaline")})</span>
             </div>
           </div>
 
           {/* Moisture bar */}
           <div className="space-y-1">
             <div className="flex justify-between text-xs">
-              <span className="text-muted-foreground">Soil Moisture (H₂O)</span>
+              <span className="text-muted-foreground">{t("home.soilMoisture")}</span>
               <span className="font-semibold">{displaySensor.moisture}<span className="text-muted-foreground font-normal">%</span></span>
             </div>
             <div className="h-2 bg-muted rounded-full overflow-hidden">
@@ -523,8 +525,8 @@ export default function Home() {
         <CardHeader className="pb-3 pt-4">
           <CardTitle className="text-base flex items-center gap-2">
             <Brain className="w-5 h-5 text-primary" />
-            Analyze Farm
-            <Badge variant="secondary" className="text-[10px] ml-auto">Web3 Pipeline</Badge>
+            {t("home.analyzeFarm")}
+            <Badge variant="secondary" className="text-[10px] ml-auto">{t("home.web3Pipeline")}</Badge>
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4 pb-4">
@@ -534,8 +536,8 @@ export default function Home() {
             <div className="flex items-center gap-2">
               <Lock className="w-4 h-4 text-muted-foreground" />
               <div>
-                <p className="text-sm font-medium">Privacy Mode</p>
-                <p className="text-[10px] text-muted-foreground">Powered by Zama</p>
+                <p className="text-sm font-medium">{t("home.privacyMode")}</p>
+                <p className="text-[10px] text-muted-foreground">{t("home.poweredByZama")}</p>
               </div>
             </div>
             <button
@@ -586,12 +588,12 @@ export default function Home() {
             {pipelineRunning ? (
               <span className="flex items-center gap-2">
                 <Loader2 className="w-5 h-5 animate-spin" />
-                Processing Farm Data...
+                {t("home.running")}
               </span>
             ) : (
               <span className="flex items-center gap-2">
                 <Zap className="w-5 h-5" />
-                Analyze Farm
+                {t("home.analyzeFarm")}
                 {walletAddress && <span className="text-xs opacity-75 ml-1">+20 FLOW</span>}
               </span>
             )}
