@@ -874,9 +874,9 @@ export default function Home() {
             className="flex flex-col items-center gap-1.5 w-full px-3 py-3 rounded-xl bg-white/55 border border-white/65 hover:bg-white/75 transition-all group"
           >
             <img
-              src="https://avatars.githubusercontent.com/u/6935308"
+              src="https://logo.clearbit.com/protocol.ai"
               alt="Protocol Labs"
-              className="w-8 h-8 rounded-xl object-cover ring-1 ring-black/8 shadow-sm group-hover:scale-105 transition-transform"
+              className="w-8 h-8 rounded-xl object-contain bg-white p-0.5 ring-1 ring-black/8 shadow-sm group-hover:scale-105 transition-transform"
             />
             <div className="text-center">
               <p className="text-xs font-bold text-gray-800 leading-tight">Protocol Labs</p>
@@ -887,12 +887,12 @@ export default function Home() {
           {/* Protocol grid — 3 × 2, compact */}
           <div className="grid grid-cols-3 gap-1.5">
             {[
-              { name: "Flow", sub: "Rewards", avatar: "https://avatars.githubusercontent.com/u/62387156", href: "https://flow.com" },
-              { name: "Filecoin", sub: "Storage", avatar: "https://avatars.githubusercontent.com/u/22014611", href: "https://filecoin.io" },
-              { name: "Lit Protocol", sub: "Access", avatar: "https://avatars.githubusercontent.com/u/83147108", href: "https://litprotocol.com" },
-              { name: "Zama", sub: "Privacy", avatar: "https://avatars.githubusercontent.com/u/57671822", href: "https://zama.ai" },
-              { name: "Starknet", sub: "Insurance", avatar: "https://avatars.githubusercontent.com/u/104390117", href: "https://starknet.io" },
-              { name: "HyperCerts", sub: "Impact", avatar: "https://avatars.githubusercontent.com/u/124626532", href: "https://hypercerts.org" },
+              { name: "Flow", sub: "Rewards", avatar: "https://logo.clearbit.com/flow.com", href: "https://flow.com" },
+              { name: "Filecoin", sub: "Storage", avatar: "https://logo.clearbit.com/filecoin.io", href: "https://filecoin.io" },
+              { name: "Lit Protocol", sub: "Access", avatar: "https://logo.clearbit.com/litprotocol.com", href: "https://litprotocol.com" },
+              { name: "Zama", sub: "Privacy", avatar: "https://logo.clearbit.com/zama.ai", href: "https://zama.ai" },
+              { name: "Starknet", sub: "Insurance", avatar: "https://logo.clearbit.com/starknet.io", href: "https://starknet.io" },
+              { name: "HyperCerts", sub: "Impact", avatar: "https://logo.clearbit.com/hypercerts.org", href: "https://hypercerts.org" },
             ].map(({ name, sub, avatar, href }) => (
               <a
                 key={name}
@@ -904,7 +904,7 @@ export default function Home() {
                 <img
                   src={avatar}
                   alt={name}
-                  className="w-7 h-7 rounded-lg object-cover ring-1 ring-black/8 shadow-sm group-hover:scale-110 transition-transform duration-200"
+                  className="w-7 h-7 rounded-lg object-contain bg-white p-0.5 ring-1 ring-black/8 shadow-sm group-hover:scale-110 transition-transform duration-200"
                 />
                 <p className="text-[9px] font-bold text-gray-700 leading-tight text-center">{name}</p>
                 <p className="text-[8px] text-gray-400 leading-tight text-center">{sub}</p>
