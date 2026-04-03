@@ -22,6 +22,7 @@ import {
   Loader2, CheckCircle2, Sparkles, Users, TrendingUp, Globe,
   FlaskConical, TreePine, Flame, Sprout, ShieldCheck, AlertTriangle,
   ArrowRight, Copy, Plus, RefreshCw, Coins, ScrollText,
+  Medal, Building2, Award, CalendarDays, Landmark, HandCoins,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -76,6 +77,24 @@ interface Stats {
   totalCO2Tonnes: number;
   totalWaterSavedLitres: number;
   farmerCount: number;
+}
+
+interface FunderEntry {
+  rank: number;
+  funderName: string;
+  funderType: string;
+  totalAmountInr: number;
+  claimsCount: number;
+  hypercertsMinted: number;
+  totalCO2Funded: number;
+  totalWaterFunded: number;
+  fundings: Funding[];
+}
+
+interface FunderPortalData {
+  leaderboard: FunderEntry[];
+  typeBreakdown: Record<string, { totalAmountInr: number; count: number }>;
+  recentFundings: Funding[];
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -600,16 +619,341 @@ function SubmitClaimForm({ onSuccess }: { onSuccess: (claim: ImpactClaim) => voi
   );
 }
 
+// ─── Funder Type Icon ─────────────────────────────────────────────────────────
+
+function funderTypeIcon(type: string) {
+  if (type.includes("NGO")) return <Landmark className="w-3.5 h-3.5" />;
+  if (type.includes("Corporate")) return <Building2 className="w-3.5 h-3.5" />;
+  if (type.includes("Government")) return <Award className="w-3.5 h-3.5" />;
+  if (type.includes("International")) return <Globe className="w-3.5 h-3.5" />;
+  return <Users className="w-3.5 h-3.5" />;
+}
+
+const RANK_COLORS = [
+  "bg-amber-100 text-amber-700 border-amber-300",
+  "bg-slate-100 text-slate-700 border-slate-300",
+  "bg-orange-100 text-orange-700 border-orange-300",
+];
+
+// ─── Funder Portal ────────────────────────────────────────────────────────────
+
+function FunderPortal({ onOpenFundDialog }: { onOpenFundDialog: () => void }) {
+  const { toast } = useToast();
+  const [data, setData] = useState<FunderPortalData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [expanded, setExpanded] = useState<string | null>(null);
+
+  const fetchFunders = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/retroactive/funders");
+      const json = await res.json();
+      setData(json);
+    } catch (e) {
+      toast({ variant: "destructive", title: "Failed to load funder data", description: (e as Error).message });
+    } finally {
+      setLoading(false);
+    }
+  }, [toast]);
+
+  useEffect(() => { fetchFunders(); }, [fetchFunders]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-16 text-muted-foreground gap-2">
+        <Loader2 className="w-5 h-5 animate-spin" /><span className="text-sm">Loading funder portal…</span>
+      </div>
+    );
+  }
+
+  if (!data || data.leaderboard.length === 0) {
+    return (
+      <div className="space-y-4">
+        <div className="flex flex-col items-center justify-center py-12 text-muted-foreground gap-3">
+          <Trophy className="w-12 h-12 opacity-20" />
+          <div className="text-sm font-medium">No funders yet — be the first</div>
+          <div className="text-xs text-center max-w-xs text-muted-foreground">
+            NGOs, corporate CSR, and government schemes can retroactively fund verified farmer impact and receive on-chain Hypercerts as proof.
+          </div>
+          <Button className="mt-1 gap-2" onClick={onOpenFundDialog}>
+            <HandCoins className="w-4 h-4" />Fund a Farmer Now
+          </Button>
+        </div>
+
+        {/* How RPGF works for funders */}
+        <Card className="bg-gradient-to-br from-violet-50 to-indigo-50 border-violet-100">
+          <CardContent className="pt-4 pb-4 space-y-3">
+            <div className="text-xs font-bold text-violet-800 flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5" />Why Fund Retroactively?
+            </div>
+            {[
+              ["Zero speculation risk", "You only pay for impact that has already happened and been verified by IoT sensors + AI"],
+              ["On-chain proof", "Every contribution mints a real ERC-1155 Hypercert on Optimism Sepolia with your name encoded"],
+              ["CSR compliance", "IPFS-stored evidence package satisfies audit requirements for NGO grants and corporate CSR reporting"],
+              ["Carbon credits", "CO₂ tonnes are calculated using IPCC Tier 1 methodology — defensible for carbon offset claims"],
+            ].map(([title, desc]) => (
+              <div key={title} className="flex gap-2.5">
+                <CheckCircle2 className="w-4 h-4 text-violet-600 shrink-0 mt-0.5" />
+                <div>
+                  <div className="text-[11px] font-semibold text-violet-800">{title}</div>
+                  <div className="text-[10px] text-violet-700 opacity-80">{desc}</div>
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  const totalFunded = data.leaderboard.reduce((s, f) => s + f.totalAmountInr, 0);
+  const totalCerts = data.leaderboard.reduce((s, f) => s + f.hypercertsMinted, 0);
+  const totalCO2 = data.leaderboard.reduce((s, f) => s + f.totalCO2Funded, 0);
+
+  return (
+    <div className="space-y-4">
+      {/* Summary bar */}
+      <div className="grid grid-cols-3 gap-2">
+        <div className="rounded-xl border bg-violet-50 border-violet-100 p-2.5 text-center">
+          <div className="text-sm font-bold text-violet-800">{data.leaderboard.length}</div>
+          <div className="text-[10px] text-violet-600 mt-0.5">Funders</div>
+        </div>
+        <div className="rounded-xl border bg-amber-50 border-amber-100 p-2.5 text-center">
+          <div className="text-sm font-bold text-amber-800">{fmtINR(totalFunded)}</div>
+          <div className="text-[10px] text-amber-600 mt-0.5">Total Funded</div>
+        </div>
+        <div className="rounded-xl border bg-green-50 border-green-100 p-2.5 text-center">
+          <div className="text-sm font-bold text-green-800">{totalCO2.toFixed(1)}t</div>
+          <div className="text-[10px] text-green-600 mt-0.5">CO₂ Funded</div>
+        </div>
+      </div>
+
+      {/* Leaderboard */}
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <div className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+            <Trophy className="w-3.5 h-3.5 text-amber-500" />Impact Funder Leaderboard
+          </div>
+          <Button size="sm" variant="ghost" className="h-7 text-xs gap-1" onClick={fetchFunders}>
+            <RefreshCw className="w-3 h-3" />Refresh
+          </Button>
+        </div>
+
+        {data.leaderboard.map((funder) => {
+          const isExpanded = expanded === funder.funderName;
+          const rankColor = RANK_COLORS[funder.rank - 1] ?? "bg-muted/50 text-muted-foreground border-border";
+          const pct = totalFunded > 0 ? Math.round((funder.totalAmountInr / totalFunded) * 100) : 0;
+
+          return (
+            <Card key={funder.funderName} className={cn("border overflow-hidden transition-all", isExpanded && "border-primary/40")}>
+              <button
+                className="w-full text-left"
+                onClick={() => setExpanded(isExpanded ? null : funder.funderName)}
+              >
+                <CardContent className="px-3 py-3">
+                  <div className="flex items-center gap-2.5">
+                    {/* Rank badge */}
+                    <div className={cn("shrink-0 w-7 h-7 rounded-full border flex items-center justify-center text-xs font-bold", rankColor)}>
+                      {funder.rank <= 3 ? <Medal className="w-3.5 h-3.5" /> : `#${funder.rank}`}
+                    </div>
+
+                    {/* Name + type */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-sm font-semibold truncate">{funder.funderName}</span>
+                        {funder.rank === 1 && <Badge className="text-[9px] bg-amber-100 text-amber-700 border border-amber-300 px-1 py-0">Top Funder</Badge>}
+                      </div>
+                      <div className="flex items-center gap-1 text-[10px] text-muted-foreground mt-0.5">
+                        {funderTypeIcon(funder.funderType)}
+                        <span>{funder.funderType}</span>
+                        <span>·</span>
+                        <Sparkles className="w-2.5 h-2.5 text-violet-500" />
+                        <span>{funder.hypercertsMinted} Hypercert{funder.hypercertsMinted !== 1 ? "s" : ""}</span>
+                      </div>
+                    </div>
+
+                    {/* Amount */}
+                    <div className="text-right shrink-0">
+                      <div className="text-sm font-bold text-primary">{fmtINR(funder.totalAmountInr)}</div>
+                      <div className="text-[10px] text-muted-foreground">{funder.claimsCount} claim{funder.claimsCount !== 1 ? "s" : ""}</div>
+                    </div>
+                  </div>
+
+                  {/* Share bar */}
+                  <div className="mt-2 space-y-1">
+                    <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                      <div className="h-full rounded-full bg-primary/60 transition-all" style={{ width: `${pct}%` }} />
+                    </div>
+                    <div className="flex justify-between text-[9px] text-muted-foreground">
+                      <span>{pct}% of total funding</span>
+                      <span>{funder.totalCO2Funded.toFixed(1)}t CO₂ · {funder.totalWaterFunded >= 1000 ? `${Math.round(funder.totalWaterFunded / 1000)}kL` : `${funder.totalWaterFunded}L`} water</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </button>
+
+              {/* Expanded fundings */}
+              {isExpanded && (
+                <div className="border-t bg-muted/30 px-3 py-3 space-y-2">
+                  <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">Funding History</div>
+                  {funder.fundings.map((f) => (
+                    <div key={f.id} className="rounded-lg border bg-background px-3 py-2 space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-semibold">{fmtINR(f.amountInr)}</span>
+                        <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+                          <CalendarDays className="w-3 h-3" />
+                          {new Date(f.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                        </span>
+                      </div>
+                      {f.message && (
+                        <p className="text-[10px] text-muted-foreground italic">"{f.message}"</p>
+                      )}
+                      <div className="flex flex-wrap gap-2">
+                        {f.txHash && (
+                          <a href={`https://sepolia-optimism.etherscan.io/tx/${f.txHash}`}
+                            target="_blank" rel="noreferrer"
+                            className="flex items-center gap-1 text-[10px] text-blue-600 hover:underline">
+                            <ExternalLink className="w-2.5 h-2.5" />Etherscan
+                          </a>
+                        )}
+                        {f.hypercertUrl && (
+                          <a href={f.hypercertUrl} target="_blank" rel="noreferrer"
+                            className="flex items-center gap-1 text-[10px] text-violet-600 hover:underline">
+                            <Sparkles className="w-2.5 h-2.5" />Hypercert
+                          </a>
+                        )}
+                        {f.txHash && (
+                          <button onClick={() => { navigator.clipboard.writeText(f.txHash!); toast({ title: "Copied!" }); }}
+                            className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground">
+                            <Copy className="w-2.5 h-2.5" />{f.txHash.slice(0, 8)}…
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+
+                  {/* Impact summary for this funder */}
+                  <div className="rounded-lg bg-green-50 border border-green-100 px-3 py-2 mt-1">
+                    <div className="text-[10px] font-semibold text-green-700 mb-1.5">Your Verified Impact Attribution</div>
+                    <div className="grid grid-cols-3 gap-2 text-center">
+                      <div>
+                        <div className="text-xs font-bold text-green-700">{funder.totalCO2Funded.toFixed(1)}t</div>
+                        <div className="text-[9px] text-green-600">CO₂ Offset</div>
+                      </div>
+                      <div>
+                        <div className="text-xs font-bold text-blue-700">
+                          {funder.totalWaterFunded >= 1000 ? `${Math.round(funder.totalWaterFunded / 1000)}kL` : `${funder.totalWaterFunded}L`}
+                        </div>
+                        <div className="text-[9px] text-blue-600">Water Saved</div>
+                      </div>
+                      <div>
+                        <div className="text-xs font-bold text-violet-700">{funder.hypercertsMinted}</div>
+                        <div className="text-[9px] text-violet-600">On-chain Certs</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </Card>
+          );
+        })}
+      </div>
+
+      {/* Funder type breakdown */}
+      {Object.keys(data.typeBreakdown).length > 0 && (
+        <div className="space-y-2">
+          <div className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+            <BarChart3 className="w-3.5 h-3.5 text-primary" />Funding by Source Type
+          </div>
+          <Card>
+            <CardContent className="px-3 py-3 space-y-2.5">
+              {Object.entries(data.typeBreakdown)
+                .sort((a, b) => b[1].totalAmountInr - a[1].totalAmountInr)
+                .map(([type, info]) => {
+                  const pct = totalFunded > 0 ? Math.round((info.totalAmountInr / totalFunded) * 100) : 0;
+                  return (
+                    <div key={type} className="space-y-1">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="flex items-center gap-1.5 font-medium">
+                          {funderTypeIcon(type)}{type}
+                        </span>
+                        <span className="text-muted-foreground">{fmtINR(info.totalAmountInr)} · {info.count} funding{info.count !== 1 ? "s" : ""}</span>
+                      </div>
+                      <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                        <div className="h-full rounded-full bg-gradient-to-r from-primary to-primary/60 transition-all" style={{ width: `${pct}%` }} />
+                      </div>
+                    </div>
+                  );
+                })}
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Recent activity feed */}
+      {data.recentFundings.length > 0 && (
+        <div className="space-y-2">
+          <div className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+            <TrendingUp className="w-3.5 h-3.5 text-primary" />Recent Funding Activity
+          </div>
+          <div className="space-y-1.5">
+            {data.recentFundings.slice(0, 5).map((f) => (
+              <div key={f.id} className="flex items-center gap-2.5 rounded-lg border bg-muted/20 px-3 py-2">
+                <div className="shrink-0 w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center">
+                  <HandCoins className="w-3.5 h-3.5 text-primary" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-xs font-medium truncate">{f.funderName}</div>
+                  <div className="text-[10px] text-muted-foreground">{f.funderType}</div>
+                </div>
+                <div className="text-right shrink-0">
+                  <div className="text-xs font-bold text-primary">{fmtINR(f.amountInr)}</div>
+                  {f.txHash ? (
+                    <div className="flex items-center gap-0.5 text-[10px] text-violet-600">
+                      <Sparkles className="w-2.5 h-2.5" />On-chain
+                    </div>
+                  ) : (
+                    <div className="text-[10px] text-muted-foreground">Recorded</div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* CTA */}
+      <Card className="bg-gradient-to-br from-violet-50 to-indigo-50 border-violet-100">
+        <CardContent className="pt-4 pb-4 flex items-center justify-between gap-3">
+          <div>
+            <div className="text-sm font-bold text-violet-800">Fund the next farmer</div>
+            <div className="text-[10px] text-violet-600 mt-0.5">
+              Your name gets encoded in the Hypercert on Optimism Sepolia
+            </div>
+          </div>
+          <Button size="sm" className="shrink-0 gap-1.5 bg-violet-700 hover:bg-violet-800" onClick={onOpenFundDialog}>
+            <HandCoins className="w-3.5 h-3.5" />Fund Now
+          </Button>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function Retroactive() {
   const [claims, setClaims] = useState<ImpactClaim[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
-  const [role, setRole] = useState<"farmer" | "funder">("funder");
+  const [role, setRole] = useState<"farmer" | "funder" | "portal">("funder");
   const [fundTarget, setFundTarget] = useState<ImpactClaim | null>(null);
   const [activityFilter, setActivityFilter] = useState("all");
   const { toast } = useToast();
+
+  const handleOpenFundDialog = useCallback(() => {
+    setRole("funder");
+  }, []);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -678,13 +1022,16 @@ export default function Retroactive() {
       )}
 
       {/* Role switcher */}
-      <Tabs value={role} onValueChange={(v) => setRole(v as "farmer" | "funder")}>
-        <TabsList className="w-full grid grid-cols-2">
-          <TabsTrigger value="funder" className="gap-1.5">
-            <TrendingUp className="w-3.5 h-3.5" />Browse &amp; Fund
+      <Tabs value={role} onValueChange={(v) => setRole(v as "farmer" | "funder" | "portal")}>
+        <TabsList className="w-full grid grid-cols-3">
+          <TabsTrigger value="funder" className="gap-1 text-xs">
+            <TrendingUp className="w-3 h-3" />Browse &amp; Fund
           </TabsTrigger>
-          <TabsTrigger value="farmer" className="gap-1.5">
-            <Sprout className="w-3.5 h-3.5" />Submit Claim
+          <TabsTrigger value="portal" className="gap-1 text-xs">
+            <Trophy className="w-3 h-3" />Funder Portal
+          </TabsTrigger>
+          <TabsTrigger value="farmer" className="gap-1 text-xs">
+            <Sprout className="w-3 h-3" />Submit Claim
           </TabsTrigger>
         </TabsList>
 
@@ -744,6 +1091,11 @@ export default function Retroactive() {
               </div>
             </>
           )}
+        </TabsContent>
+
+        {/* ─── FUNDER PORTAL TAB ─── */}
+        <TabsContent value="portal" className="space-y-3 mt-3">
+          <FunderPortal onOpenFundDialog={handleOpenFundDialog} />
         </TabsContent>
 
         {/* ─── FARMER TAB ─── */}

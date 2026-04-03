@@ -461,6 +461,71 @@ router.post("/retroactive/claims/:id/fund", async (req, res): Promise<void> => {
   });
 });
 
+// GET /api/retroactive/funders — aggregate leaderboard + portfolio
+router.get("/retroactive/funders", async (_req, res): Promise<void> => {
+  const fundings = await db
+    .select()
+    .from(retroactiveFundingsTable)
+    .orderBy(desc(retroactiveFundingsTable.createdAt));
+
+  const claims = await db.select().from(impactClaimsTable);
+  const claimMap = new Map(claims.map((c) => [c.id, c]));
+
+  // Aggregate by funder name
+  const funderMap = new Map<string, {
+    funderName: string;
+    funderType: string;
+    totalAmountInr: number;
+    claimsCount: number;
+    hypercertsMinted: number;
+    totalCO2Funded: number;
+    totalWaterFunded: number;
+    fundings: typeof fundings;
+  }>();
+
+  for (const f of fundings) {
+    const key = f.funderName.toLowerCase().trim();
+    const claim = claimMap.get(f.claimId);
+    const co2 = parseFloat(String(claim?.co2Tonnes ?? 0));
+    const water = claim?.waterSavedLitres ?? 0;
+
+    if (!funderMap.has(key)) {
+      funderMap.set(key, {
+        funderName: f.funderName,
+        funderType: f.funderType,
+        totalAmountInr: 0,
+        claimsCount: 0,
+        hypercertsMinted: 0,
+        totalCO2Funded: 0,
+        totalWaterFunded: 0,
+        fundings: [],
+      });
+    }
+    const entry = funderMap.get(key)!;
+    entry.totalAmountInr += f.amountInr ?? 0;
+    entry.claimsCount += 1;
+    if (f.txHash) entry.hypercertsMinted += 1;
+    entry.totalCO2Funded += co2;
+    entry.totalWaterFunded += water;
+    entry.fundings.push(f);
+  }
+
+  const leaderboard = Array.from(funderMap.values())
+    .sort((a, b) => b.totalAmountInr - a.totalAmountInr)
+    .map((f, i) => ({ ...f, rank: i + 1, totalCO2Funded: Math.round(f.totalCO2Funded * 100) / 100 }));
+
+  // Type breakdown
+  const typeBreakdown: Record<string, { totalAmountInr: number; count: number }> = {};
+  for (const f of fundings) {
+    const t = f.funderType || "Other";
+    if (!typeBreakdown[t]) typeBreakdown[t] = { totalAmountInr: 0, count: 0 };
+    typeBreakdown[t].totalAmountInr += f.amountInr ?? 0;
+    typeBreakdown[t].count += 1;
+  }
+
+  res.json({ leaderboard, typeBreakdown, recentFundings: fundings.slice(0, 20) });
+});
+
 // GET /api/retroactive/stats
 router.get("/retroactive/stats", async (_req, res): Promise<void> => {
   const claims = await db.select().from(impactClaimsTable);
