@@ -260,8 +260,8 @@ async function getOrRefreshPrices() {
     for (const p of BASE_PRICES) {
       await db.insert(marketPricesTable).values(p);
     }
-  } else if (now - lastPriceRefresh > 3_600_000) {
-    // Refresh every hour — try live AGMARKNET first, fall back to simulation
+  } else if (lastPriceRefresh === 0 || now - lastPriceRefresh > 3_600_000) {
+    // Refresh on startup and then every hour — try live AGMARKNET first, fall back to simulation
     lastPriceRefresh = now;
 
     const gotLive = await fetchLivePricesFromAgmarknet();
