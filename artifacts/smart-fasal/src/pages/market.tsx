@@ -554,20 +554,30 @@ export default function Market() {
 
   return (
     <div className="space-y-5 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      {/* ── Header ── */}
-      <div className="flex justify-between items-end">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight">Marketplace</h2>
-          <p className="text-muted-foreground text-xs">Live Mandi prices · P2P trade · Filecoin escrow · IPFS storage</p>
+      {/* Hero Header */}
+      <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-orange-500 via-amber-500 to-yellow-500 p-4 shadow-lg">
+        <div className="absolute -top-6 -right-6 w-28 h-28 rounded-full bg-white/10 blur-xl" />
+        <div className="absolute bottom-0 left-0 w-20 h-20 rounded-full bg-yellow-300/20 blur-lg" />
+        <div className="relative flex items-center justify-between">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <div className="w-7 h-7 rounded-lg bg-white/20 flex items-center justify-center">
+                <Store className="w-4 h-4 text-white" />
+              </div>
+              <p className="text-orange-100 text-xs font-bold uppercase tracking-wide">Smart Fasal</p>
+            </div>
+            <h2 className="text-xl font-extrabold text-white tracking-tight">Marketplace</h2>
+            <p className="text-orange-100/70 text-xs mt-0.5">Live Mandi Prices · P2P Trade · Filecoin Escrow</p>
+          </div>
+          <a
+            href="https://lighthouse.storage"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 text-xs font-bold text-orange-900 bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-md hover:bg-white transition-all"
+          >
+            <span>⬡</span> Protocol Labs
+          </a>
         </div>
-        <a
-          href="https://lighthouse.storage"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center gap-1 text-[10px] text-blue-700 font-semibold bg-blue-50 border border-blue-200 rounded-full px-2.5 py-1 hover:bg-blue-100 transition-colors"
-        >
-          <span>⬡</span> Protocol Labs
-        </a>
       </div>
 
       <Tabs defaultValue="mandi" className="w-full">

@@ -2541,23 +2541,35 @@ export default function Web3Hub() {
   const { t } = useTranslation();
   return (
     <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div>
-        <h2 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-          <Sparkles className="w-6 h-6 text-primary" />
-          {t("web3.title")}
-        </h2>
-        <p className="text-muted-foreground text-sm">{t("web3.subtitle")}</p>
-      </div>
-
-      {/* Protocol status strip */}
-      <div className="flex gap-1.5 flex-wrap">
-        {TABS.map(t => (
-          <div key={t.value} className="flex items-center gap-1 text-[10px] font-semibold bg-muted/80 border rounded-full px-2 py-0.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-            <t.icon className={cn("w-3 h-3", t.color)} />
-            <span>{t.label}</span>
+      {/* Hero Header */}
+      <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-blue-600 via-indigo-600 to-violet-700 p-4 shadow-lg">
+        <div className="absolute -top-6 -right-6 w-28 h-28 rounded-full bg-white/10 blur-xl" />
+        <div className="absolute bottom-0 left-0 w-20 h-20 rounded-full bg-violet-400/20 blur-lg" />
+        <div className="relative">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-lg bg-white/20 flex items-center justify-center">
+                <Sparkles className="w-4 h-4 text-white" />
+              </div>
+              <p className="text-blue-100 text-xs font-bold uppercase tracking-wide">Smart Fasal</p>
+            </div>
+            <span className="text-[10px] font-bold text-green-900 bg-green-300/90 rounded-full px-2.5 py-1">
+              🟢 All Protocols Live
+            </span>
           </div>
-        ))}
+          <h2 className="text-xl font-extrabold text-white tracking-tight">{t("web3.title")}</h2>
+          <p className="text-blue-100/70 text-xs mt-0.5">{t("web3.subtitle")}</p>
+          {/* Protocol pills */}
+          <div className="flex gap-1.5 flex-wrap mt-3">
+            {TABS.map(tab => (
+              <div key={tab.value} className="flex items-center gap-1 text-[10px] font-semibold bg-white/15 backdrop-blur-sm rounded-full px-2 py-0.5 border border-white/20">
+                <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+                <tab.icon className="w-2.5 h-2.5 text-white" />
+                <span className="text-white">{tab.label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
 
       <Tabs defaultValue="flow">

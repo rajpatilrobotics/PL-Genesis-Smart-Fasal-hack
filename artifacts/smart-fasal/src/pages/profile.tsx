@@ -112,6 +112,24 @@ export default function Profile() {
   return (
     <div className="space-y-5 animate-in fade-in slide-in-from-bottom-4 duration-500">
 
+      {/* Hero Header */}
+      <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-emerald-600 via-green-600 to-teal-700 p-4 shadow-lg mb-1">
+        <div className="absolute -top-6 -right-6 w-28 h-28 rounded-full bg-white/10 blur-xl" />
+        <div className="absolute bottom-0 left-4 opacity-10">
+          <Leaf className="w-28 h-28" />
+        </div>
+        <div className="relative">
+          <div className="flex items-center gap-2 mb-1">
+            <div className="w-7 h-7 rounded-lg bg-white/20 flex items-center justify-center">
+              <Sprout className="w-4 h-4 text-white" />
+            </div>
+            <p className="text-emerald-100 text-xs font-bold uppercase tracking-wide">Smart Fasal</p>
+          </div>
+          <h2 className="text-xl font-extrabold text-white tracking-tight">{t("profile.title")}</h2>
+          <p className="text-emerald-100/70 text-xs mt-0.5">Credit Score · Farm History · Identity</p>
+        </div>
+      </div>
+
       {/* Profile Hero Card */}
       <Card className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border-primary/20 overflow-hidden relative">
         <div className="absolute right-0 top-0 opacity-5">
