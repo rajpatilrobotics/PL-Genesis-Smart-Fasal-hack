@@ -1,4 +1,4 @@
-import { Leaf, Wallet, LogOut, Wifi, CheckCircle, Gift, UserCircle, LogIn } from "lucide-react";
+import { Wallet, LogOut, Wifi, CheckCircle, Gift, UserCircle, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useWallet } from "@/lib/wallet-context";
@@ -6,8 +6,9 @@ import { useUser, useClerk } from "@clerk/react";
 import { useLocation } from "wouter";
 
 const MOCK_BALANCE = "100,000";
+const clerkEnabled = !!import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
-function ClerkAuthButton() {
+function ClerkAuthButtonInner() {
   const { isSignedIn, user } = useUser();
   const { signOut } = useClerk();
   const [, setLocation] = useLocation();
@@ -43,6 +44,11 @@ function ClerkAuthButton() {
       Sign In
     </Button>
   );
+}
+
+function ClerkAuthButton() {
+  if (!clerkEnabled) return null;
+  return <ClerkAuthButtonInner />;
 }
 
 export default function TopHeader() {
