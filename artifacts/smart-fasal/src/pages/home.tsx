@@ -157,12 +157,12 @@ export default function Home() {
     const activeSensor = sensorData ?? displaySensor;
 
     const initialSteps: PipelineStep[] = [
-      { id: "ai", label: "AI Analysis", description: "Analyzing soil & weather data...", status: "idle" },
-      { id: "privacy", label: "Privacy Layer", description: "Applying Zama-style encryption...", status: "idle" },
-      { id: "filecoin", label: "Filecoin Storage", description: "Storing structured data on IPFS...", status: "idle" },
-      { id: "access", label: "Access Control", description: `Applying ${accessLevel} permissions via Lit...`, status: "idle" },
-      { id: "rewards", label: "Flow Rewards", description: "Issuing blockchain rewards...", status: "idle" },
-      { id: "insurance", label: "Starknet Insurance", description: "Evaluating parametric risk...", status: "idle" },
+      { id: "ai", label: t("home.aiAnalysis"), description: t("home.analyzingData"), status: "idle" },
+      { id: "privacy", label: t("home.privacyLayer"), description: t("home.applyingEncryption"), status: "idle" },
+      { id: "filecoin", label: t("home.filecoinStorage"), description: t("home.storingOnIPFS"), status: "idle" },
+      { id: "access", label: t("home.accessControl"), description: t("home.applyingPermissions"), status: "idle" },
+      { id: "rewards", label: t("home.flowRewards"), description: t("home.issuingRewards"), status: "idle" },
+      { id: "insurance", label: t("home.starknetInsurance"), description: t("home.evaluatingRisk"), status: "idle" },
     ];
 
     setSteps(initialSteps);
@@ -223,7 +223,7 @@ export default function Home() {
     await delay(700);
     setSteps(prev => prev.map(s => s.id === "privacy" ? {
       ...s, status: "done",
-      result: privacyEnabled ? "Raw values masked · Insights preserved" : "Privacy layer off · Full data visible"
+      result: privacyEnabled ? t("home.rawValuesMasked") : t("home.privacyLayerOff")
     } : s));
     await delay(400);
 
@@ -611,7 +611,7 @@ export default function Home() {
           <CardHeader className="pb-2 pt-4">
             <CardTitle className="text-sm flex items-center gap-2 text-muted-foreground">
               <Activity className="w-4 h-4" />
-              {pipelineRunning ? "Running Pipeline..." : "Pipeline Complete"}
+              {pipelineRunning ? t("home.pipelineRunning") : t("home.pipelineComplete")}
             </CardTitle>
           </CardHeader>
           <CardContent className="pb-4 space-y-2">
@@ -661,29 +661,29 @@ export default function Home() {
         )}>
           <CardContent className="p-4 space-y-4">
             <div className="flex items-center justify-between">
-              <p className="font-bold text-sm">Analysis Summary</p>
+              <p className="font-bold text-sm">{t("home.analysisDone")}</p>
               {pipelineResult.riskLevel === "High" && (
                 <div className="flex items-center gap-1.5 text-red-600 text-xs font-bold bg-red-100 border border-red-200 px-2.5 py-1 rounded-full">
                   <AlertTriangle className="w-3.5 h-3.5" />
-                  Insurance Auto-Triggered
+                  {t("home.insuranceTriggered")}
                 </div>
               )}
             </div>
 
             <div className="grid grid-cols-3 gap-2">
               <div className="text-center p-2.5 bg-white rounded-xl border">
-                <p className="text-[10px] uppercase font-bold text-muted-foreground mb-1">Health</p>
+                <p className="text-[10px] uppercase font-bold text-muted-foreground mb-1">{t("ai.healthLabel")}</p>
                 <p className="text-xl font-bold text-primary">{pipelineResult.aiHealth}%</p>
               </div>
               <div className="text-center p-2.5 bg-white rounded-xl border">
-                <p className="text-[10px] uppercase font-bold text-muted-foreground mb-1">Risk</p>
+                <p className="text-[10px] uppercase font-bold text-muted-foreground mb-1">{t("ai.riskLabel")}</p>
                 <p className={cn("text-sm font-bold mt-0.5",
                   pipelineResult.riskLevel === "Low" ? "text-green-600" :
                   pipelineResult.riskLevel === "High" ? "text-red-600" : "text-yellow-600"
                 )}>{pipelineResult.riskLevel}</p>
               </div>
               <div className="text-center p-2.5 bg-white rounded-xl border">
-                <p className="text-[10px] uppercase font-bold text-muted-foreground mb-1">Yield</p>
+                <p className="text-[10px] uppercase font-bold text-muted-foreground mb-1">{t("ai.yieldLabel")}</p>
                 <p className="text-xl font-bold text-primary">{pipelineResult.aiYield}%</p>
               </div>
             </div>
@@ -692,11 +692,11 @@ export default function Home() {
 
             <div className="grid grid-cols-2 gap-2 text-xs">
               <div className="bg-white rounded-xl border p-2.5">
-                <p className="text-muted-foreground mb-0.5">CID (Filecoin)</p>
+                <p className="text-muted-foreground mb-0.5">{t("home.cidFilecoin")}</p>
                 <p className="font-mono font-semibold text-[10px] break-all">{pipelineResult.cid.substring(0, 20)}...</p>
               </div>
               <div className="bg-white rounded-xl border p-2.5">
-                <p className="text-muted-foreground mb-0.5">Rewards Earned</p>
+                <p className="text-muted-foreground mb-0.5">{t("home.rewardEarned")}</p>
                 <p className="font-bold text-amber-600">+{pipelineResult.rewardEarned} FLOW</p>
               </div>
             </div>
@@ -706,12 +706,12 @@ export default function Home() {
                 <div className="flex items-center gap-2">
                   <Shield className="w-4 h-4 text-red-600" />
                   <div>
-                    <p className="text-xs font-bold text-red-700">Starknet Insurance</p>
-                    <p className="text-[10px] text-red-600">Auto-triggered claim</p>
+                    <p className="text-xs font-bold text-red-700">{t("home.starknetInsurance")}</p>
+                    <p className="text-[10px] text-red-600">{t("home.autoTriggeredClaim")}</p>
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-xs text-red-600">Est. Payout</p>
+                  <p className="text-xs text-red-600">{t("home.estPayout")}</p>
                   <p className="text-sm font-bold text-red-700">₹{pipelineResult.estimatedPayout.toLocaleString()}</p>
                 </div>
               </div>
@@ -723,15 +723,15 @@ export default function Home() {
       {/* Tech Badge Strip */}
       <div className="flex flex-wrap gap-1.5 pt-1 pb-2">
         {[
-          { label: "Powered by Flow", color: "bg-green-50 text-green-700 border-green-200" },
-          { label: "Stored on Filecoin", color: "bg-blue-50 text-blue-700 border-blue-200" },
-          { label: "Access via Lit Protocol", color: "bg-purple-50 text-purple-700 border-purple-200" },
-          { label: "Privacy via Zama", color: "bg-pink-50 text-pink-700 border-pink-200" },
-          { label: "Insurance via Starknet", color: "bg-orange-50 text-orange-700 border-orange-200" },
-          { label: "Recognition via Hypercerts", color: "bg-amber-50 text-amber-700 border-amber-200" },
-        ].map(({ label, color }) => (
-          <span key={label} className={cn("text-[9px] font-semibold border rounded-full px-2 py-0.5", color)}>
-            {label}
+          { key: "badgeFlow", color: "bg-green-50 text-green-700 border-green-200" },
+          { key: "badgeFilecoin", color: "bg-blue-50 text-blue-700 border-blue-200" },
+          { key: "badgeLit", color: "bg-purple-50 text-purple-700 border-purple-200" },
+          { key: "badgeZama", color: "bg-pink-50 text-pink-700 border-pink-200" },
+          { key: "badgeStarknet", color: "bg-orange-50 text-orange-700 border-orange-200" },
+          { key: "badgeHypercerts", color: "bg-amber-50 text-amber-700 border-amber-200" },
+        ].map(({ key, color }) => (
+          <span key={key} className={cn("text-[9px] font-semibold border rounded-full px-2 py-0.5", color)}>
+            {t(`home.${key}`)}
           </span>
         ))}
       </div>
