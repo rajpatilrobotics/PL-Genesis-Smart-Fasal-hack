@@ -3,8 +3,10 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Activity, Droplets, FlaskConical, TrendingUp, CheckCircle } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 export default function Analytics() {
+  const { t } = useTranslation();
   const { data: history, isLoading: loadingHistory } = useGetSensorHistory({ limit: 20 }, {
     query: {
       queryKey: getGetSensorHistoryQueryKey({ limit: 20 })
@@ -43,7 +45,7 @@ export default function Analytics() {
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">Farm Analytics</h2>
+          <h2 className="text-2xl font-bold tracking-tight">{t("analytics.title")}</h2>
           <p className="text-muted-foreground text-sm">Historical trends and system logs</p>
         </div>
         {health && (

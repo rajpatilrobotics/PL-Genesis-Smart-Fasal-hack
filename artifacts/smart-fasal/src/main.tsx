@@ -1,6 +1,7 @@
 import { createRoot } from "react-dom/client";
 import App from "./App";
 import "./index.css";
+import "./i18n";
 import { fcl } from "./lib/flow";
 
 // Eagerly subscribe to FCL user state on page load so the internal

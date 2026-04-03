@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -427,6 +428,7 @@ function ProductCard({ product }: {
 }
 
 export default function Market() {
+  const { t } = useTranslation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -555,7 +557,7 @@ export default function Market() {
       {/* ── Header ── */}
       <div className="flex justify-between items-end">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">Marketplace</h2>
+          <h2 className="text-2xl font-bold tracking-tight">{t("market.title")}</h2>
           <p className="text-muted-foreground text-xs">Live Mandi prices · P2P trade · Filecoin escrow · IPFS storage</p>
         </div>
         <a

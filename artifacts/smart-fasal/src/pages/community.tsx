@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -152,6 +153,7 @@ const SEVERITY_CONFIG: Record<string, { color: string; bg: string; label: string
 const BASE_ONLINE_COUNT = 127;
 
 export default function Community() {
+  const { t } = useTranslation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const chatBottomRef = useRef<HTMLDivElement>(null);
@@ -358,7 +360,7 @@ export default function Community() {
   return (
     <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500 flex flex-col h-[calc(100vh-8rem)]">
       <div>
-        <h2 className="text-2xl font-bold tracking-tight">Community</h2>
+        <h2 className="text-2xl font-bold tracking-tight">{t("community.title")}</h2>
         <p className="text-muted-foreground text-sm flex items-center gap-2">
           Connect, learn, and grow together
           <span className="inline-flex items-center gap-1 text-green-600 font-medium text-xs">

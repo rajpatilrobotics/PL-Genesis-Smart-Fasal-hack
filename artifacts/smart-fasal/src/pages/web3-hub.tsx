@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, lazy, Suspense } from "react";
+import { useTranslation } from "react-i18next";
 const RetroactivePage = lazy(() => import("@/pages/retroactive"));
 import { litEncrypt, litDecrypt, getLitClient, shortCipher, getEphemeralWallet, type LitEncryptResult } from "@/lib/lit";
 import {
@@ -2537,12 +2538,13 @@ const TABS = [
 ];
 
 export default function Web3Hub() {
+  const { t } = useTranslation();
   return (
     <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div>
         <h2 className="text-2xl font-bold tracking-tight flex items-center gap-2">
           <Sparkles className="w-6 h-6 text-primary" />
-          Web3 Hub
+          {t("web3.title")}
         </h2>
         <p className="text-muted-foreground text-sm">All 6 protocols — live and interactive</p>
       </div>

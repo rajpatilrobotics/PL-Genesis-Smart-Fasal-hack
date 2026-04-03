@@ -56,6 +56,7 @@ Full-stack mobile-style web app for Indian farmers combining:
 - Verifiable Farmer Credit History (CIBIL-style 300–900 AI credit score)
 - HyperCerts on Optimism Sepolia (impact certificates for sustainable farming)
 - Zama FHE disease intelligence (private encrypted reporting)
+- Multilingual support (9 languages): English, Hindi, Telugu, Marathi, Spanish, French, Arabic, Portuguese, Swahili
 
 ## Stack
 

@@ -4,6 +4,8 @@ import { Input } from "@/components/ui/input";
 import { useWallet } from "@/lib/wallet-context";
 import { useUser, useClerk } from "@clerk/react";
 import { useLocation } from "wouter";
+import { useTranslation } from "react-i18next";
+import LanguageSelector from "@/components/LanguageSelector";
 
 const MOCK_BALANCE = "100,000";
 
@@ -11,6 +13,7 @@ function ClerkAuthButton() {
   const { isSignedIn, user } = useUser();
   const { signOut } = useClerk();
   const [, setLocation] = useLocation();
+  const { t } = useTranslation();
 
   if (isSignedIn) {
     const name = user.firstName || user.emailAddresses[0]?.emailAddress?.split("@")[0] || "Farmer";
@@ -19,7 +22,7 @@ function ClerkAuthButton() {
         <button
           onClick={() => setLocation("/profile")}
           className="flex items-center gap-1 text-xs font-medium text-primary hover:text-primary/80 transition-colors"
-          title="My Profile"
+          title={t("header.myProfile")}
         >
           {user.imageUrl
             ? <img src={user.imageUrl} alt={name} className="w-5 h-5 rounded-full object-cover" />
@@ -29,7 +32,7 @@ function ClerkAuthButton() {
         <button
           onClick={() => signOut(() => setLocation("/"))}
           className="text-muted-foreground hover:text-destructive transition-colors"
-          title="Sign out"
+          title={t("header.signOut")}
         >
           <LogOut className="w-3.5 h-3.5" />
         </button>
@@ -40,12 +43,13 @@ function ClerkAuthButton() {
   return (
     <Button size="sm" variant="outline" className="h-7 text-xs px-2.5 gap-1" onClick={() => setLocation("/sign-in")}>
       <LogIn className="w-3 h-3" />
-      Sign In
+      {t("header.signIn")}
     </Button>
   );
 }
 
 export default function TopHeader() {
+  const { t } = useTranslation();
   const {
     walletAddress,
     isManual,
@@ -75,12 +79,13 @@ export default function TopHeader() {
             <span className="font-bold text-lg tracking-tight">Smart Fasal</span>
           </div>
           <span className="text-[9px] font-semibold text-emerald-600 bg-emerald-50 border border-emerald-200 rounded-full px-2 py-px leading-tight">
-            ⛓ Powered by Flow Blockchain
+            {t("header.poweredBy")}
           </span>
         </div>
 
         {/* Right section */}
         <div className="flex items-center gap-2 min-w-0">
+          <LanguageSelector />
           <ClerkAuthButton />
 
           {/* CONNECTED STATE */}
@@ -95,7 +100,7 @@ export default function TopHeader() {
                 }
                 <span className="font-mono font-semibold text-primary truncate max-w-[110px]">{displayAddress}</span>
                 <span className="text-[9px] bg-green-100 text-green-700 font-bold px-1.5 py-px rounded-full shrink-0">LIVE</span>
-                <button onClick={handleDisconnect} className="ml-0.5 text-muted-foreground hover:text-destructive transition-colors shrink-0" title="Disconnect">
+                <button onClick={handleDisconnect} className="ml-0.5 text-muted-foreground hover:text-destructive transition-colors shrink-0" title={t("header.signOut")}>
                   <LogOut className="w-3 h-3" />
                 </button>
               </div>
@@ -103,11 +108,11 @@ export default function TopHeader() {
               {/* Wallet info row */}
               <div className="flex items-center gap-2 text-[10px] px-1 flex-wrap justify-end">
                 <span className="text-muted-foreground">
-                  Network: <span className="font-semibold text-foreground">Flow Testnet</span>
+                  {t("header.network")}: <span className="font-semibold text-foreground">Flow Testnet</span>
                 </span>
                 <span className="text-border">·</span>
                 <span className="text-muted-foreground">
-                  Balance: <span className="font-semibold text-foreground">{MOCK_BALANCE} FLOW</span>
+                  {t("header.balance")}: <span className="font-semibold text-foreground">{MOCK_BALANCE} FLOW</span>
                 </span>
                 <span className="text-border">·</span>
                 <span className="flex items-center gap-0.5 text-amber-600 font-semibold">
@@ -118,7 +123,7 @@ export default function TopHeader() {
 
               {/* Rewards label */}
               <span className="text-[8px] text-muted-foreground/70 px-1">
-                Rewards powered by Flow Blockchain
+                {t("header.rewards")}
               </span>
             </div>
           )}
@@ -145,11 +150,11 @@ export default function TopHeader() {
             <div className="flex items-center gap-2">
               <Button onClick={handleConnect} disabled={isConnecting} size="sm" className="rounded-full font-semibold px-4">
                 <Wallet className="w-4 h-4 mr-1.5" />
-                {isConnecting ? "Connecting..." : "Connect Flow"}
+                {isConnecting ? t("header.connecting") : t("header.connectFlow")}
               </Button>
               <button onClick={() => setShowManualInput(true)}
                 className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground transition-colors">
-                Manual
+                {t("header.manual")}
               </button>
             </div>
           )}

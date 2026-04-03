@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import {
   useGetWeather, getGetWeatherQueryKey,
   useGetLatestSensorData, getGetLatestSensorDataQueryKey,
@@ -74,6 +75,7 @@ const ACCESS_OPTIONS: { value: AccessLevel; icon: React.ComponentType<{ classNam
 ];
 
 export default function Home() {
+  const { t } = useTranslation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { walletAddress, addFlowReward, addDataEntry } = useWallet();

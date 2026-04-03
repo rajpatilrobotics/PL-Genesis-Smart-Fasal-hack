@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -39,6 +40,7 @@ type EvidenceRecord = {
 };
 
 export default function AiHub() {
+  const { t } = useTranslation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { walletAddress, addFlowReward } = useWallet();
@@ -287,7 +289,7 @@ export default function AiHub() {
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div>
-        <h2 className="text-2xl font-bold tracking-tight">AI Farm Hub</h2>
+        <h2 className="text-2xl font-bold tracking-tight">{t("ai.title")}</h2>
         <p className="text-muted-foreground text-sm">Powered insights for better yields</p>
         {walletAddress && (
           <div className="mt-2 flex items-center gap-1.5 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-1.5 w-fit">

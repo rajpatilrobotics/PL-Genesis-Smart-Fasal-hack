@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useWallet } from "@/lib/wallet-context";
 import { useUserProfile, useUpdateProfile } from "@/lib/useUserProfile";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -59,6 +60,7 @@ function formatDate(iso: string) {
 }
 
 export default function Profile() {
+  const { t } = useTranslation();
   const { walletAddress, flowRewards, contributionCount, dataHistory, certificates, currentRisk, handleConnect } = useWallet();
   const { data: profileData, isLoading } = useUserProfile();
   const { mutateAsync: updateProfile, isPending: isSaving } = useUpdateProfile();

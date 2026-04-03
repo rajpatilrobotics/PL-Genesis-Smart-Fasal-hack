@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import {
   getCreditProfile,
   submitCreditSeason,
@@ -508,6 +509,7 @@ function VerifyCid() {
 }
 
 export default function CreditPage() {
+  const { t } = useTranslation();
   const [showForm, setShowForm] = useState(false);
 
   const { data: profile, isLoading } = useQuery({
