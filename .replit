@@ -74,3 +74,4 @@ STARKNET_PUBLIC_KEY = "0x5647cc4b9b494bfeb21175eb4f148f88bf59acd6d642099e32f0249
 OPTIMISM_RPC_URL = "https://sepolia.optimism.io"
 LIGHTHOUSE_API_KEY = "223c00b4.ccc6a5abae6a4f65bf9391950236e7aa"
 STARKNET_RPC_URL = "https://starknet-sepolia.drpc.org/"
+VITE_CLERK_PUBLISHABLE_KEY = "pk_test_ZGFybGluZy1jYXR0bGUtNDkuY2xlcmsuYWNjb3VudHMuZGV2JA"
