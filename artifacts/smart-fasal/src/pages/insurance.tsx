@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import {
   useGetInsuranceRisk, getGetInsuranceRiskQueryKey,
   useGetInsuranceClaims, getGetInsuranceClaimsQueryKey,
@@ -76,6 +77,7 @@ const CROP_OPTIONS = [
 ];
 
 export default function Insurance() {
+  const { t } = useTranslation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { walletAddress, addFlowReward } = useWallet();
@@ -222,7 +224,7 @@ export default function Insurance() {
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div>
-        <h2 className="text-2xl font-bold tracking-tight">Parametric Insurance</h2>
+        <h2 className="text-2xl font-bold tracking-tight">{t("insurance.title")}</h2>
         <p className="text-muted-foreground text-sm">
           Auto-triggered payouts via live weather oracle · Policies stored on IPFS
         </p>

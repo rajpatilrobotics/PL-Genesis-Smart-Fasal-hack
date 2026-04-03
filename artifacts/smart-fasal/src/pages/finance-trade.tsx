@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   getCreditProfile,
@@ -1204,6 +1205,7 @@ function InsuranceTab() {
 // ─── Main Finance Page ────────────────────────────────────────────────────────
 
 export default function FinanceTrade() {
+  const { t } = useTranslation();
   const { data: profile } = useQuery({
     queryKey: ["creditProfile"],
     queryFn: () => getCreditProfile(),
@@ -1213,7 +1215,7 @@ export default function FinanceTrade() {
     <div className="space-y-5 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex justify-between items-end">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">Finance</h2>
+          <h2 className="text-2xl font-bold tracking-tight">{t("finance.title")}</h2>
           <p className="text-muted-foreground text-sm">Credit · Loans · Insurance</p>
         </div>
         <div className="flex items-center gap-1 text-[10px] text-blue-600 font-medium bg-blue-50 border border-blue-200 rounded-full px-2 py-1">
@@ -1223,9 +1225,9 @@ export default function FinanceTrade() {
 
       <Tabs defaultValue="credit" className="w-full">
         <TabsList className="grid w-full grid-cols-3 mb-5 h-auto p-1">
-          <TabsTrigger value="credit" className="py-1.5 text-xs">Credit</TabsTrigger>
-          <TabsTrigger value="loans" className="py-1.5 text-xs">Loans</TabsTrigger>
-          <TabsTrigger value="insurance" className="py-1.5 text-xs">Insurance</TabsTrigger>
+          <TabsTrigger value="credit" className="py-1.5 text-xs">{t("finance.creditScore")}</TabsTrigger>
+          <TabsTrigger value="loans" className="py-1.5 text-xs">{t("finance.loanOffers")}</TabsTrigger>
+          <TabsTrigger value="insurance" className="py-1.5 text-xs">{t("finance.insurance")}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="credit"><CreditTab /></TabsContent>

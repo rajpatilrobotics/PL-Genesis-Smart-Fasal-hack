@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useGetSensorHistory, getGetSensorHistoryQueryKey, useGetAnalyticsSummary, getGetAnalyticsSummaryQueryKey, useGetAnalyticsLogs, getGetAnalyticsLogsQueryKey, useHealthCheck, getHealthCheckQueryKey } from "@workspace/api-client-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -5,6 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Activity, Droplets, FlaskConical, TrendingUp, CheckCircle } from "lucide-react";
 
 export default function Analytics() {
+  const { t } = useTranslation();
   const { data: history, isLoading: loadingHistory } = useGetSensorHistory({ limit: 20 }, {
     query: {
       queryKey: getGetSensorHistoryQueryKey({ limit: 20 })
@@ -43,12 +45,12 @@ export default function Analytics() {
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">Farm Analytics</h2>
-          <p className="text-muted-foreground text-sm">Historical trends and system logs</p>
+          <h2 className="text-2xl font-bold tracking-tight">{t("analytics.title")}</h2>
+          <p className="text-muted-foreground text-sm">{t("analytics.subtitle")}</p>
         </div>
         {health && (
           <div className="flex items-center gap-1 text-xs font-semibold text-green-600 bg-green-100 px-2 py-1 rounded-full border border-green-200">
-            <CheckCircle className="w-3 h-3" /> System {health.status}
+            <CheckCircle className="w-3 h-3" /> {t("analytics.system")} {health.status}
           </div>
         )}
       </div>
@@ -59,28 +61,28 @@ export default function Analytics() {
           <CardContent className="p-4 flex flex-col justify-center items-center text-center">
             <Activity className="w-5 h-5 text-primary mb-2" />
             <p className="text-2xl font-bold">{loadingSummary ? "-" : summary?.totalSensorReadings}</p>
-            <p className="text-xs text-muted-foreground">Total Readings</p>
+            <p className="text-xs text-muted-foreground">{t("analytics.totalReadings")}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4 flex flex-col justify-center items-center text-center">
             <TrendingUp className="w-5 h-5 text-primary mb-2" />
             <p className="text-2xl font-bold">{loadingSummary ? "-" : `${summary?.avgCropHealth != null ? Math.round(summary.avgCropHealth) : 0}%`}</p>
-            <p className="text-xs text-muted-foreground">Avg Health</p>
+            <p className="text-xs text-muted-foreground">{t("analytics.avgHealth")}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4 flex flex-col justify-center items-center text-center">
             <FlaskConical className="w-5 h-5 text-primary mb-2" />
             <p className="text-2xl font-bold">{loadingSummary ? "-" : summary?.avgSoilPh != null ? Number(summary.avgSoilPh).toFixed(1) : "-"}</p>
-            <p className="text-xs text-muted-foreground">Avg Soil pH</p>
+            <p className="text-xs text-muted-foreground">{t("analytics.avgSoilPh")}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4 flex flex-col justify-center items-center text-center">
             <Droplets className="w-5 h-5 text-primary mb-2" />
             <p className="text-2xl font-bold">{loadingSummary ? "-" : `${summary?.avgMoisture != null ? Math.round(summary.avgMoisture) : 0}%`}</p>
-            <p className="text-xs text-muted-foreground">Avg Moisture</p>
+            <p className="text-xs text-muted-foreground">{t("analytics.avgMoisture")}</p>
           </CardContent>
         </Card>
       </div>
@@ -88,8 +90,8 @@ export default function Analytics() {
       {/* Chart */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">NPK Trends</CardTitle>
-          <CardDescription>Last 20 readings</CardDescription>
+          <CardTitle className="text-base">{t("analytics.npkTrends")}</CardTitle>
+          <CardDescription>{t("analytics.last20Readings")}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="h-[250px] w-full">
@@ -118,7 +120,7 @@ export default function Analytics() {
               </ResponsiveContainer>
             ) : (
               <div className="h-full flex items-center justify-center text-muted-foreground">
-                No historical data available
+                {t("analytics.noData")}
               </div>
             )}
           </div>
@@ -128,7 +130,7 @@ export default function Analytics() {
       {/* System Logs */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">System Activity</CardTitle>
+          <CardTitle className="text-base">{t("analytics.systemActivity")}</CardTitle>
         </CardHeader>
         <CardContent>
           {loadingLogs ? (
@@ -150,7 +152,7 @@ export default function Analytics() {
               ))}
             </div>
           ) : (
-             <div className="text-center text-muted-foreground py-4">No recent activity</div>
+             <div className="text-center text-muted-foreground py-4">{t("analytics.noActivity")}</div>
           )}
         </CardContent>
       </Card>

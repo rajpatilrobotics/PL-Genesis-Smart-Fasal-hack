@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useWallet } from "@/lib/wallet-context";
 import { useUserProfile, useUpdateProfile } from "@/lib/useUserProfile";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -59,6 +60,7 @@ function formatDate(iso: string) {
 }
 
 export default function Profile() {
+  const { t } = useTranslation();
   const { walletAddress, flowRewards, contributionCount, dataHistory, certificates, currentRisk, handleConnect } = useWallet();
   const { data: profileData, isLoading } = useUserProfile();
   const { mutateAsync: updateProfile, isPending: isSaving } = useUpdateProfile();
@@ -119,12 +121,12 @@ export default function Profile() {
           {editing ? (
             <div className="space-y-3">
               <div className="flex items-center justify-between mb-1">
-                <span className="font-semibold text-sm">Edit Profile</span>
+                <span className="font-semibold text-sm">{t("profile.editProfile")}</span>
                 <Button variant="ghost" size="sm" onClick={() => setEditing(false)}><X className="w-4 h-4" /></Button>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="col-span-2 space-y-1">
-                  <Label className="text-xs">Full Name *</Label>
+                  <Label className="text-xs">{t("profile.fullName")} *</Label>
                   <Input value={editForm.fullName} onChange={e => setEditForm(f => ({ ...f, fullName: e.target.value }))} />
                 </div>
                 <div className="space-y-1">
@@ -147,7 +149,7 @@ export default function Profile() {
                   </select>
                 </div>
                 <div className="space-y-1">
-                  <Label className="text-xs">Farm Size (acres)</Label>
+                  <Label className="text-xs">{t("profile.farmSize")}</Label>
                   <Input type="number" value={editForm.farmSizeAcres} onChange={e => setEditForm(f => ({ ...f, farmSizeAcres: e.target.value }))} />
                 </div>
                 <div className="space-y-1">
@@ -164,7 +166,7 @@ export default function Profile() {
               </div>
               <Button className="w-full" onClick={saveEdit} disabled={isSaving || !editForm.fullName.trim()}>
                 <Save className="w-4 h-4 mr-2" />
-                {isSaving ? "Saving..." : "Save Changes"}
+                {isSaving ? t("profile.saving") : t("profile.saveChanges")}
               </Button>
             </div>
           ) : (
