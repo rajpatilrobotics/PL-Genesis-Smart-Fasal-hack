@@ -230,7 +230,6 @@ export const GetMarketPricesResponseItem = zod.object({
   market: zod.string(),
   state: zod.string(),
   change: zod.number(),
-  category: zod.string().nullish(),
   updatedAt: zod.coerce.date(),
 });
 export const GetMarketPricesResponse = zod.array(GetMarketPricesResponseItem);
@@ -251,12 +250,9 @@ export const GetMarketListingsResponseItem = zod.object({
   location: zod.string(),
   status: zod.string(),
   imageCid: zod.string().nullish(),
-  imageUrl: zod.string().nullish(),
   receiptCid: zod.string().nullish(),
   escrowStatus: zod.string(),
   buyerName: zod.string().nullish(),
-  rating: zod.number().nullish(),
-  category: zod.string().nullish(),
   createdAt: zod.coerce.date(),
 });
 export const GetMarketListingsResponse = zod.array(
@@ -303,12 +299,9 @@ export const BuyMarketListingResponse = zod.object({
   location: zod.string(),
   status: zod.string(),
   imageCid: zod.string().nullish(),
-  imageUrl: zod.string().nullish(),
   receiptCid: zod.string().nullish(),
   escrowStatus: zod.string(),
   buyerName: zod.string().nullish(),
-  rating: zod.number().nullish(),
-  category: zod.string().nullish(),
   createdAt: zod.coerce.date(),
 });
 
@@ -332,12 +325,9 @@ export const ConfirmDeliveryResponse = zod.object({
   location: zod.string(),
   status: zod.string(),
   imageCid: zod.string().nullish(),
-  imageUrl: zod.string().nullish(),
   receiptCid: zod.string().nullish(),
   escrowStatus: zod.string(),
   buyerName: zod.string().nullish(),
-  rating: zod.number().nullish(),
-  category: zod.string().nullish(),
   createdAt: zod.coerce.date(),
 });
 
@@ -347,11 +337,21 @@ export const ConfirmDeliveryResponse = zod.object({
 export const GetProductRecommendationsResponseItem = zod.object({
   id: zod.number(),
   name: zod.string(),
+  brand: zod.string(),
   category: zod.string(),
   description: zod.string(),
   price: zod.number(),
+  mrp: zod.number(),
   reason: zod.string(),
   rating: zod.number(),
+  buyLinks: zod.array(
+    zod.object({
+      platform: zod.string(),
+      label: zod.string(),
+      url: zod.string(),
+      color: zod.string(),
+    }),
+  ),
 });
 export const GetProductRecommendationsResponse = zod.array(
   GetProductRecommendationsResponseItem,

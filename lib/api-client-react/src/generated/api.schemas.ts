@@ -179,14 +179,24 @@ export interface ConfirmDeliveryInput {
   buyerName: string;
 }
 
+export interface BuyLink {
+  platform: string;
+  label: string;
+  url: string;
+  color: string;
+}
+
 export interface ProductRecommendation {
   id: number;
   name: string;
+  brand: string;
   category: string;
   description: string;
   price: number;
+  mrp: number;
   reason: string;
   rating: number;
+  buyLinks: BuyLink[];
 }
 
 export interface Comment {

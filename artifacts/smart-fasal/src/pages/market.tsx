@@ -10,9 +10,9 @@ import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   TrendingUp, TrendingDown, Store, MapPin, Tag, ShoppingBag,
-  PlusCircle, Lock, CheckCircle2, FileText, Image, ExternalLink,
+  PlusCircle, Lock, CheckCircle2, FileText, ExternalLink,
   RefreshCw, Search, Star, User, Package, Leaf, Droplets,
-  ChevronRight, Shield, Database, CloudUpload, ArrowRight
+  Shield, Database, CloudUpload, ArrowRight, Building2
 } from "lucide-react";
 import {
   useGetMarketPrices, getGetMarketPricesQueryKey,
@@ -286,23 +286,63 @@ function ListingCard({
   );
 }
 
+const BUY_LINK_STYLES: Record<string, { bg: string; text: string; border: string; logo: string }> = {
+  amazon: {
+    bg: "bg-[#FF9900]/10 hover:bg-[#FF9900]/20",
+    text: "text-[#c45500]",
+    border: "border-[#FF9900]/40",
+    logo: "🟠",
+  },
+  flipkart: {
+    bg: "bg-[#2874f0]/10 hover:bg-[#2874f0]/20",
+    text: "text-[#2874f0]",
+    border: "border-[#2874f0]/40",
+    logo: "🔵",
+  },
+  bighaat: {
+    bg: "bg-green-500/10 hover:bg-green-500/20",
+    text: "text-green-700",
+    border: "border-green-400/40",
+    logo: "🟢",
+  },
+};
+
 function ProductCard({ product }: {
-  product: { id: number; name: string; category: string; description: string; price: number; reason: string; rating: number }
+  product: {
+    id: number; name: string; brand: string; category: string; description: string;
+    price: number; mrp: number; reason: string; rating: number;
+    buyLinks: { platform: string; label: string; url: string; color: string }[];
+  }
 }) {
-  const { toast } = useToast();
+  const discount = product.mrp > product.price
+    ? Math.round(((product.mrp - product.price) / product.mrp) * 100)
+    : 0;
+
   return (
     <Card className="overflow-hidden hover:shadow-md transition-all flex flex-col">
-      <CardContent className="p-3.5 flex-1 space-y-2">
+      <CardContent className="p-3.5 flex-1 space-y-2.5">
         <div className="flex justify-between items-start gap-2">
-          <div className="flex-1">
-            <p className="font-semibold text-sm leading-tight mb-1">{product.name}</p>
-            <span className={`inline-flex items-center gap-1 text-[10px] border rounded-full px-1.5 py-0 font-medium ${CATEGORY_COLORS[product.category] ?? "bg-muted text-muted-foreground"}`}>
-              {PRODUCT_CATEGORY_ICONS[product.category]}
-              {product.category}
-            </span>
+          <div className="flex-1 min-w-0">
+            <p className="font-semibold text-sm leading-tight mb-0.5">{product.name}</p>
+            <div className="flex items-center gap-1 flex-wrap">
+              <span className={`inline-flex items-center gap-1 text-[10px] border rounded-full px-1.5 py-0 font-medium ${CATEGORY_COLORS[product.category] ?? "bg-muted text-muted-foreground"}`}>
+                {PRODUCT_CATEGORY_ICONS[product.category]}
+                {product.category}
+              </span>
+              <span className="inline-flex items-center gap-0.5 text-[10px] text-muted-foreground">
+                <Building2 className="w-2.5 h-2.5" />
+                {product.brand}
+              </span>
+            </div>
           </div>
           <div className="text-right flex-shrink-0">
             <p className="text-lg font-black text-primary">₹{product.price.toLocaleString("en-IN")}</p>
+            {discount > 0 && (
+              <div className="flex items-center gap-1 justify-end">
+                <span className="text-[10px] text-muted-foreground line-through">₹{product.mrp.toLocaleString("en-IN")}</span>
+                <span className="text-[10px] font-bold text-green-600">{discount}% off</span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -315,16 +355,35 @@ function ProductCard({ product }: {
             <span className="italic">{product.reason}</span>
           </p>
         </div>
-      </CardContent>
 
-      <CardFooter className="p-3.5 pt-0 gap-2">
-        <Button
-          className="w-full h-8 text-xs"
-          onClick={() => toast({ title: "Added to Cart", description: `${product.name} — ₹${product.price.toLocaleString("en-IN")}` })}
-        >
-          <ShoppingBag className="w-3 h-3 mr-1" /> Add to Cart
-        </Button>
-      </CardFooter>
+        {/* Buy Links */}
+        <div className="space-y-1">
+          <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">Buy from</p>
+          <div className="flex gap-1.5 flex-wrap">
+            {product.buyLinks.map((link) => {
+              const style = BUY_LINK_STYLES[link.platform] ?? {
+                bg: "bg-muted hover:bg-muted/80",
+                text: "text-foreground",
+                border: "border-border",
+                logo: "🛒",
+              };
+              return (
+                <a
+                  key={link.platform}
+                  href={link.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-md border transition-colors ${style.bg} ${style.text} ${style.border}`}
+                >
+                  <span>{style.logo}</span>
+                  {link.label}
+                  <ExternalLink className="w-2.5 h-2.5" />
+                </a>
+              );
+            })}
+          </div>
+        </div>
+      </CardContent>
     </Card>
   );
 }

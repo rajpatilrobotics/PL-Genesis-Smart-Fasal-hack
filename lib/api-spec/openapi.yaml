@@ -1148,6 +1148,23 @@ components:
       required:
         - buyerName
 
+    BuyLink:
+      type: object
+      properties:
+        platform:
+          type: string
+        label:
+          type: string
+        url:
+          type: string
+        color:
+          type: string
+      required:
+        - platform
+        - label
+        - url
+        - color
+
     ProductRecommendation:
       type: object
       properties:
@@ -1155,24 +1172,35 @@ components:
           type: integer
         name:
           type: string
+        brand:
+          type: string
         category:
           type: string
         description:
           type: string
         price:
           type: number
+        mrp:
+          type: number
         reason:
           type: string
         rating:
           type: number
+        buyLinks:
+          type: array
+          items:
+            $ref: "#/components/schemas/BuyLink"
       required:
         - id
         - name
+        - brand
         - category
         - description
         - price
+        - mrp
         - reason
         - rating
+        - buyLinks
 
     CommunityPost:
       type: object

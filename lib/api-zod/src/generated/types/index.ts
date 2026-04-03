@@ -12,6 +12,7 @@ export * from "./aiRecommendation";
 export * from "./aiRecommendationInput";
 export * from "./analyticsSummary";
 export * from "./askExpertInput";
+export * from "./buyLink";
 export * from "./chatMessage";
 export * from "./comment";
 export * from "./communityPost";

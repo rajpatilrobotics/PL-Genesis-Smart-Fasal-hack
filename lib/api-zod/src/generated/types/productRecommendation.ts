@@ -5,13 +5,17 @@
  * Smart Fasal Agriculture Platform API
  * OpenAPI spec version: 0.1.0
  */
+import type { BuyLink } from "./buyLink";
 
 export interface ProductRecommendation {
   id: number;
   name: string;
+  brand: string;
   category: string;
   description: string;
   price: number;
+  mrp: number;
   reason: string;
   rating: number;
+  buyLinks: BuyLink[];
 }
