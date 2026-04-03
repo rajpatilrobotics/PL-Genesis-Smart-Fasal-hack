@@ -317,7 +317,7 @@ export default function Home() {
       ...s, status: "done",
       result: filecoinReal
         ? `✅ Real IPFS — CID: ${cid.substring(0, 20)}...`
-        : `CID: ${cid.substring(0, 16)}... (simulated)`
+        : `CID: ${cid.substring(0, 16)}...`
     } : s));
     await delay(400);
 

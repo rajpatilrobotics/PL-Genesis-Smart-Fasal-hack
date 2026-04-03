@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import { Switch, Route, Router as WouterRouter, useLocation, Redirect } from "wouter";
 import { QueryClient, QueryClientProvider, useQueryClient } from "@tanstack/react-query";
-import { ClerkProvider, SignIn, SignUp, useClerk, useUser } from "@clerk/react";
+import { ClerkProvider, SignIn, SignUp, useAuth, useClerk, useUser } from "@clerk/react";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import BottomNav from "@/components/layout/BottomNav";
@@ -97,25 +97,29 @@ function SignUpPage() {
 }
 
 function ProfileGuard({ children }: { children: React.ReactNode }) {
-  const { isSignedIn } = useUser();
+  const { isSignedIn, isLoaded } = useUser();
   const [location, setLocation] = useLocation();
   const { data, isLoading } = useUserProfile();
 
   useEffect(() => {
-    if (!isSignedIn || isLoading || location === "/onboarding") return;
+    if (!isLoaded || !isSignedIn || isLoading || location === "/onboarding") return;
     if (data && !data.profile?.profileComplete) {
       setLocation("/onboarding");
     }
-  }, [isSignedIn, isLoading, data, location, setLocation]);
+  }, [isLoaded, isSignedIn, isLoading, data, location, setLocation]);
 
   return <>{children}</>;
 }
 
 function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
   const { isSignedIn, isLoaded } = useUser();
+  const { userId } = useAuth();
 
   if (!isLoaded) return null;
-  if (!isSignedIn) return <Redirect to="/sign-in" />;
+  // userId stays set even during brief token-refresh dips in isSignedIn,
+  // so only redirect when both confirm the user is genuinely signed out.
+  if (!isSignedIn && !userId) return <Redirect to="/sign-in" />;
+  if (!isSignedIn) return null;
   return <Component />;
 }
 
