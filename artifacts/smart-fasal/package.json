@@ -80,6 +80,7 @@
     "@lit-protocol/constants": "^9.0.1",
     "@lit-protocol/lit-node-client": "^7.4.0",
     "@onflow/fcl": "^1.21.10",
+    "@onflow/fcl-wc": "^6.0.22",
     "@onflow/types": "^1.5.0",
     "buffer": "^6.0.3",
     "ethers": "^6.16.0",
