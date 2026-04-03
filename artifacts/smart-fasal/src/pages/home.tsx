@@ -379,7 +379,7 @@ export default function Home() {
         )}
       </div>
 
-      {/* Weather + Sensors compact row */}
+      {/* Weather + IoT Status row */}
       <div className="grid grid-cols-2 gap-3">
         <Card className="bg-gradient-to-br from-blue-50 to-sky-50 border-blue-100">
           <CardContent className="p-3">
@@ -400,55 +400,123 @@ export default function Home() {
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-emerald-50 to-green-50 border-emerald-100">
+        <Card className="bg-gradient-to-br from-emerald-50 to-teal-50 border-emerald-100">
           <CardContent className="p-3">
-            {loadingSensor ? <Skeleton className="h-14 w-full" /> : sensorData ? (
-              <div>
-                <div className="flex items-center gap-1 mb-1">
-                  <Activity className="w-3.5 h-3.5 text-emerald-600" />
-                  <span className="text-[10px] font-semibold text-emerald-600 uppercase">Soil Sensors</span>
+            <div className="flex items-center gap-1 mb-2">
+              <Activity className="w-3.5 h-3.5 text-emerald-600" />
+              <span className="text-[10px] font-semibold text-emerald-700 uppercase tracking-wide">IoT Probe</span>
+            </div>
+            {loadingSensor ? <Skeleton className="h-10 w-full" /> : sensorData ? (
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse inline-block flex-shrink-0" />
+                  <span className="text-xs font-semibold text-emerald-700">Live · Connected</span>
                 </div>
-                <div className="grid grid-cols-3 gap-x-2 gap-y-1 text-xs mt-1">
-                  <div><span className="text-muted-foreground">N</span> <span className="font-bold text-green-700">{sensorData.nitrogen}</span></div>
-                  <div><span className="text-muted-foreground">P</span> <span className="font-bold text-orange-600">{sensorData.phosphorus}</span></div>
-                  <div><span className="text-muted-foreground">K</span> <span className="font-bold text-purple-600">{sensorData.potassium}</span></div>
-                  <div><span className="text-muted-foreground">pH</span> <span className="font-bold">{sensorData.ph}</span></div>
-                  <div><span className="text-muted-foreground">H₂O</span> <span className="font-bold">{sensorData.moisture}%</span></div>
-                </div>
+                <p className="text-[10px] text-muted-foreground leading-tight">5-in-1 capacitive soil probe</p>
+                {lastUpdated && (
+                  <p className="text-[10px] text-muted-foreground">
+                    Synced {lastUpdated.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}
+                  </p>
+                )}
               </div>
-            ) : <p className="text-xs text-muted-foreground">No data</p>}
+            ) : (
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-amber-400 inline-block flex-shrink-0" />
+                  <span className="text-xs font-medium text-amber-700">Waiting…</span>
+                </div>
+                <p className="text-[10px] text-muted-foreground">Tap sync to read sensor</p>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
 
-      {/* NPK progress bars */}
+      {/* Live Soil Readings — NPK + pH + Moisture bars */}
       {sensorData && (
-        <Card>
+        <Card className="border-emerald-100">
           <CardContent className="p-4 space-y-3">
-            <div className="flex items-center justify-between mb-1">
-              <p className="text-sm font-semibold">Soil Nutrients (NPK)</p>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-semibold flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse inline-block" />
+                  Live Soil Readings
+                </p>
+                <p className="text-[10px] text-muted-foreground mt-0.5">Real-time · 5-in-1 hardware sensor · 10s refresh</p>
+              </div>
               <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded-full border", getRiskColor(riskToDisplay))}>
                 {riskToDisplay} Risk
               </span>
             </div>
+
+            {/* NPK bars */}
             {[
-              { label: "Nitrogen (N)", value: sensorData.nitrogen, max: 200, color: "bg-green-500" },
-              { label: "Phosphorus (P)", value: sensorData.phosphorus, max: 100, color: "bg-orange-500" },
-              { label: "Potassium (K)", value: sensorData.potassium, max: 300, color: "bg-purple-500" },
-            ].map(({ label, value, max, color }) => (
+              { label: "Nitrogen (N)", value: sensorData.nitrogen, max: 200, color: "bg-green-500", unit: "mg/kg" },
+              { label: "Phosphorus (P)", value: sensorData.phosphorus, max: 100, color: "bg-orange-500", unit: "mg/kg" },
+              { label: "Potassium (K)", value: sensorData.potassium, max: 300, color: "bg-purple-500", unit: "mg/kg" },
+            ].map(({ label, value, max, color, unit }) => (
               <div key={label} className="space-y-1">
                 <div className="flex justify-between text-xs">
                   <span className="text-muted-foreground">{label}</span>
-                  <span className="font-semibold">{value} mg/kg</span>
+                  <span className="font-semibold">{value} <span className="text-muted-foreground font-normal">{unit}</span></span>
                 </div>
                 <div className="h-2 bg-muted rounded-full overflow-hidden">
-                  <div
-                    className={cn("h-full rounded-full transition-all duration-700", color)}
-                    style={{ width: `${Math.min(100, (value / max) * 100)}%` }}
-                  />
+                  <div className={cn("h-full rounded-full transition-all duration-700", color)} style={{ width: `${Math.min(100, (value / max) * 100)}%` }} />
                 </div>
               </div>
             ))}
+
+            {/* Divider */}
+            <div className="border-t border-dashed border-muted-foreground/20 pt-1" />
+
+            {/* pH bar with optimal zone */}
+            <div className="space-y-1">
+              <div className="flex justify-between text-xs">
+                <span className="text-muted-foreground">
+                  Soil pH
+                  <span className={cn("ml-1.5 text-[10px] font-semibold px-1.5 py-0 rounded-full",
+                    sensorData.ph >= 6.0 && sensorData.ph <= 7.5
+                      ? "bg-emerald-100 text-emerald-700"
+                      : "bg-amber-100 text-amber-700"
+                  )}>
+                    {sensorData.ph >= 6.0 && sensorData.ph <= 7.5 ? "Optimal" : sensorData.ph < 6.0 ? "Acidic" : "Alkaline"}
+                  </span>
+                </span>
+                <span className="font-semibold">{sensorData.ph} <span className="text-muted-foreground font-normal">pH</span></span>
+              </div>
+              <div className="relative h-2 bg-muted rounded-full overflow-hidden">
+                <div className="absolute inset-0 flex">
+                  <div className="bg-muted h-full" style={{ width: `${(6.0 / 14) * 100}%` }} />
+                  <div className="bg-emerald-200 h-full" style={{ width: `${((7.5 - 6.0) / 14) * 100}%` }} />
+                  <div className="bg-muted h-full flex-1" />
+                </div>
+                <div
+                  className="absolute top-0 h-full w-1 bg-blue-500 rounded-full transition-all duration-700"
+                  style={{ left: `calc(${Math.min(100, (sensorData.ph / 14) * 100)}% - 2px)` }}
+                />
+              </div>
+              <div className="flex justify-between text-[9px] text-muted-foreground/70">
+                <span>0 (Acid)</span>
+                <span className="text-emerald-600">Optimal 6–7.5</span>
+                <span>14 (Alkaline)</span>
+              </div>
+            </div>
+
+            {/* Moisture bar */}
+            <div className="space-y-1">
+              <div className="flex justify-between text-xs">
+                <span className="text-muted-foreground">Soil Moisture (H₂O)</span>
+                <span className="font-semibold">{sensorData.moisture}<span className="text-muted-foreground font-normal">%</span></span>
+              </div>
+              <div className="h-2 bg-muted rounded-full overflow-hidden">
+                <div
+                  className={cn("h-full rounded-full transition-all duration-700",
+                    sensorData.moisture < 30 ? "bg-red-400" : sensorData.moisture > 70 ? "bg-blue-500" : "bg-cyan-500"
+                  )}
+                  style={{ width: `${Math.min(100, sensorData.moisture)}%` }}
+                />
+              </div>
+            </div>
           </CardContent>
         </Card>
       )}
