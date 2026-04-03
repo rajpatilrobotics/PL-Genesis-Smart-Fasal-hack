@@ -84,7 +84,7 @@ export default function AiHub() {
       }
     }, {
       onSuccess: () => {
-        toast({ title: "Analysis Complete", description: "New recommendation generated." });
+        toast({ title: t("ai.analysisComplete"), description: t("ai.aiRecommendation") + "." });
         queryClient.invalidateQueries({ queryKey: getGetAiRecommendationHistoryQueryKey() });
         if (walletAddress) addFlowReward("AI Crop Recommendation", 10);
       },
@@ -207,7 +207,7 @@ export default function AiHub() {
       }
     }, {
       onSuccess: (data) => {
-        toast({ title: "Detection Complete", description: "Archiving evidence to Filecoin..." });
+        toast({ title: t("ai.detectionComplete"), description: t("ai.soilDataEncrypted") + "..." });
         if (walletAddress) addFlowReward("Disease Detection Analysis", 10);
         queryClient.invalidateQueries({ queryKey: getGetDiseaseHistoryQueryKey() });
         archiveEvidence(data);
@@ -350,30 +350,30 @@ export default function AiHub() {
             <Card className="border-primary bg-primary/5">
               <CardHeader className="pb-2">
                 <CardTitle className="text-lg text-primary flex items-center">
-                  <Brain className="w-5 h-5 mr-2" /> AI Recommendation
+                  <Brain className="w-5 h-5 mr-2" /> {t("ai.aiRecommendationTitle")}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-3 gap-2">
                   {[
-                    { label: "Health", value: `${getAiRec.data.cropHealthPercent}%` },
-                    { label: "Risk", value: getAiRec.data.riskLevel, color: getAiRec.data.riskLevel === "LOW" ? "text-green-600" : getAiRec.data.riskLevel === "MEDIUM" ? "text-yellow-600" : "text-red-600" },
-                    { label: "Yield", value: `${getAiRec.data.yieldPercent}%` },
+                    { labelKey: "ai.healthLabel", value: `${getAiRec.data.cropHealthPercent}%` },
+                    { labelKey: "ai.riskLabel", value: getAiRec.data.riskLevel, color: getAiRec.data.riskLevel === "LOW" ? "text-green-600" : getAiRec.data.riskLevel === "MEDIUM" ? "text-yellow-600" : "text-red-600" },
+                    { labelKey: "ai.yieldLabel", value: `${getAiRec.data.yieldPercent}%` },
                   ].map(item => (
-                    <div key={item.label} className="bg-background p-2 rounded-lg text-center shadow-sm">
-                      <p className="text-[10px] uppercase text-muted-foreground font-bold">{item.label}</p>
+                    <div key={item.labelKey} className="bg-background p-2 rounded-lg text-center shadow-sm">
+                      <p className="text-[10px] uppercase text-muted-foreground font-bold">{t(item.labelKey)}</p>
                       <p className={cn("font-bold text-lg", item.color)}>{item.value}</p>
                     </div>
                   ))}
                 </div>
                 <div className="space-y-2 text-sm">
                   {[
-                    { label: "Fertilizer Advice", color: "text-primary", value: getAiRec.data.fertilizerAdvice },
-                    { label: "Irrigation", color: "text-blue-600", value: getAiRec.data.irrigationSuggestion },
-                    { label: "Risk Analysis", color: "text-orange-600", value: getAiRec.data.riskAnalysis },
+                    { labelKey: "ai.fertilizerLabel", color: "text-primary", value: getAiRec.data.fertilizerAdvice },
+                    { labelKey: "ai.irrigationLabel", color: "text-blue-600", value: getAiRec.data.irrigationSuggestion },
+                    { labelKey: "ai.riskAnalysisLabel", color: "text-orange-600", value: getAiRec.data.riskAnalysis },
                   ].map(item => (
-                    <div key={item.label} className="p-3 bg-background rounded-lg shadow-sm border border-border">
-                      <p className={cn("font-semibold mb-1", item.color)}>{item.label}</p>
+                    <div key={item.labelKey} className="p-3 bg-background rounded-lg shadow-sm border border-border">
+                      <p className={cn("font-semibold mb-1", item.color)}>{t(item.labelKey)}</p>
                       <p className="text-muted-foreground">{item.value}</p>
                     </div>
                   ))}
@@ -383,13 +383,13 @@ export default function AiHub() {
                 <div className="border border-orange-300 bg-orange-50/40 rounded-lg p-2.5 space-y-2">
                   <div className="flex items-center gap-1.5">
                     <Lock className="w-3.5 h-3.5 text-orange-600" />
-                    <p className="text-xs font-bold text-orange-800">Store in Private Vault</p>
+                    <p className="text-xs font-bold text-orange-800">{t("ai.storePrivateVault")}</p>
                   </div>
                   {litVaultSoilRecord ? (
                     <div className="bg-green-50 border border-green-200 rounded-lg p-2 space-y-1">
                       <div className="flex items-center gap-1.5 text-green-700 text-[11px] font-semibold">
                         <ShieldCheck className="w-3 h-3" />
-                        Soil data encrypted on Filecoin
+                        {t("ai.soilDataEncrypted")}
                       </div>
                       <div className="flex items-center gap-1.5">
                         <code className="text-[10px] font-mono text-green-800 flex-1 truncate">

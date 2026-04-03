@@ -34,37 +34,37 @@ import { cn } from "@/lib/utils";
 
 type Category = "tip" | "group_buy" | "price_alert" | "question" | "weather";
 
-const CATEGORY_CONFIG: Record<string, { label: string; icon: React.ReactNode; color: string; bg: string; border: string }> = {
+const CATEGORY_CONFIG: Record<string, { labelKey: string; icon: React.ReactNode; color: string; bg: string; border: string }> = {
   tip: {
-    label: "Tip",
+    labelKey: "community.catTip",
     icon: <Sprout className="w-3 h-3" />,
     color: "text-green-700",
     bg: "bg-green-50",
     border: "border-green-200",
   },
   group_buy: {
-    label: "Group Buy",
+    labelKey: "community.catGroupBuy",
     icon: <ShoppingCart className="w-3 h-3" />,
     color: "text-amber-700",
     bg: "bg-amber-50",
     border: "border-amber-300",
   },
   price_alert: {
-    label: "Price Alert",
+    labelKey: "community.catPriceAlert",
     icon: <DollarSign className="w-3 h-3" />,
     color: "text-blue-700",
     bg: "bg-blue-50",
     border: "border-blue-200",
   },
   question: {
-    label: "Question",
+    labelKey: "community.catQuestion",
     icon: <HelpCircle className="w-3 h-3" />,
     color: "text-purple-700",
     bg: "bg-purple-50",
     border: "border-purple-200",
   },
   weather: {
-    label: "Weather",
+    labelKey: "community.catWeather",
     icon: <CloudRain className="w-3 h-3" />,
     color: "text-sky-700",
     bg: "bg-sky-50",
@@ -73,23 +73,24 @@ const CATEGORY_CONFIG: Record<string, { label: string; icon: React.ReactNode; co
 };
 
 function CategoryBadge({ category }: { category?: string | null }) {
+  const { t } = useTranslation();
   const cfg = CATEGORY_CONFIG[category ?? "tip"] ?? CATEGORY_CONFIG.tip;
   return (
     <span className={cn("inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border", cfg.color, cfg.bg, cfg.border)}>
       {cfg.icon}
-      {cfg.label}
+      {t(cfg.labelKey)}
     </span>
   );
 }
 
-function timeAgo(date: Date | string): string {
+function timeAgo(date: Date | string, t: (key: string, opts?: Record<string, unknown>) => string): string {
   const now = Date.now();
   const d = new Date(date).getTime();
   const diff = Math.floor((now - d) / 1000);
-  if (diff < 60) return "just now";
-  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
-  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
-  return `${Math.floor(diff / 86400)}d ago`;
+  if (diff < 60) return t("community.justNow");
+  if (diff < 3600) return `${Math.floor(diff / 60)}${t("community.minutesAgo")}`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)}${t("community.hoursAgo")}`;
+  return `${Math.floor(diff / 86400)}${t("community.daysAgo")}`;
 }
 
 function formatTime(date: Date | string): string {
@@ -223,7 +224,7 @@ export default function Community() {
       onSuccess: () => {
         setPostContent("");
         queryClient.invalidateQueries({ queryKey: getGetCommunityPostsQueryKey() });
-        toast({ title: "Posted to community ✓" });
+        toast({ title: t("community.postedToCommunity") + " ✓" });
       }
     });
   };
@@ -247,7 +248,7 @@ export default function Community() {
         setCommentText({ ...commentText, [postId]: "" });
         setActiveCommentPost(null);
         queryClient.invalidateQueries({ queryKey: getGetCommunityPostsQueryKey() });
-        toast({ title: "Comment added" });
+        toast({ title: t("community.commentAdded") });
       }
     });
   };
@@ -362,10 +363,10 @@ export default function Community() {
       <div>
         <h2 className="text-2xl font-bold tracking-tight">{t("community.title")}</h2>
         <p className="text-muted-foreground text-sm flex items-center gap-2">
-          Connect, learn, and grow together
+          {t("community.connectLearnGrow")}
           <span className="inline-flex items-center gap-1 text-green-600 font-medium text-xs">
             <Circle className="w-2 h-2 fill-green-500 text-green-500 animate-pulse" />
-            {onlineCount} online
+            {onlineCount} {t("community.onlineFarmers")}
           </span>
         </p>
       </div>
@@ -374,7 +375,7 @@ export default function Community() {
         <TabsList className="grid w-full grid-cols-4 mb-4 h-10">
           <TabsTrigger value="feed" className="text-xs">📢 {t("community.feed")}</TabsTrigger>
           <TabsTrigger value="alerts" className="text-xs relative">
-            🚨 Alerts
+            🚨 {t("community.alerts")}
             <span className={cn(
               "absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-red-500 transition-all",
               alertsPulse && "scale-150 opacity-0"
@@ -496,7 +497,7 @@ export default function Community() {
                       <div className="flex items-center gap-2 mt-0.5">
                         <span className="text-[10px] text-muted-foreground">
                           {post.visibility === 'EXPERT' && <Lock className="w-2.5 h-2.5 inline mr-0.5 text-yellow-600" />}
-                          {timeAgo(post.createdAt)}
+                          {timeAgo(post.createdAt, t)}
                         </span>
                         <CategoryBadge category={cat} />
                       </div>
@@ -628,7 +629,7 @@ export default function Community() {
                       </div>
                       <p className="text-[10px] text-muted-foreground mt-1.5 flex items-center gap-1">
                         <AlertTriangle className="w-2.5 h-2.5" />
-                        {timeAgo(alert.time)}
+                        {timeAgo(alert.time, t)}
                       </p>
                     </div>
                   </div>
@@ -796,7 +797,7 @@ export default function Community() {
                         className="w-full mt-3"
                         onClick={() => setAskExpertId(expert.id)}
                       >
-                        {(expert as any).isOnline ? "Ask Now (0.001 FLOW) →" : "Ask a Question"}
+                        {(expert as any).isOnline ? `${t("community.askNow")} →` : t("community.askAQuestion")}
                       </Button>
                     )}
                   </div>
@@ -807,7 +808,7 @@ export default function Community() {
 
           {expertQuestions && expertQuestions.length > 0 && (
             <div className="mt-4">
-              <h3 className="font-bold text-sm mb-3 text-muted-foreground uppercase tracking-wider">My Questions</h3>
+              <h3 className="font-bold text-sm mb-3 text-muted-foreground uppercase tracking-wider">{t("community.myQuestions")}</h3>
               <div className="space-y-3">
                 {expertQuestions.map(q => (
                   <Card key={q.id} className="bg-muted/30 border-dashed">
@@ -816,12 +817,12 @@ export default function Community() {
                         <Badge variant={q.status === 'ANSWERED' ? 'default' : 'secondary'} className="text-[10px]">
                           {q.status}
                         </Badge>
-                        <span className="text-[10px] text-muted-foreground">To: {q.expertName}</span>
+                        <span className="text-[10px] text-muted-foreground">{t("community.toExpert")}: {q.expertName}</span>
                       </div>
                       <p className="text-sm font-medium mb-2">Q: {q.question}</p>
                       {q.answer && (
                         <div className="bg-background p-2 rounded text-sm border border-border">
-                          <span className="font-bold text-primary text-xs block mb-1">Answer:</span>
+                          <span className="font-bold text-primary text-xs block mb-1">{t("community.answer")}:</span>
                           {q.answer}
                         </div>
                       )}
