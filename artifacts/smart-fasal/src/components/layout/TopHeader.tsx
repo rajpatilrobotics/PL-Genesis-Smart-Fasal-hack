@@ -45,11 +45,11 @@ function ClerkAuthButtonInner() {
     <Button
       size="sm"
       variant="outline"
-      className="h-7 text-xs px-3 gap-1.5 rounded-full border-primary/25 text-primary hover:bg-primary/8 hover:border-primary/40 font-semibold"
+      className="h-7 text-xs px-2.5 gap-1 rounded-full border-primary/25 text-primary hover:bg-primary/8 hover:border-primary/40 font-semibold"
       onClick={() => setLocation("/sign-in")}
     >
-      <LogIn className="w-3 h-3" />
-      {t("header.signIn")}
+      <LogIn className="w-3 h-3 shrink-0" />
+      <span>{t("header.signIn")}</span>
     </Button>
   );
 }
@@ -84,27 +84,27 @@ export default function TopHeader() {
       {/* Thin green accent line at very top */}
       <div className="h-[2.5px] w-full bg-gradient-to-r from-emerald-500 via-green-400 to-teal-500" />
 
-      <div className="container mx-auto px-4 flex items-center justify-between gap-3 py-2.5">
+      <div className="container mx-auto px-3 flex items-center justify-between gap-2 py-2">
 
         {/* Logo */}
-        <div className="flex items-center gap-2.5 shrink-0">
+        <div className="flex items-center gap-2 shrink-0">
           <div className="relative">
             <img
               src="/logo.jpeg"
               alt="Smart Fasal"
-              className="w-11 h-11 rounded-xl object-cover shadow-md ring-2 ring-emerald-200/80"
+              className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl object-cover shadow-md ring-2 ring-emerald-200/80"
             />
-            <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 rounded-full border-2 border-white shadow-sm" />
+            <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-white shadow-sm" />
           </div>
           <div className="flex flex-col">
-            <span className="font-extrabold text-base tracking-tight text-gradient-green leading-tight">Smart Fasal</span>
-            <span className="text-[10px] font-semibold text-emerald-600 leading-tight">The Agriculture Platform</span>
+            <span className="font-extrabold text-sm sm:text-base tracking-tight text-gradient-green leading-tight">Smart Fasal</span>
+            <span className="text-[9px] sm:text-[10px] font-semibold text-emerald-600 leading-tight">The Agriculture Platform</span>
           </div>
         </div>
 
         {/* Right section */}
-        <div className="flex items-center gap-2 min-w-0">
-          <LanguageSwitcher />
+        <div className="flex items-center gap-1.5 min-w-0">
+          <div className="hidden sm:block"><LanguageSwitcher /></div>
           <ClerkAuthButton />
 
           {/* CONNECTED STATE */}
