@@ -422,16 +422,27 @@ export default function AiHub() {
 
   return (
     <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      {/* Header */}
-      <div>
-        <h2 className="text-2xl font-bold tracking-tight">{t("ai.title")}</h2>
-        <p className="text-muted-foreground text-sm">AI insights · Sensor analytics · Data marketplace</p>
-        {walletAddress && (
-          <div className="mt-2 flex items-center gap-1.5 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-1.5 w-fit">
-            <Zap className="w-3.5 h-3.5 text-amber-500" />
-            Each AI analysis earns <strong>+10 FLOW</strong>
+      {/* Hero Header */}
+      <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-violet-600 via-purple-600 to-indigo-700 p-4 shadow-lg">
+        <div className="absolute -top-6 -right-6 w-28 h-28 rounded-full bg-white/10 blur-xl" />
+        <div className="absolute bottom-0 left-0 w-20 h-20 rounded-full bg-indigo-400/20 blur-lg" />
+        <div className="relative flex items-center justify-between">
+          <div>
+            <div className="flex items-center gap-2.5 mb-1">
+              <div className="w-7 h-7 rounded-lg bg-white/20 flex items-center justify-center shrink-0">
+                <Brain className="w-4 h-4 text-white" />
+              </div>
+              <h2 className="text-xl font-extrabold text-white tracking-tight">{t("ai.title")}</h2>
+            </div>
+            <p className="text-violet-100/70 text-xs mt-0.5">AI Insights · Sensor Analytics · Data Marketplace</p>
           </div>
-        )}
+          {walletAddress && (
+            <div className="flex items-center gap-1.5 text-xs font-bold text-amber-900 bg-amber-300/90 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-md">
+              <Zap className="w-3.5 h-3.5" />
+              +10 FLOW / analysis
+            </div>
+          )}
+        </div>
       </div>
 
       <Tabs defaultValue="crop-ai" className="w-full">
