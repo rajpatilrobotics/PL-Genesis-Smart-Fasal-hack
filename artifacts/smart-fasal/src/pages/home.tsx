@@ -336,17 +336,7 @@ export default function Home() {
 
       {/* Header row */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <img
-            src="/logo.jpeg"
-            alt="Smart Fasal"
-            className="w-12 h-12 rounded-2xl object-cover border-2 border-emerald-200 shadow-md"
-          />
-          <div>
-            <h2 className="text-xl font-bold tracking-tight leading-tight">Farm Dashboard</h2>
-            <p className="text-[11px] text-muted-foreground">Smart agriculture · IoT · AI</p>
-          </div>
-        </div>
+        <h2 className="text-2xl font-bold tracking-tight">Farm Dashboard</h2>
         <button
           onClick={handleSimulateSensor}
           className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground bg-muted px-2.5 py-1 rounded-full hover:bg-muted/80"
