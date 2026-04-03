@@ -73,6 +73,14 @@ const ACCESS_OPTIONS: { value: AccessLevel; icon: React.ComponentType<{ classNam
   { value: "Public", icon: Globe, label: "Public", color: "text-green-600" },
 ];
 
+const DUMMY_SENSOR_BASE = {
+  nitrogen: 142,
+  phosphorus: 68,
+  potassium: 203,
+  ph: 6.7,
+  moisture: 58,
+};
+
 export default function Home() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -83,6 +91,8 @@ export default function Home() {
   const [pipelineRunning, setPipelineRunning] = useState(false);
   const [pipelineResult, setPipelineResult] = useState<PipelineResult | null>(null);
   const [steps, setSteps] = useState<PipelineStep[]>([]);
+  const [displaySensor, setDisplaySensor] = useState({ ...DUMMY_SENSOR_BASE });
+  const [isSampling, setIsSampling] = useState(false);
 
   const { data: weather, isLoading: loadingWeather } = useGetWeather({}, {
     query: { queryKey: getGetWeatherQueryKey({}) }
@@ -118,12 +128,31 @@ export default function Home() {
     });
   };
 
+  const handleResample = () => {
+    if (isSampling) return;
+    setIsSampling(true);
+    const delay = 2000 + Math.random() * 1000;
+    setTimeout(() => {
+      const vary = (base: number, pct = 0.15) =>
+        Math.round(base * (1 - pct + Math.random() * pct * 2));
+      setDisplaySensor({
+        nitrogen: vary(DUMMY_SENSOR_BASE.nitrogen),
+        phosphorus: vary(DUMMY_SENSOR_BASE.phosphorus),
+        potassium: vary(DUMMY_SENSOR_BASE.potassium),
+        ph: Number((DUMMY_SENSOR_BASE.ph + (Math.random() * 0.6 - 0.3)).toFixed(1)),
+        moisture: vary(DUMMY_SENSOR_BASE.moisture),
+      });
+      setIsSampling(false);
+    }, delay);
+  };
+
   const updateStep = useCallback((id: string, update: Partial<PipelineStep>) => {
     setSteps(prev => prev.map(s => s.id === id ? { ...s, ...update } : s));
   }, []);
 
   const runPipeline = async () => {
-    if (!sensorData || pipelineRunning) return;
+    if (pipelineRunning) return;
+    const activeSensor = sensorData ?? displaySensor;
 
     const initialSteps: PipelineStep[] = [
       { id: "ai", label: "AI Analysis", description: "Analyzing soil & weather data...", status: "idle" },
@@ -154,11 +183,11 @@ export default function Home() {
       const aiResult = await new Promise<{ cropHealthPercent: number; yieldPercent: number; riskLevel: string; fertilizerAdvice: string }>((resolve, reject) => {
         getAiRec.mutate({
           data: {
-            nitrogen: sensorData.nitrogen,
-            phosphorus: sensorData.phosphorus,
-            potassium: sensorData.potassium,
-            ph: sensorData.ph,
-            moisture: sensorData.moisture,
+            nitrogen: activeSensor.nitrogen,
+            phosphorus: activeSensor.phosphorus,
+            potassium: activeSensor.potassium,
+            ph: activeSensor.ph,
+            moisture: activeSensor.moisture,
             temperature: weather?.temperature,
             humidity: weather?.humidity,
             rainfall: weather?.rainfall
@@ -174,11 +203,11 @@ export default function Home() {
       fertilizerAdvice = aiResult.fertilizerAdvice;
     } catch {
       // fallback
-      const n = sensorData.nitrogen; const m = sensorData.moisture; const t = weather?.temperature ?? 30;
-      aiHealth = Math.min(95, Math.max(30, 75 + (sensorData.ph > 6 && sensorData.ph < 7.5 ? 10 : -10)));
+      const n = activeSensor.nitrogen; const m = activeSensor.moisture; const t = weather?.temperature ?? 30;
+      aiHealth = Math.min(95, Math.max(30, 75 + (activeSensor.ph > 6 && activeSensor.ph < 7.5 ? 10 : -10)));
       aiYield = Math.min(95, Math.max(30, 70 + (n > 40 ? 10 : -5)));
       riskLevel = (t > 35 && m < 30) ? "High" : m < 40 ? "Medium" : "Low";
-      fertilizerAdvice = `Based on N:${n}, P:${sensorData.phosphorus}, K:${sensorData.potassium} levels, apply balanced NPK fertilizer.`;
+      fertilizerAdvice = `Based on N:${n}, P:${activeSensor.phosphorus}, K:${activeSensor.potassium} levels, apply balanced NPK fertilizer.`;
     }
 
     setSteps(prev => prev.map(s => s.id === "ai" ? {
@@ -402,94 +431,92 @@ export default function Home() {
         </CardContent>
       </Card>
 
-      {/* Live Soil Readings — NPK + pH + Moisture bars */}
-      {sensorData && (
-        <Card className="border-emerald-100">
-          <CardContent className="p-4 space-y-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-semibold flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse inline-block" />
-                  Live Soil Readings
-                </p>
-                <p className="text-[10px] text-muted-foreground mt-0.5">Real-time · 5-in-1 hardware sensor · 10s refresh</p>
-              </div>
-              <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded-full border", getRiskColor(riskToDisplay))}>
-                {riskToDisplay} Risk
-              </span>
+      {/* Live Soil Readings — NPK + pH + Moisture bars (dummy hardware sensor data) */}
+      <Card className="border-emerald-100">
+        <CardContent className="p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-semibold flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse inline-block" />
+                Live Soil Readings
+              </p>
+              <p className="text-[10px] text-muted-foreground mt-0.5">5-in-1 hardware sensor · NPK + pH + Moisture</p>
             </div>
+            <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded-full border", getRiskColor(riskToDisplay))}>
+              {riskToDisplay} Risk
+            </span>
+          </div>
 
-            {/* NPK bars */}
-            {[
-              { label: "Nitrogen (N)", value: sensorData.nitrogen, max: 200, color: "bg-green-500", unit: "mg/kg" },
-              { label: "Phosphorus (P)", value: sensorData.phosphorus, max: 100, color: "bg-orange-500", unit: "mg/kg" },
-              { label: "Potassium (K)", value: sensorData.potassium, max: 300, color: "bg-purple-500", unit: "mg/kg" },
-            ].map(({ label, value, max, color, unit }) => (
-              <div key={label} className="space-y-1">
-                <div className="flex justify-between text-xs">
-                  <span className="text-muted-foreground">{label}</span>
-                  <span className="font-semibold">{value} <span className="text-muted-foreground font-normal">{unit}</span></span>
-                </div>
-                <div className="h-2 bg-muted rounded-full overflow-hidden">
-                  <div className={cn("h-full rounded-full transition-all duration-700", color)} style={{ width: `${Math.min(100, (value / max) * 100)}%` }} />
-                </div>
-              </div>
-            ))}
-
-            {/* Divider */}
-            <div className="border-t border-dashed border-muted-foreground/20 pt-1" />
-
-            {/* pH bar with optimal zone */}
-            <div className="space-y-1">
+          {/* NPK bars */}
+          {[
+            { label: "Nitrogen (N)", value: DUMMY_SENSOR.nitrogen, max: 200, color: "bg-green-500", unit: "mg/kg" },
+            { label: "Phosphorus (P)", value: DUMMY_SENSOR.phosphorus, max: 100, color: "bg-orange-500", unit: "mg/kg" },
+            { label: "Potassium (K)", value: DUMMY_SENSOR.potassium, max: 300, color: "bg-purple-500", unit: "mg/kg" },
+          ].map(({ label, value, max, color, unit }) => (
+            <div key={label} className="space-y-1">
               <div className="flex justify-between text-xs">
-                <span className="text-muted-foreground">
-                  Soil pH
-                  <span className={cn("ml-1.5 text-[10px] font-semibold px-1.5 py-0 rounded-full",
-                    sensorData.ph >= 6.0 && sensorData.ph <= 7.5
-                      ? "bg-emerald-100 text-emerald-700"
-                      : "bg-amber-100 text-amber-700"
-                  )}>
-                    {sensorData.ph >= 6.0 && sensorData.ph <= 7.5 ? "Optimal" : sensorData.ph < 6.0 ? "Acidic" : "Alkaline"}
-                  </span>
-                </span>
-                <span className="font-semibold">{sensorData.ph} <span className="text-muted-foreground font-normal">pH</span></span>
-              </div>
-              <div className="relative h-2 bg-muted rounded-full overflow-hidden">
-                <div className="absolute inset-0 flex">
-                  <div className="bg-muted h-full" style={{ width: `${(6.0 / 14) * 100}%` }} />
-                  <div className="bg-emerald-200 h-full" style={{ width: `${((7.5 - 6.0) / 14) * 100}%` }} />
-                  <div className="bg-muted h-full flex-1" />
-                </div>
-                <div
-                  className="absolute top-0 h-full w-1 bg-blue-500 rounded-full transition-all duration-700"
-                  style={{ left: `calc(${Math.min(100, (sensorData.ph / 14) * 100)}% - 2px)` }}
-                />
-              </div>
-              <div className="flex justify-between text-[9px] text-muted-foreground/70">
-                <span>0 (Acid)</span>
-                <span className="text-emerald-600">Optimal 6–7.5</span>
-                <span>14 (Alkaline)</span>
-              </div>
-            </div>
-
-            {/* Moisture bar */}
-            <div className="space-y-1">
-              <div className="flex justify-between text-xs">
-                <span className="text-muted-foreground">Soil Moisture (H₂O)</span>
-                <span className="font-semibold">{sensorData.moisture}<span className="text-muted-foreground font-normal">%</span></span>
+                <span className="text-muted-foreground">{label}</span>
+                <span className="font-semibold">{value} <span className="text-muted-foreground font-normal">{unit}</span></span>
               </div>
               <div className="h-2 bg-muted rounded-full overflow-hidden">
-                <div
-                  className={cn("h-full rounded-full transition-all duration-700",
-                    sensorData.moisture < 30 ? "bg-red-400" : sensorData.moisture > 70 ? "bg-blue-500" : "bg-cyan-500"
-                  )}
-                  style={{ width: `${Math.min(100, sensorData.moisture)}%` }}
-                />
+                <div className={cn("h-full rounded-full transition-all duration-700", color)} style={{ width: `${Math.min(100, (value / max) * 100)}%` }} />
               </div>
             </div>
-          </CardContent>
-        </Card>
-      )}
+          ))}
+
+          {/* Divider */}
+          <div className="border-t border-dashed border-muted-foreground/20 pt-1" />
+
+          {/* pH bar with optimal zone */}
+          <div className="space-y-1">
+            <div className="flex justify-between text-xs">
+              <span className="text-muted-foreground">
+                Soil pH
+                <span className={cn("ml-1.5 text-[10px] font-semibold px-1.5 py-0 rounded-full",
+                  DUMMY_SENSOR.ph >= 6.0 && DUMMY_SENSOR.ph <= 7.5
+                    ? "bg-emerald-100 text-emerald-700"
+                    : "bg-amber-100 text-amber-700"
+                )}>
+                  {DUMMY_SENSOR.ph >= 6.0 && DUMMY_SENSOR.ph <= 7.5 ? "Optimal" : DUMMY_SENSOR.ph < 6.0 ? "Acidic" : "Alkaline"}
+                </span>
+              </span>
+              <span className="font-semibold">{DUMMY_SENSOR.ph} <span className="text-muted-foreground font-normal">pH</span></span>
+            </div>
+            <div className="relative h-2 bg-muted rounded-full overflow-hidden">
+              <div className="absolute inset-0 flex">
+                <div className="bg-muted h-full" style={{ width: `${(6.0 / 14) * 100}%` }} />
+                <div className="bg-emerald-200 h-full" style={{ width: `${((7.5 - 6.0) / 14) * 100}%` }} />
+                <div className="bg-muted h-full flex-1" />
+              </div>
+              <div
+                className="absolute top-0 h-full w-1 bg-blue-500 rounded-full transition-all duration-700"
+                style={{ left: `calc(${Math.min(100, (DUMMY_SENSOR.ph / 14) * 100)}% - 2px)` }}
+              />
+            </div>
+            <div className="flex justify-between text-[9px] text-muted-foreground/70">
+              <span>0 (Acid)</span>
+              <span className="text-emerald-600">Optimal 6–7.5</span>
+              <span>14 (Alkaline)</span>
+            </div>
+          </div>
+
+          {/* Moisture bar */}
+          <div className="space-y-1">
+            <div className="flex justify-between text-xs">
+              <span className="text-muted-foreground">Soil Moisture (H₂O)</span>
+              <span className="font-semibold">{DUMMY_SENSOR.moisture}<span className="text-muted-foreground font-normal">%</span></span>
+            </div>
+            <div className="h-2 bg-muted rounded-full overflow-hidden">
+              <div
+                className={cn("h-full rounded-full transition-all duration-700",
+                  DUMMY_SENSOR.moisture < 30 ? "bg-red-400" : DUMMY_SENSOR.moisture > 70 ? "bg-blue-500" : "bg-cyan-500"
+                )}
+                style={{ width: `${Math.min(100, DUMMY_SENSOR.moisture)}%` }}
+              />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Pipeline Controls */}
       <Card className="border-2 border-dashed border-primary/30 bg-primary/2">
