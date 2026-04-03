@@ -69,8 +69,12 @@ autoInstallPeers: false
 
 onlyBuiltDependencies:
   - '@swc/core'
+  - bigint-buffer
+  - bls-eth-wasm
   - esbuild
+  - keccak
   - msw
+  - protobufjs
   - unrs-resolver
   - bigint-buffer
   - bls-eth-wasm

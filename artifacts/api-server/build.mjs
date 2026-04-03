@@ -29,6 +29,12 @@ async function buildAll() {
     // - use path traversal to read files (e.g. @google-cloud/secret-manager loads sibling .proto files)
     external: [
       "*.node",
+      "bls-eth-wasm",
+      "keccak",
+      "bigint-buffer",
+      "@lighthouse-web3/*",
+      "@lighthouse-web3/sdk",
+      "@lighthouse-web3/kavach",
       "sharp",
       "better-sqlite3",
       "sqlite3",
