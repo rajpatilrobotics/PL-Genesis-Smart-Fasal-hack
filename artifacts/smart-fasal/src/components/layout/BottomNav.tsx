@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Home, Brain, ShoppingCart, Sparkles, UserCircle2, Wallet } from "lucide-react";
+import { Home, Brain, ShoppingCart, BarChart3, UserCircle2, Wallet } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 
@@ -11,7 +11,7 @@ export default function BottomNav() {
     { href: "/", icon: Home, label: t("nav.home") },
     { href: "/ai", icon: Brain, label: t("nav.aiHub") },
     { href: "/market", icon: ShoppingCart, label: t("nav.market") },
-    { href: "/web3", icon: Sparkles, label: t("nav.web3") },
+    { href: "/analytics", icon: BarChart3, label: "Analytics" },
     { href: "/finance", icon: Wallet, label: t("nav.finance") },
     { href: "/profile", icon: UserCircle2, label: t("nav.profile") },
   ];
