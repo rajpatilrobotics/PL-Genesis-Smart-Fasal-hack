@@ -202,6 +202,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
         );
       } else if (!isManualRef.current) {
         setWalletAddress(null);
+        setIsConnecting(false);
       }
     });
     return () => unsub();
@@ -209,6 +210,9 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
 
   const handleConnect = async () => {
     setIsConnecting(true);
+    const timeout = setTimeout(() => {
+      setIsConnecting(false);
+    }, 30000);
     try {
       await fcl.authenticate();
     } catch (err: unknown) {
@@ -221,6 +225,8 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
         });
       }
       setIsConnecting(false);
+    } finally {
+      clearTimeout(timeout);
     }
   };
 
