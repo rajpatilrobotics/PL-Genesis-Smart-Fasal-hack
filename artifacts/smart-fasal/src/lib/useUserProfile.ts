@@ -43,7 +43,10 @@ export function useUpdateProfile() {
   return useMutation({
     mutationFn: (data: Partial<UserProfile>) =>
       apiFetch("/user/profile", { method: "PUT", body: JSON.stringify(data) }),
-    onSuccess: () => {
+    onSuccess: (result) => {
+      if (result?.profile) {
+        queryClient.setQueryData(["user-profile"], { exists: true, profile: result.profile });
+      }
       queryClient.invalidateQueries({ queryKey: ["user-profile"] });
     },
   });
