@@ -17,7 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 import {
   CloudRain, Droplets, Thermometer, Wind, Brain, Database,
   RefreshCw, Shield, Zap, Lock, Globe, Users, CheckCircle2,
-  Loader2, AlertTriangle, Activity, ChevronRight
+  Loader2, AlertTriangle, Activity
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useQueryClient } from "@tanstack/react-query";
@@ -852,23 +852,22 @@ export default function Home() {
             </p>
           </div>
 
-          {/* Protocol Labs — full-width horizontal banner */}
+          {/* Protocol Labs — centred banner */}
           <a
             href="https://protocol.ai"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl bg-white/55 border border-white/65 hover:bg-white/75 transition-all group"
+            className="flex flex-col items-center gap-1.5 w-full px-3 py-3 rounded-xl bg-white/55 border border-white/65 hover:bg-white/75 transition-all group"
           >
             <img
               src="https://avatars.githubusercontent.com/u/6935308"
               alt="Protocol Labs"
-              className="w-7 h-7 rounded-lg object-cover ring-1 ring-black/8 shadow-sm shrink-0"
+              className="w-8 h-8 rounded-xl object-cover ring-1 ring-black/8 shadow-sm group-hover:scale-105 transition-transform"
             />
-            <div className="flex-1 min-w-0">
+            <div className="text-center">
               <p className="text-xs font-bold text-gray-800 leading-tight">Protocol Labs</p>
               <p className="text-[9px] text-gray-400 leading-tight">Web3 infrastructure &amp; research</p>
             </div>
-            <ChevronRight className="w-3 h-3 text-gray-300 group-hover:text-gray-500 transition-colors shrink-0" />
           </a>
 
           {/* Protocol grid — 3 × 2, compact */}
