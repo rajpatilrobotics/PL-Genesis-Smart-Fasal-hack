@@ -379,11 +379,11 @@ export default function Home() {
         )}
       </div>
 
-      {/* Weather + IoT Status row */}
-      <div className="grid grid-cols-2 gap-3">
-        <Card className="bg-gradient-to-br from-blue-50 to-sky-50 border-blue-100">
-          <CardContent className="p-3">
-            {loadingWeather ? <Skeleton className="h-14 w-full" /> : weather ? (
+      {/* Weather card */}
+      <Card className="bg-gradient-to-br from-blue-50 to-sky-50 border-blue-100">
+        <CardContent className="p-3">
+          {loadingWeather ? <Skeleton className="h-14 w-full" /> : weather ? (
+            <div className="flex items-center justify-between">
               <div>
                 <div className="flex items-center gap-1 mb-1">
                   <CloudRain className="w-3.5 h-3.5 text-blue-500" />
@@ -391,46 +391,16 @@ export default function Home() {
                 </div>
                 <p className="text-2xl font-bold">{weather.temperature}°C</p>
                 <p className="text-xs text-muted-foreground capitalize mt-0.5">{weather.description}</p>
-                <div className="flex gap-3 mt-1.5 text-xs text-muted-foreground">
-                  <span className="flex items-center gap-0.5"><Droplets className="w-3 h-3 text-blue-400" />{weather.humidity}%</span>
-                  <span className="flex items-center gap-0.5"><Wind className="w-3 h-3" />{weather.windSpeed}m/s</span>
-                </div>
               </div>
-            ) : <p className="text-xs text-muted-foreground">Unavailable</p>}
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-emerald-50 to-teal-50 border-emerald-100">
-          <CardContent className="p-3">
-            <div className="flex items-center gap-1 mb-2">
-              <Activity className="w-3.5 h-3.5 text-emerald-600" />
-              <span className="text-[10px] font-semibold text-emerald-700 uppercase tracking-wide">IoT Probe</span>
+              <div className="flex flex-col items-end gap-2 text-xs text-muted-foreground">
+                <span className="flex items-center gap-1"><Droplets className="w-3.5 h-3.5 text-blue-400" />{weather.humidity}% humidity</span>
+                <span className="flex items-center gap-1"><Wind className="w-3.5 h-3.5" />{weather.windSpeed} m/s wind</span>
+                <span className="flex items-center gap-1"><Thermometer className="w-3.5 h-3.5 text-orange-400" />Feels {weather.feelsLike ?? weather.temperature}°C</span>
+              </div>
             </div>
-            {loadingSensor ? <Skeleton className="h-10 w-full" /> : sensorData ? (
-              <div className="space-y-1.5">
-                <div className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse inline-block flex-shrink-0" />
-                  <span className="text-xs font-semibold text-emerald-700">Live · Connected</span>
-                </div>
-                <p className="text-[10px] text-muted-foreground leading-tight">5-in-1 capacitive soil probe</p>
-                {lastUpdated && (
-                  <p className="text-[10px] text-muted-foreground">
-                    Synced {lastUpdated.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}
-                  </p>
-                )}
-              </div>
-            ) : (
-              <div className="space-y-1.5">
-                <div className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-amber-400 inline-block flex-shrink-0" />
-                  <span className="text-xs font-medium text-amber-700">Waiting…</span>
-                </div>
-                <p className="text-[10px] text-muted-foreground">Tap sync to read sensor</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+          ) : <p className="text-xs text-muted-foreground">Unavailable</p>}
+        </CardContent>
+      </Card>
 
       {/* Live Soil Readings — NPK + pH + Moisture bars */}
       {sensorData && (
