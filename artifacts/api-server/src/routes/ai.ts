@@ -1,7 +1,8 @@
 import { Router, type IRouter } from "express";
 import { db } from "@workspace/db";
 import { aiRecommendationsTable, diseaseScansTable } from "@workspace/db";
-import { desc } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
+import { requireAuth } from "../middlewares/requireAuth.js";
 import {
   GetAiRecommendationBody,
   GetAiRecommendationResponse,
@@ -14,7 +15,7 @@ import { logEvent } from "../lib/event-logger.js";
 
 const router: IRouter = Router();
 
-router.post("/ai-recommendation", async (req, res): Promise<void> => {
+router.post("/ai-recommendation", requireAuth, async (req, res): Promise<void> => {
   const parsed = GetAiRecommendationBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
@@ -73,6 +74,7 @@ Provide a JSON response with exactly these fields:
   }
 
   const [row] = await db.insert(aiRecommendationsTable).values({
+    userId: (req as any).userId ?? null,
     fertilizerAdvice,
     irrigationSuggestion,
     riskAnalysis,
@@ -91,17 +93,19 @@ Provide a JSON response with exactly these fields:
   res.json(GetAiRecommendationResponse.parse(row));
 });
 
-router.get("/ai-recommendations/history", async (_req, res): Promise<void> => {
+router.get("/ai-recommendations/history", requireAuth, async (req, res): Promise<void> => {
+  const userId = (req as any).userId;
   const rows = await db
     .select()
     .from(aiRecommendationsTable)
+    .where(eq(aiRecommendationsTable.userId, userId))
     .orderBy(desc(aiRecommendationsTable.createdAt))
     .limit(10);
 
   res.json(GetAiRecommendationHistoryResponse.parse(rows));
 });
 
-router.post("/disease-detect", async (req, res): Promise<void> => {
+router.post("/disease-detect", requireAuth, async (req, res): Promise<void> => {
   const parsed = DetectDiseaseBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
@@ -166,6 +170,7 @@ Respond with a JSON object with exactly these fields:
   }
 
   const [scanRow] = await db.insert(diseaseScansTable).values({
+    userId: (req as any).userId ?? null,
     cropName: cropName || null,
     plantName,
     diseaseName,
@@ -188,10 +193,12 @@ Respond with a JSON object with exactly these fields:
   }));
 });
 
-router.get("/disease-detections/history", async (_req, res): Promise<void> => {
+router.get("/disease-detections/history", requireAuth, async (req, res): Promise<void> => {
+  const userId = (req as any).userId;
   const rows = await db
     .select()
     .from(diseaseScansTable)
+    .where(eq(diseaseScansTable.userId, userId))
     .orderBy(desc(diseaseScansTable.createdAt))
     .limit(30);
   res.json(rows);

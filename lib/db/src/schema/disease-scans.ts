@@ -4,6 +4,7 @@ import { z } from "zod/v4";
 
 export const diseaseScansTable = pgTable("disease_scans", {
   id: serial("id").primaryKey(),
+  userId: text("user_id"),
   cropName: text("crop_name"),
   plantName: text("plant_name").notNull(),
   diseaseName: text("disease_name").notNull(),

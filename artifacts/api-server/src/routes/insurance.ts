@@ -5,6 +5,7 @@ import {
   sensorDataTable, rewardTransactionsTable,
 } from "@workspace/db";
 import { desc, eq } from "drizzle-orm";
+import { requireAuth } from "../middlewares/requireAuth.js";
 import {
   GetInsuranceRiskResponse,
   GetInsuranceClaimsResponse,
@@ -207,17 +208,19 @@ router.get("/insurance/risk", async (_req, res): Promise<void> => {
 
 // ─── GET /insurance/claims ────────────────────────────────────────────────────
 
-router.get("/insurance/claims", async (_req, res): Promise<void> => {
+router.get("/insurance/claims", requireAuth, async (req, res): Promise<void> => {
+  const userId = (req as any).userId;
   const rows = await db
     .select()
     .from(insuranceClaimsTable)
+    .where(eq(insuranceClaimsTable.userId, userId))
     .orderBy(desc(insuranceClaimsTable.createdAt));
   res.json(rows);
 });
 
 // ─── POST /insurance/claims ───────────────────────────────────────────────────
 
-router.post("/insurance/claims", async (req, res): Promise<void> => {
+router.post("/insurance/claims", requireAuth, async (req, res): Promise<void> => {
   const parsed = CreateInsuranceClaimBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
@@ -263,6 +266,7 @@ router.post("/insurance/claims", async (req, res): Promise<void> => {
   const claimStatus = validation.validated ? "approved" : "pending";
 
   const [row] = await db.insert(insuranceClaimsTable).values({
+    userId: (req as any).userId ?? null,
     claimType: parsed.data.claimType,
     riskLevel,
     description: parsed.data.description,
@@ -303,17 +307,19 @@ router.post("/insurance/claims", async (req, res): Promise<void> => {
 
 // ─── GET /insurance/policies ──────────────────────────────────────────────────
 
-router.get("/insurance/policies", async (_req, res): Promise<void> => {
+router.get("/insurance/policies", requireAuth, async (req, res): Promise<void> => {
+  const userId = (req as any).userId;
   const rows = await db
     .select()
     .from(insurancePoliciesTable)
+    .where(eq(insurancePoliciesTable.userId, userId))
     .orderBy(desc(insurancePoliciesTable.createdAt));
   res.json(rows);
 });
 
 // ─── POST /insurance/policies ─────────────────────────────────────────────────
 
-router.post("/insurance/policies", async (req, res): Promise<void> => {
+router.post("/insurance/policies", requireAuth, async (req, res): Promise<void> => {
   const { plan, acresCovered, cropType, walletAddress } = req.body;
 
   if (!plan || !PLANS[plan]) {
@@ -368,6 +374,7 @@ router.post("/insurance/policies", async (req, res): Promise<void> => {
   }
 
   const [row] = await db.insert(insurancePoliciesTable).values({
+    userId: (req as any).userId ?? null,
     plan,
     coveredEvents: JSON.stringify(planDetails.events),
     premiumAnnual: planDetails.premium,

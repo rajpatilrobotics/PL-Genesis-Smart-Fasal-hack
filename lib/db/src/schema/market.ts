@@ -16,6 +16,7 @@ export const marketPricesTable = pgTable("market_prices", {
 
 export const marketListingsTable = pgTable("market_listings", {
   id: serial("id").primaryKey(),
+  userId: text("user_id"),
   title: text("title").notNull(),
   description: text("description").notNull(),
   crop: text("crop").notNull(),
