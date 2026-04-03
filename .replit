@@ -34,13 +34,13 @@ args = "Start application"
 name = "API Server"
 author = "agent"
 
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "pnpm --filter @workspace/db run push-force && PORT=8080 pnpm --filter @workspace/api-server run dev"
-waitForPort = 8080
-
 [workflows.workflow.metadata]
 outputType = "console"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd lib/db && pnpm run push-force && cd ../.. && PORT=8080 pnpm --filter @workspace/api-server run dev"
+waitForPort = 8080
 
 [[workflows.workflow]]
 name = "Start application"
@@ -51,8 +51,8 @@ outputType = "webview"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "PORT=5000 BASE_PATH=/ pnpm --filter @workspace/smart-fasal run dev"
-waitForPort = 5000
+args = "PORT=5001 BASE_PATH=/ pnpm --filter @workspace/smart-fasal run dev"
+waitForPort = 5001
 
 [agent]
 stack = "PNPM_WORKSPACE"
@@ -74,3 +74,5 @@ STARKNET_PUBLIC_KEY = "0x5647cc4b9b494bfeb21175eb4f148f88bf59acd6d642099e32f0249
 OPTIMISM_RPC_URL = "https://sepolia.optimism.io"
 LIGHTHOUSE_API_KEY = "223c00b4.ccc6a5abae6a4f65bf9391950236e7aa"
 STARKNET_RPC_URL = "https://starknet-sepolia.drpc.org/"
+VITE_CLERK_PUBLISHABLE_KEY = "pk_test_ZGFybGluZy1jYXR0bGUtNDkuY2xlcmsuYWNjb3VudHMuZGV2JA"
+CLERK_PUBLISHABLE_KEY = "pk_test_ZGFybGluZy1jYXR0bGUtNDkuY2xlcmsuYWNjb3VudHMuZGV2JA"
