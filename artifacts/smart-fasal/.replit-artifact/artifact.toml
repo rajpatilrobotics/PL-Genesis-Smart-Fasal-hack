@@ -1,31 +1,32 @@
 kind = "web"
-previewPath = "/"
-title = "Smart Fasal: Smart Agriculture Platform"
-version = "1.0.0"
-id = "artifacts/smart-fasal"
-router = "path"
+  previewPath = "/"
+  title = "Smart Fasal: Smart Agriculture Platform"
+  version = "1.0.0"
+  id = "artifacts/smart-fasal"
+  router = "path"
 
-[[integratedSkills]]
-name = "react-vite"
-version = "1.0.0"
+  [[integratedSkills]]
+  name = "react-vite"
+  version = "1.0.0"
 
-[[services]]
-name = "web"
-paths = [ "/" ]
-localPort = 5000
+  [[services]]
+  name = "web"
+  paths = [ "/" ]
+  localPort = 5000
 
-[services.development]
-run = "pnpm install --frozen-lockfile && pnpm --filter @workspace/smart-fasal run dev"
+  [services.development]
+  run = "pnpm install --frozen-lockfile && pnpm --filter @workspace/smart-fasal run dev"
 
-[services.production]
-build = [ "pnpm", "--filter", "@workspace/smart-fasal", "run", "build" ]
-publicDir = "artifacts/smart-fasal/dist/public"
-serve = "static"
+  [services.production]
+  build = [ "pnpm", "--filter", "@workspace/smart-fasal", "run", "build" ]
+  publicDir = "artifacts/smart-fasal/dist/public"
+  serve = "static"
 
-[[services.production.rewrites]]
-from = "/*"
-to = "/index.html"
+  [[services.production.rewrites]]
+  from = "/*"
+  to = "/index.html"
 
-[services.env]
-PORT = "5000"
-BASE_PATH = "/"
+  [services.env]
+  PORT = "5000"
+  BASE_PATH = "/"
+  
