@@ -5,6 +5,7 @@
  * Smart Fasal Agriculture Platform API
  * OpenAPI spec version: 0.1.0
  */
+import type { InsuranceRiskWeatherSummary } from "./insuranceRiskWeatherSummary";
 
 export interface InsuranceRisk {
   riskLevel: string;
@@ -12,4 +13,5 @@ export interface InsuranceRisk {
   eligibleForClaim: boolean;
   reasons: string[];
   recommendations: string[];
+  weatherSummary?: InsuranceRiskWeatherSummary;
 }

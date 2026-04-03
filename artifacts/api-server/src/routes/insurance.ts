@@ -390,4 +390,37 @@ router.post("/insurance/policies", async (req, res): Promise<void> => {
   });
 });
 
+// ─── DELETE /insurance/policies/:id  (Cancel a policy) ───────────────────────
+
+router.delete("/insurance/policies/:id", async (req, res): Promise<void> => {
+  const id = parseInt(req.params.id, 10);
+  if (isNaN(id)) {
+    res.status(400).json({ error: "Invalid policy id." });
+    return;
+  }
+
+  const [updated] = await db
+    .update(insurancePoliciesTable)
+    .set({ status: "cancelled" })
+    .where(eq(insurancePoliciesTable.id, id))
+    .returning();
+
+  if (!updated) {
+    res.status(404).json({ error: "Policy not found." });
+    return;
+  }
+
+  await logEvent("insurance", `Policy cancelled: #${id} | ${updated.plan}`);
+  res.json({ success: true, policy: updated });
+});
+
+// ─── DELETE /insurance/reset  (Demo reset — wipes all policies + claims) ──────
+
+router.delete("/insurance/reset", async (_req, res): Promise<void> => {
+  await db.delete(insuranceClaimsTable);
+  await db.delete(insurancePoliciesTable);
+  await logEvent("insurance", "Demo reset: all policies and claims cleared.");
+  res.json({ success: true, message: "All insurance data cleared for demo." });
+});
+
 export default router;

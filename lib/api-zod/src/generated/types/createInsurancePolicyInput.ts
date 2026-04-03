@@ -6,13 +6,10 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface CreateInsuranceClaimInput {
-  claimType: string;
-  description: string;
+export interface CreateInsurancePolicyInput {
+  plan: string;
+  acresCovered: number;
+  cropType: string;
   /** @nullable */
   walletAddress?: string | null;
-  /** @nullable */
-  acresCovered?: number | null;
-  /** @nullable */
-  cropValuePerAcre?: number | null;
 }

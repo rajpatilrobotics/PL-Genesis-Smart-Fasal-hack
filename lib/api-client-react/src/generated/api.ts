@@ -23,12 +23,14 @@ import type {
   AiRecommendationInput,
   AnalyticsSummary,
   AskExpertInput,
+  CancelInsurancePolicy200,
   ChatMessage,
   CommunityPost,
   ConfirmDeliveryInput,
   ConnectWalletInput,
   CreateCommunityPostInput,
   CreateInsuranceClaimInput,
+  CreateInsurancePolicyInput,
   CreateMarketListingInput,
   CreditProfile,
   CreditSeasonInput,
@@ -49,6 +51,7 @@ import type {
   GetWeatherParams,
   HealthStatus,
   InsuranceClaim,
+  InsurancePolicy,
   InsuranceRisk,
   LitDecryptInput,
   LitDecryptResult,
@@ -58,11 +61,13 @@ import type {
   MarketListing,
   MarketPrice,
   ProductRecommendation,
+  ResetInsuranceDemo200,
   RewardsInfo,
   SendMessageInput,
   SensorData,
   SensorDataInput,
   WeatherData,
+  WeatherOracle,
 } from "./api.schemas";
 
 import { customFetch } from "../custom-fetch";
@@ -1060,6 +1065,411 @@ export const useCreateInsuranceClaim = <
 > => {
   return useMutation(getCreateInsuranceClaimMutationOptions(options));
 };
+
+/**
+ * @summary Get all insurance policies
+ */
+export const getGetInsurancePoliciesUrl = () => {
+  return `/api/insurance/policies`;
+};
+
+export const getInsurancePolicies = async (
+  options?: RequestInit,
+): Promise<InsurancePolicy[]> => {
+  return customFetch<InsurancePolicy[]>(getGetInsurancePoliciesUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetInsurancePoliciesQueryKey = () => {
+  return [`/api/insurance/policies`] as const;
+};
+
+export const getGetInsurancePoliciesQueryOptions = <
+  TData = Awaited<ReturnType<typeof getInsurancePolicies>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getInsurancePolicies>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetInsurancePoliciesQueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getInsurancePolicies>>
+  > = ({ signal }) => getInsurancePolicies({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getInsurancePolicies>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetInsurancePoliciesQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getInsurancePolicies>>
+>;
+export type GetInsurancePoliciesQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Get all insurance policies
+ */
+
+export function useGetInsurancePolicies<
+  TData = Awaited<ReturnType<typeof getInsurancePolicies>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getInsurancePolicies>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetInsurancePoliciesQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Purchase a new insurance policy
+ */
+export const getCreateInsurancePolicyUrl = () => {
+  return `/api/insurance/policies`;
+};
+
+export const createInsurancePolicy = async (
+  createInsurancePolicyInput: CreateInsurancePolicyInput,
+  options?: RequestInit,
+): Promise<InsurancePolicy> => {
+  return customFetch<InsurancePolicy>(getCreateInsurancePolicyUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createInsurancePolicyInput),
+  });
+};
+
+export const getCreateInsurancePolicyMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createInsurancePolicy>>,
+    TError,
+    { data: BodyType<CreateInsurancePolicyInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createInsurancePolicy>>,
+  TError,
+  { data: BodyType<CreateInsurancePolicyInput> },
+  TContext
+> => {
+  const mutationKey = ["createInsurancePolicy"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createInsurancePolicy>>,
+    { data: BodyType<CreateInsurancePolicyInput> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return createInsurancePolicy(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateInsurancePolicyMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createInsurancePolicy>>
+>;
+export type CreateInsurancePolicyMutationBody =
+  BodyType<CreateInsurancePolicyInput>;
+export type CreateInsurancePolicyMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Purchase a new insurance policy
+ */
+export const useCreateInsurancePolicy = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createInsurancePolicy>>,
+    TError,
+    { data: BodyType<CreateInsurancePolicyInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createInsurancePolicy>>,
+  TError,
+  { data: BodyType<CreateInsurancePolicyInput> },
+  TContext
+> => {
+  return useMutation(getCreateInsurancePolicyMutationOptions(options));
+};
+
+/**
+ * @summary Cancel an active insurance policy
+ */
+export const getCancelInsurancePolicyUrl = (id: number) => {
+  return `/api/insurance/policies/${id}`;
+};
+
+export const cancelInsurancePolicy = async (
+  id: number,
+  options?: RequestInit,
+): Promise<CancelInsurancePolicy200> => {
+  return customFetch<CancelInsurancePolicy200>(
+    getCancelInsurancePolicyUrl(id),
+    {
+      ...options,
+      method: "DELETE",
+    },
+  );
+};
+
+export const getCancelInsurancePolicyMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof cancelInsurancePolicy>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof cancelInsurancePolicy>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  const mutationKey = ["cancelInsurancePolicy"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof cancelInsurancePolicy>>,
+    { id: number }
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return cancelInsurancePolicy(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CancelInsurancePolicyMutationResult = NonNullable<
+  Awaited<ReturnType<typeof cancelInsurancePolicy>>
+>;
+
+export type CancelInsurancePolicyMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Cancel an active insurance policy
+ */
+export const useCancelInsurancePolicy = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof cancelInsurancePolicy>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof cancelInsurancePolicy>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  return useMutation(getCancelInsurancePolicyMutationOptions(options));
+};
+
+/**
+ * @summary Reset all insurance data for demo purposes
+ */
+export const getResetInsuranceDemoUrl = () => {
+  return `/api/insurance/reset`;
+};
+
+export const resetInsuranceDemo = async (
+  options?: RequestInit,
+): Promise<ResetInsuranceDemo200> => {
+  return customFetch<ResetInsuranceDemo200>(getResetInsuranceDemoUrl(), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export const getResetInsuranceDemoMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof resetInsuranceDemo>>,
+    TError,
+    void,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof resetInsuranceDemo>>,
+  TError,
+  void,
+  TContext
+> => {
+  const mutationKey = ["resetInsuranceDemo"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof resetInsuranceDemo>>,
+    void
+  > = () => {
+    return resetInsuranceDemo(requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type ResetInsuranceDemoMutationResult = NonNullable<
+  Awaited<ReturnType<typeof resetInsuranceDemo>>
+>;
+
+export type ResetInsuranceDemoMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Reset all insurance data for demo purposes
+ */
+export const useResetInsuranceDemo = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof resetInsuranceDemo>>,
+    TError,
+    void,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof resetInsuranceDemo>>,
+  TError,
+  void,
+  TContext
+> => {
+  return useMutation(getResetInsuranceDemoMutationOptions(options));
+};
+
+/**
+ * @summary Get live weather oracle data used for claim validation
+ */
+export const getGetInsuranceWeatherUrl = () => {
+  return `/api/insurance/weather`;
+};
+
+export const getInsuranceWeather = async (
+  options?: RequestInit,
+): Promise<WeatherOracle> => {
+  return customFetch<WeatherOracle>(getGetInsuranceWeatherUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetInsuranceWeatherQueryKey = () => {
+  return [`/api/insurance/weather`] as const;
+};
+
+export const getGetInsuranceWeatherQueryOptions = <
+  TData = Awaited<ReturnType<typeof getInsuranceWeather>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getInsuranceWeather>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetInsuranceWeatherQueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getInsuranceWeather>>
+  > = ({ signal }) => getInsuranceWeather({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getInsuranceWeather>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetInsuranceWeatherQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getInsuranceWeather>>
+>;
+export type GetInsuranceWeatherQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Get live weather oracle data used for claim validation
+ */
+
+export function useGetInsuranceWeather<
+  TData = Awaited<ReturnType<typeof getInsuranceWeather>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getInsuranceWeather>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetInsuranceWeatherQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
 
 /**
  * @summary Get live mandi prices

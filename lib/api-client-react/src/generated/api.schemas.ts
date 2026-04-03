@@ -99,19 +99,21 @@ export interface WeatherData {
   updatedAt: string;
 }
 
+export type InsuranceRiskWeatherSummary = {
+  totalRainfall7d?: number;
+  avgRainfall7d?: number;
+  maxTemp7d?: number;
+  heatwaveDays?: number;
+  source?: string;
+} | null;
+
 export interface InsuranceRisk {
   riskLevel: string;
   riskScore: number;
   eligibleForClaim: boolean;
   reasons: string[];
   recommendations: string[];
-  weatherSummary?: {
-    totalRainfall7d: number;
-    avgRainfall7d: number;
-    maxTemp7d: number;
-    heatwaveDays: number;
-    source: string;
-  };
+  weatherSummary?: InsuranceRiskWeatherSummary;
 }
 
 export interface InsuranceClaim {
@@ -123,9 +125,14 @@ export interface InsuranceClaim {
   rewardPoints: number;
   /** @nullable */
   walletAddress?: string | null;
+  /** @nullable */
   weatherValidated?: boolean | null;
+  /** @nullable */
   validationNote?: string | null;
+  /** @nullable */
   payoutAmount?: number | null;
+  /** @nullable */
+  weatherData?: string | null;
   createdAt: string;
 }
 
@@ -134,6 +141,62 @@ export interface CreateInsuranceClaimInput {
   description: string;
   /** @nullable */
   walletAddress?: string | null;
+  /** @nullable */
+  acresCovered?: number | null;
+  /** @nullable */
+  cropValuePerAcre?: number | null;
+}
+
+export interface InsurancePolicy {
+  id: number;
+  plan: string;
+  coveredEvents: string;
+  premiumAnnual: number;
+  maxPayout: number;
+  acresCovered: string;
+  cropType: string;
+  status: string;
+  /** @nullable */
+  ipfsCid?: string | null;
+  /** @nullable */
+  ipfsUrl?: string | null;
+  /** @nullable */
+  walletAddress?: string | null;
+  startDate?: string;
+  endDate?: string;
+  createdAt: string;
+}
+
+export interface CreateInsurancePolicyInput {
+  plan: string;
+  acresCovered: number;
+  cropType: string;
+  /** @nullable */
+  walletAddress?: string | null;
+}
+
+export type WeatherOraclePast7DaysItem = {
+  date?: string;
+  rainfall?: number;
+  maxTemp?: number;
+  minTemp?: number;
+};
+
+export type WeatherOracleSummary = {
+  totalRainfall7d: number;
+  avgRainfall7d: number;
+  maxSingleDayRain: number;
+  maxTemp7d: number;
+  heatwaveDays: number;
+};
+
+export interface WeatherOracle {
+  source: string;
+  /** @nullable */
+  location?: string | null;
+  fetchedAt: string;
+  past7Days?: WeatherOraclePast7DaysItem[];
+  summary: WeatherOracleSummary;
 }
 
 export interface MarketPrice {
@@ -494,6 +557,16 @@ export type GetSensorHistoryParams = {
 export type GetWeatherParams = {
   lat?: number;
   lon?: number;
+};
+
+export type CancelInsurancePolicy200 = {
+  success: boolean;
+  policy?: InsurancePolicy;
+};
+
+export type ResetInsuranceDemo200 = {
+  success: boolean;
+  message: string;
 };
 
 export type GetLitVaultRecordsParams = {

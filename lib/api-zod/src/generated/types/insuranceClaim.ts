@@ -15,5 +15,13 @@ export interface InsuranceClaim {
   rewardPoints: number;
   /** @nullable */
   walletAddress?: string | null;
+  /** @nullable */
+  weatherValidated?: boolean | null;
+  /** @nullable */
+  validationNote?: string | null;
+  /** @nullable */
+  payoutAmount?: number | null;
+  /** @nullable */
+  weatherData?: string | null;
   createdAt: Date;
 }
