@@ -449,9 +449,9 @@ export default function Home() {
 
           {/* NPK bars */}
           {[
-            { label: "Nitrogen (N)", value: DUMMY_SENSOR.nitrogen, max: 200, color: "bg-green-500", unit: "mg/kg" },
-            { label: "Phosphorus (P)", value: DUMMY_SENSOR.phosphorus, max: 100, color: "bg-orange-500", unit: "mg/kg" },
-            { label: "Potassium (K)", value: DUMMY_SENSOR.potassium, max: 300, color: "bg-purple-500", unit: "mg/kg" },
+            { label: "Nitrogen (N)", value: displaySensor.nitrogen, max: 200, color: "bg-green-500", unit: "mg/kg" },
+            { label: "Phosphorus (P)", value: displaySensor.phosphorus, max: 100, color: "bg-orange-500", unit: "mg/kg" },
+            { label: "Potassium (K)", value: displaySensor.potassium, max: 300, color: "bg-purple-500", unit: "mg/kg" },
           ].map(({ label, value, max, color, unit }) => (
             <div key={label} className="space-y-1">
               <div className="flex justify-between text-xs">
@@ -473,14 +473,14 @@ export default function Home() {
               <span className="text-muted-foreground">
                 Soil pH
                 <span className={cn("ml-1.5 text-[10px] font-semibold px-1.5 py-0 rounded-full",
-                  DUMMY_SENSOR.ph >= 6.0 && DUMMY_SENSOR.ph <= 7.5
+                  displaySensor.ph >= 6.0 && displaySensor.ph <= 7.5
                     ? "bg-emerald-100 text-emerald-700"
                     : "bg-amber-100 text-amber-700"
                 )}>
-                  {DUMMY_SENSOR.ph >= 6.0 && DUMMY_SENSOR.ph <= 7.5 ? "Optimal" : DUMMY_SENSOR.ph < 6.0 ? "Acidic" : "Alkaline"}
+                  {displaySensor.ph >= 6.0 && displaySensor.ph <= 7.5 ? "Optimal" : displaySensor.ph < 6.0 ? "Acidic" : "Alkaline"}
                 </span>
               </span>
-              <span className="font-semibold">{DUMMY_SENSOR.ph} <span className="text-muted-foreground font-normal">pH</span></span>
+              <span className="font-semibold">{displaySensor.ph} <span className="text-muted-foreground font-normal">pH</span></span>
             </div>
             <div className="relative h-2 bg-muted rounded-full overflow-hidden">
               <div className="absolute inset-0 flex">
@@ -490,7 +490,7 @@ export default function Home() {
               </div>
               <div
                 className="absolute top-0 h-full w-1 bg-blue-500 rounded-full transition-all duration-700"
-                style={{ left: `calc(${Math.min(100, (DUMMY_SENSOR.ph / 14) * 100)}% - 2px)` }}
+                style={{ left: `calc(${Math.min(100, (displaySensor.ph / 14) * 100)}% - 2px)` }}
               />
             </div>
             <div className="flex justify-between text-[9px] text-muted-foreground/70">
@@ -504,14 +504,14 @@ export default function Home() {
           <div className="space-y-1">
             <div className="flex justify-between text-xs">
               <span className="text-muted-foreground">Soil Moisture (H₂O)</span>
-              <span className="font-semibold">{DUMMY_SENSOR.moisture}<span className="text-muted-foreground font-normal">%</span></span>
+              <span className="font-semibold">{displaySensor.moisture}<span className="text-muted-foreground font-normal">%</span></span>
             </div>
             <div className="h-2 bg-muted rounded-full overflow-hidden">
               <div
                 className={cn("h-full rounded-full transition-all duration-700",
-                  DUMMY_SENSOR.moisture < 30 ? "bg-red-400" : DUMMY_SENSOR.moisture > 70 ? "bg-blue-500" : "bg-cyan-500"
+                  displaySensor.moisture < 30 ? "bg-red-400" : displaySensor.moisture > 70 ? "bg-blue-500" : "bg-cyan-500"
                 )}
-                style={{ width: `${Math.min(100, DUMMY_SENSOR.moisture)}%` }}
+                style={{ width: `${Math.min(100, displaySensor.moisture)}%` }}
               />
             </div>
           </div>
