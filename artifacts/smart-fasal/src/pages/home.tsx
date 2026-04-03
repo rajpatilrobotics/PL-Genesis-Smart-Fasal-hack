@@ -393,7 +393,7 @@ export default function Home() {
 
   const riskToDisplay: RiskStatus = pipelineResult?.riskLevel ?? (insuranceRisk?.riskLevel === "HIGH" ? "High" : insuranceRisk?.riskLevel === "LOW" ? "Low" : "Medium");
 
-  const glassCard = "rounded-2xl border border-white/70 bg-white/60 backdrop-blur-xl shadow-lg";
+  const glassCard = "rounded-2xl border border-white/70 bg-white/60 backdrop-blur-xl shadow-lg transition-all duration-200 hover:-translate-y-1 hover:shadow-xl hover:shadow-emerald-200/50 active:translate-y-0 active:shadow-lg";
 
   return (
     <div className="relative -mx-4 -mt-5 min-h-screen animate-in fade-in slide-in-from-bottom-4 duration-500"
@@ -409,7 +409,7 @@ export default function Home() {
       <div className="relative space-y-4 px-4 pt-5 pb-28">
 
         {/* ── Hero Header ── */}
-        <div className="relative rounded-2xl overflow-hidden p-4 shadow-xl"
+        <div className="relative rounded-2xl overflow-hidden p-4 shadow-xl transition-all duration-200 hover:-translate-y-1 hover:shadow-2xl hover:shadow-green-400/40 active:translate-y-0"
           style={{ background: "linear-gradient(135deg, #16a34a 0%, #15803d 40%, #166534 100%)", border: "1px solid rgba(255,255,255,0.25)" }}>
           <div className="absolute -top-6 -right-6 w-32 h-32 rounded-full bg-white/10 blur-2xl" />
           <div className="absolute bottom-0 left-0 w-20 h-20 rounded-full bg-yellow-300/15 blur-xl" />
@@ -429,7 +429,7 @@ export default function Home() {
         </div>
 
         {/* ── Weather ── */}
-        <div className="relative rounded-2xl overflow-hidden shadow-lg"
+        <div className="relative rounded-2xl overflow-hidden shadow-lg transition-all duration-200 hover:-translate-y-1 hover:shadow-2xl hover:shadow-sky-300/50 active:translate-y-0"
           style={{ background: "linear-gradient(135deg, #0ea5e9 0%, #38bdf8 50%, #7dd3fc 100%)", border: "1px solid rgba(255,255,255,0.35)" }}>
           <div className="absolute -top-4 -right-4 w-24 h-24 rounded-full bg-white/20 blur-2xl" />
           <div className="relative p-3.5">
@@ -640,7 +640,7 @@ export default function Home() {
         </div>
 
         {/* ── Analyze Farm Pipeline ── */}
-        <div className="relative rounded-2xl overflow-hidden shadow-xl"
+        <div className="relative rounded-2xl overflow-hidden shadow-xl transition-all duration-200 hover:-translate-y-1 hover:shadow-2xl hover:shadow-green-700/40 active:translate-y-0"
           style={{ background: "linear-gradient(135deg, #14532d 0%, #166534 45%, #15803d 100%)", border: "1px solid rgba(255,255,255,0.2)" }}>
           <div className="absolute top-0 right-0 w-32 h-32 bg-yellow-300/10 rounded-full blur-2xl -translate-y-8 translate-x-8" />
           <div className="relative p-4 space-y-4">
