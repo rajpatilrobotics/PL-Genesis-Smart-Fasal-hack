@@ -172,6 +172,17 @@ Real on-chain minting on Optimism Sepolia:
 - Wallet: `0x1C9d29F655E2674665eFD84B3997c8E76F1f88Cc` (Optimism Sepolia)
 - Needs OP Sepolia ETH to mint: https://app.optimism.io/faucet
 
+## Multilingual Support
+
+10 languages fully implemented via i18next:
+- **Indian**: English (en), Hindi (hi), Marathi (mr), Telugu (te)
+- **Global**: Spanish (es), French (fr), Arabic (ar), Chinese (zh), Portuguese (pt), German (de)
+- Locale JSON files: `artifacts/smart-fasal/src/i18n/locales/`
+- All pages and components use `useTranslation()` / `t()` hooks
+- RTL support for Arabic handled in `src/i18n/index.ts`
+- Language switcher in TopHeader works across all pages
+- Onboarding page fully translated (all 3 steps)
+
 ## Key Design Decisions
 
 - **Filecoin storage**: Real uploads via Lighthouse SDK (API key set)

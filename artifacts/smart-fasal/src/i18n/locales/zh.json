@@ -358,5 +358,27 @@
     "good": "良好",
     "average": "一般",
     "poor": "较差"
+  },
+  "onboarding": {
+    "welcome": "欢迎使用 Smart Fasal",
+    "subtitle": "让我们设置您的农民档案 — 只需一分钟。",
+    "personalDetails": "个人信息",
+    "fullName": "全名 *",
+    "phone": "电话号码",
+    "continue": "继续",
+    "farmLocation": "农场位置",
+    "village": "村庄 / 城镇",
+    "district": "区县",
+    "state": "州",
+    "selectState": "选择州...",
+    "back": "返回",
+    "farmDetails": "农场详情",
+    "farmSize": "农场面积（英亩）",
+    "primaryCrop": "主要作物",
+    "selectCrop": "选择作物...",
+    "experience": "农业经验（年）",
+    "finish": "完成设置",
+    "saving": "保存中...",
+    "saveError": "无法保存档案，请重试。"
   }
 }

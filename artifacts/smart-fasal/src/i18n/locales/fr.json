@@ -358,5 +358,27 @@
     "good": "Bien",
     "average": "Moyen",
     "poor": "Mauvais"
+  },
+  "onboarding": {
+    "welcome": "Bienvenue sur Smart Fasal",
+    "subtitle": "Configurons votre profil d'agriculteur — cela ne prend qu'une minute.",
+    "personalDetails": "Informations Personnelles",
+    "fullName": "Nom Complet *",
+    "phone": "Numéro de Téléphone",
+    "continue": "Continuer",
+    "farmLocation": "Localisation de la Ferme",
+    "village": "Village / Ville",
+    "district": "District",
+    "state": "État",
+    "selectState": "Sélectionner l'état...",
+    "back": "Retour",
+    "farmDetails": "Détails de la Ferme",
+    "farmSize": "Superficie de la Ferme (en acres)",
+    "primaryCrop": "Culture Principale",
+    "selectCrop": "Sélectionner la culture...",
+    "experience": "Expérience Agricole (années)",
+    "finish": "Terminer la Configuration",
+    "saving": "Enregistrement...",
+    "saveError": "Impossible d'enregistrer le profil. Veuillez réessayer."
   }
 }
