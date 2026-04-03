@@ -17,6 +17,7 @@ import starknetRouter from "./starknet";
 import loansRouter from "./loans";
 import retroactiveRouter from "./retroactive.js";
 import userRouter from "./user.js";
+import dataCatalogRouter from "./data-catalog.js";
 
 const router: IRouter = Router();
 
@@ -38,5 +39,6 @@ router.use(starknetRouter);
 router.use(loansRouter);
 router.use(retroactiveRouter);
 router.use(userRouter);
+router.use(dataCatalogRouter);
 
 export default router;

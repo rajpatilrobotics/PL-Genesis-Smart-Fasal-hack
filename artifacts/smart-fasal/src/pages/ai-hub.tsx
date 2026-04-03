@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -23,18 +23,17 @@ import {
   getGetAnalyticsSummaryQueryKey,
   useGetAnalyticsLogs,
   getGetAnalyticsLogsQueryKey,
-  useStoreOnFilecoin,
 } from "@workspace/api-client-react";
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, Legend,
 } from "recharts";
 import {
-  Brain, Sparkles, ChevronRight, Zap,
-  Camera, Upload, X, Shield, Copy, ExternalLink, CheckCircle2,
+  Brain, Zap, Sparkles, ChevronRight, Shield,
+  Camera, Upload, X, Copy, ExternalLink, CheckCircle2,
   Loader2, FileImage, Database, History,
   Lock, ShieldCheck, Sprout, BarChart3, ShoppingCart,
-  Activity, Droplets, FlaskConical, TrendingUp, BadgeCheck, Coins,
+  Activity, Droplets, FlaskConical, TrendingUp, Globe, Users, BookOpen,
 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useWallet } from "@/lib/wallet-context";
@@ -69,37 +68,24 @@ type CropPredictResult = {
   insight: string;
 };
 
-type DataSale = {
-  id: string;
-  buyer: string;
-  buyerType: "Research" | "Government" | "AgriTech";
-  amount: number;
-  flowTxId: string;
-  soldAt: string;
-};
-
-type MyListing = {
-  id: string;
-  title: string;
+type CatalogEntry = {
+  id: number;
+  datasetTitle: string;
+  farmerWallet: string | null;
+  location: string;
+  device: string;
+  recordCount: number;
+  avgNitrogen: number;
+  avgPhosphorus: number;
+  avgPotassium: number;
+  avgPh: number;
+  avgMoisture: number;
   cid: string;
-  priceFlow: number;
-  records: number;
-  listedAt: string;
-  sales: DataSale[];
+  ipfsUrl: string;
+  isReal: string;
+  accessCount: number;
+  createdAt: string;
 };
-
-const BUYERS = [
-  { name: "ICAR New Delhi", type: "Research" as const, icon: "🏛️" },
-  { name: "Ministry of Agriculture", type: "Government" as const, icon: "🇮🇳" },
-  { name: "AgriTech India Ltd", type: "AgriTech" as const, icon: "🏢" },
-  { name: "ICRISAT Hyderabad", type: "Research" as const, icon: "🔬" },
-  { name: "Punjab Agri Dept", type: "Government" as const, icon: "🌾" },
-  { name: "Ninjacart Analytics", type: "AgriTech" as const, icon: "📊" },
-];
-
-function randomHex(len: number) {
-  return Array.from({ length: len }, () => Math.floor(Math.random() * 16).toString(16)).join("");
-}
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
@@ -107,7 +93,7 @@ export default function AiHub() {
   const { t } = useTranslation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { walletAddress, addFlowReward, publishDataListing } = useWallet();
+  const { walletAddress, addFlowReward } = useWallet();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // ── AI Recommendations state ──
@@ -129,16 +115,16 @@ export default function AiHub() {
   const [copiedCid, setCopiedCid] = useState<string | null>(null);
   const [litVaultRecord, setLitVaultRecord] = useState<LitVaultRecord | null>(null);
 
-  // ── Data Market state ──
-  const [listing, setListing] = useState(false);
-  const [myListings, setMyListings] = useState<MyListing[]>([]);
-  const [pendingSale, setPendingSale] = useState<string | null>(null);
+  // ── Data Commons state ──
+  const [publishing, setPublishing] = useState(false);
+  const [myPublished, setMyPublished] = useState<CatalogEntry[]>([]);
+  const [catalog, setCatalog] = useState<CatalogEntry[]>([]);
+  const [catalogLoading, setCatalogLoading] = useState(false);
 
   // ── API hooks ──
   const getAiRec = useGetAiRecommendation();
   const detectDisease = useDetectDisease();
   const litEncryptMutation = useLitEncryptFarmData();
-  const storeOnFilecoin = useStoreOnFilecoin();
 
   const { data: recHistory } = useGetAiRecommendationHistory({
     query: { queryKey: getGetAiRecommendationHistoryQueryKey() }
@@ -159,6 +145,18 @@ export default function AiHub() {
   const chartData = history ? [...history].reverse() : [];
   const hasData = history && history.length > 0;
   const recordCount = history?.length ?? 0;
+
+  const fetchCatalog = useCallback(async () => {
+    setCatalogLoading(true);
+    try {
+      const res = await fetch("/api/data-catalog");
+      if (res.ok) setCatalog(await res.json());
+    } catch { } finally {
+      setCatalogLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { fetchCatalog(); }, [fetchCatalog]);
 
   const sensorAvg = (key: "nitrogen" | "phosphorus" | "potassium" | "ph" | "moisture") =>
     hasData ? history!.reduce((s, r) => s + r[key], 0) / history!.length : 0;
@@ -370,54 +368,41 @@ export default function AiHub() {
     toast({ title: "Copied!", description: `${label} copied to clipboard` });
   };
 
-  const handleListData = async () => {
+  const handlePublishData = async () => {
     if (!hasData) {
-      toast({ title: "No data to list", description: "Generate sensor readings first from the Home page.", variant: "destructive" });
+      toast({ title: "No sensor data yet", description: "Go to Home and generate readings first.", variant: "destructive" });
       return;
     }
-    setListing(true);
+    setPublishing(true);
     try {
-      let cid = "bafy" + Array.from({ length: 44 }, () => "abcdefghijklmnopqrstuvwxyz234567"[Math.floor(Math.random() * 32)]).join("");
-      await new Promise<void>((resolve) => {
-        storeOnFilecoin.mutate(
-          { data: { dataType: "sensor_dataset", data: { device: "ESP32-FARM-001", records: recordCount } as Record<string, unknown> } },
-          { onSuccess: (d: any) => { if (d?.cid) cid = d.cid; resolve(); }, onError: () => resolve() }
-        );
+      const res = await fetch("/api/data-catalog/publish", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          farmerWallet: walletAddress ?? null,
+          location: "Punjab, India",
+          device: "ESP32-FARM-001",
+          recordCount,
+          avgNitrogen: sensorAvg("nitrogen"),
+          avgPhosphorus: sensorAvg("phosphorus"),
+          avgPotassium: sensorAvg("potassium"),
+          avgPh: sensorAvg("ph"),
+          avgMoisture: sensorAvg("moisture"),
+        }),
       });
-      const newListing: MyListing = {
-        id: randomHex(8),
-        title: `Farm Soil Dataset — ${new Date().toLocaleDateString("en-IN")}`,
-        cid,
-        priceFlow: Math.floor(recordCount * 0.5 + 10),
-        records: recordCount,
-        listedAt: new Date().toISOString(),
-        sales: [],
-      };
-      setMyListings(prev => [newListing, ...prev]);
-      publishDataListing({ id: newListing.id, cid, title: newListing.title, priceFlow: newListing.priceFlow, sold: false, earnings: 0, category: "Soil", records: recordCount });
-      addFlowReward("Data Listed on Flow Marketplace", 15);
-      toast({ title: "Listed on Flow Marketplace!", description: `CID: ${cid.slice(0, 14)}... · +15 FLOW earned` });
-      const delay = 4000 + Math.random() * 4000;
-      const buyer = BUYERS[Math.floor(Math.random() * BUYERS.length)];
-      setPendingSale(newListing.id);
-      setTimeout(() => {
-        const sale: DataSale = {
-          id: randomHex(8),
-          buyer: buyer.name,
-          buyerType: buyer.type,
-          amount: newListing.priceFlow,
-          flowTxId: "0x" + randomHex(64),
-          soldAt: new Date().toISOString(),
-        };
-        setMyListings(prev => prev.map(l => l.id === newListing.id ? { ...l, sales: [sale, ...l.sales] } : l));
-        setPendingSale(null);
-        addFlowReward(`Data purchased by ${buyer.name}`, newListing.priceFlow);
-        toast({ title: `${buyer.icon} ${buyer.name} purchased your data!`, description: `+${newListing.priceFlow} FLOW tokens earned` });
-      }, delay);
+      if (!res.ok) throw new Error("publish failed");
+      const entry: CatalogEntry = await res.json();
+      setMyPublished(prev => [entry, ...prev]);
+      await fetchCatalog();
+      if (walletAddress) addFlowReward("Dataset published to Open Data Commons", 15);
+      toast({
+        title: entry.isReal === "true" ? "✅ Dataset live on IPFS/Filecoin" : "Dataset published to Open Data Commons",
+        description: `CID: ${entry.cid.slice(0, 14)}… — anyone can verify this data`,
+      });
     } catch {
-      toast({ title: "Error", description: "Could not create listing.", variant: "destructive" });
+      toast({ title: "Publish failed", description: "Could not upload dataset. Try again.", variant: "destructive" });
     } finally {
-      setListing(false);
+      setPublishing(false);
     }
   };
 
@@ -431,11 +416,6 @@ export default function AiHub() {
     }
   };
 
-  const buyerTypeColor: Record<string, string> = {
-    Research: "bg-blue-100 text-blue-700",
-    Government: "bg-green-100 text-green-700",
-    AgriTech: "bg-purple-100 text-purple-700",
-  };
 
   const diagnosisData = detectDisease.data;
   const isRunning = detectDisease.isPending || archiving;
@@ -958,97 +938,222 @@ export default function AiHub() {
         </TabsContent>
 
         {/* ══════════════════════════════════════════════════════════
-            TAB 4 — DATA MARKETPLACE
+            TAB 4 — OPEN AGRICULTURAL DATA COMMONS
         ══════════════════════════════════════════════════════════ */}
         <TabsContent value="market" className="space-y-4 mt-3">
+
+          {/* Header card — publish action */}
           <Card className="bg-gradient-to-br from-violet-50 to-indigo-50 border-violet-100">
             <CardContent className="p-4">
               <div className="flex items-start gap-3 mb-3">
-                <div className="w-9 h-9 rounded-xl bg-violet-500 flex items-center justify-center shrink-0">
-                  <Database className="w-4.5 h-4.5 text-white" />
+                <div className="w-9 h-9 rounded-xl bg-violet-600 flex items-center justify-center shrink-0">
+                  <Globe className="w-4.5 h-4.5 text-white" />
                 </div>
                 <div>
-                  <p className="font-semibold text-sm">Sensor Data Marketplace</p>
-                  <p className="text-xs text-muted-foreground">Sell IoT data to research institutes via <span className="font-semibold text-violet-700">Flow blockchain</span></p>
+                  <p className="font-semibold text-sm">Open Agricultural Data Commons</p>
+                  <p className="text-xs text-muted-foreground">Publish your soil sensor data to <span className="font-semibold text-violet-700">IPFS/Filecoin</span> — verifiable, permanent, citable</p>
                 </div>
               </div>
-              <div className="grid grid-cols-3 gap-2 mb-3">
-                <div className="bg-white/70 rounded-lg p-2 text-center">
-                  <p className="text-lg font-bold">{recordCount}</p>
-                  <p className="text-[10px] text-muted-foreground">Readings</p>
-                </div>
-                <div className="bg-white/70 rounded-lg p-2 text-center">
-                  <p className="text-lg font-bold">{myListings.length}</p>
-                  <p className="text-[10px] text-muted-foreground">Listed</p>
-                </div>
-                <div className="bg-white/70 rounded-lg p-2 text-center">
-                  <p className="text-lg font-bold">{myListings.reduce((s, l) => s + l.sales.length, 0)}</p>
-                  <p className="text-[10px] text-muted-foreground">Sold</p>
-                </div>
-              </div>
-              <Button onClick={handleListData} disabled={listing || !hasData} className="w-full bg-violet-600 hover:bg-violet-700 text-white" size="sm">
-                {listing ? <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />Uploading to Filecoin...</> : <><Coins className="w-3.5 h-3.5 mr-1.5" />Package & List on Flow (+15 pts)</>}
-              </Button>
-              {!hasData && <p className="text-[10px] text-center text-muted-foreground mt-1.5">Generate sensor readings first from Home page</p>}
-            </CardContent>
-          </Card>
 
-          {/* Active buyers */}
-          <Card>
-            <CardContent className="p-3">
-              <p className="text-xs font-semibold mb-2 text-muted-foreground uppercase tracking-wide">Active Buyers on Platform</p>
-              <div className="space-y-1.5">
-                {BUYERS.map(b => (
-                  <div key={b.name} className="flex items-center justify-between">
-                    <span className="text-xs">{b.icon} {b.name}</span>
-                    <span className={cn("text-[10px] font-semibold px-1.5 py-0.5 rounded", buyerTypeColor[b.type])}>{b.type}</span>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* My listings */}
-          {myListings.length > 0 && (
-            <div className="space-y-3">
-              <p className="text-sm font-semibold">My Listings</p>
-              {myListings.map(l => (
-                <Card key={l.id} className="border-violet-100">
-                  <CardContent className="p-3 space-y-2">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <p className="text-xs font-semibold">{l.title}</p>
-                        <p className="text-[10px] text-muted-foreground font-mono mt-0.5">{l.cid.slice(0, 10)}...{l.cid.slice(-6)}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm font-bold text-violet-700">{l.priceFlow} FLOW</p>
-                        <p className="text-[10px] text-muted-foreground">{l.records} records</p>
-                      </div>
-                    </div>
-                    {pendingSale === l.id && (
-                      <div className="flex items-center gap-1.5 p-2 rounded-lg bg-amber-50 border border-amber-100">
-                        <Loader2 className="w-3 h-3 text-amber-600 animate-spin" />
-                        <p className="text-[11px] text-amber-700">Waiting for buyer to confirm...</p>
-                      </div>
-                    )}
-                    {l.sales.map(sale => (
-                      <div key={sale.id} className="p-2 rounded-lg bg-emerald-50 border border-emerald-100 space-y-1">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-1">
-                            <BadgeCheck className="w-3.5 h-3.5 text-emerald-600" />
-                            <p className="text-[11px] font-semibold text-emerald-800">{sale.buyer}</p>
-                            <span className={cn("text-[9px] px-1 rounded", buyerTypeColor[sale.buyerType])}>{sale.buyerType}</span>
-                          </div>
-                          <p className="text-xs font-bold text-emerald-700">+{sale.amount} FLOW</p>
-                        </div>
-                        <p className="text-[10px] text-muted-foreground font-mono">{sale.flowTxId.slice(0, 22)}...</p>
+              {/* dataset preview */}
+              {hasData && (
+                <div className="bg-white/70 rounded-lg p-2.5 mb-3 space-y-1.5">
+                  <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">Dataset Preview — {recordCount} readings</p>
+                  <div className="grid grid-cols-5 gap-1">
+                    {[
+                      { label: "N", value: sensorAvg("nitrogen").toFixed(0) + " mg/kg", color: "text-green-700 bg-green-100" },
+                      { label: "P", value: sensorAvg("phosphorus").toFixed(0) + " mg/kg", color: "text-orange-700 bg-orange-100" },
+                      { label: "K", value: sensorAvg("potassium").toFixed(0) + " mg/kg", color: "text-purple-700 bg-purple-100" },
+                      { label: "pH", value: sensorAvg("ph").toFixed(1), color: "text-blue-700 bg-blue-100" },
+                      { label: "H₂O", value: sensorAvg("moisture").toFixed(0) + "%", color: "text-cyan-700 bg-cyan-100" },
+                    ].map(({ label, value, color }) => (
+                      <div key={label} className={cn("rounded p-1.5 text-center", color)}>
+                        <p className="text-[9px] font-bold">{label}</p>
+                        <p className="text-[9px] font-semibold leading-tight">{value}</p>
                       </div>
                     ))}
+                  </div>
+                  <p className="text-[10px] text-muted-foreground">License: CC BY 4.0 · Device: ESP32-FARM-001 · Schema: smartfasal/soil-sensor/v1</p>
+                </div>
+              )}
+
+              <Button
+                onClick={handlePublishData}
+                disabled={publishing || !hasData}
+                className="w-full bg-violet-600 hover:bg-violet-700 text-white"
+                size="sm"
+              >
+                {publishing
+                  ? <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />Uploading to IPFS…</>
+                  : <><Globe className="w-3.5 h-3.5 mr-1.5" />Publish to Data Commons {walletAddress && <span className="ml-1 text-[9px] bg-white/20 px-1.5 py-0.5 rounded-full">+15 pts</span>}</>
+                }
+              </Button>
+              {!hasData && <p className="text-[10px] text-center text-muted-foreground mt-1.5">Generate sensor readings first from the Home page</p>}
+            </CardContent>
+          </Card>
+
+          {/* My published datasets */}
+          {myPublished.length > 0 && (
+            <div className="space-y-2">
+              <p className="text-sm font-semibold flex items-center gap-1.5">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> My Published Datasets
+              </p>
+              {myPublished.map(entry => (
+                <Card key={entry.id} className="border-emerald-200 bg-emerald-50/30">
+                  <CardContent className="p-3 space-y-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="text-xs font-semibold leading-tight truncate">{entry.datasetTitle}</p>
+                        <p className="text-[10px] text-muted-foreground mt-0.5">{entry.recordCount} readings · {entry.location}</p>
+                      </div>
+                      {entry.isReal === "true" ? (
+                        <span className="shrink-0 text-[9px] bg-emerald-600 text-white rounded-full px-2 py-0.5 font-semibold">LIVE ON IPFS</span>
+                      ) : (
+                        <span className="shrink-0 text-[9px] bg-violet-100 text-violet-700 rounded-full px-2 py-0.5 font-semibold">IPFS HASH</span>
+                      )}
+                    </div>
+                    <div className="bg-white/80 rounded p-2 space-y-1">
+                      <p className="text-[10px] font-semibold text-muted-foreground">Content ID (CID)</p>
+                      <div className="flex items-center gap-1.5">
+                        <code className="text-[10px] font-mono text-violet-800 flex-1 truncate">{entry.cid}</code>
+                        <button
+                          onClick={() => { navigator.clipboard.writeText(entry.cid); toast({ title: "CID copied!" }); }}
+                          className="shrink-0 text-muted-foreground hover:text-foreground"
+                        >
+                          <Copy className="w-3 h-3" />
+                        </button>
+                      </div>
+                      <a
+                        href={entry.ipfsUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-[10px] text-blue-600 hover:underline"
+                      >
+                        <ExternalLink className="w-2.5 h-2.5" /> View on IPFS Gateway
+                      </a>
+                    </div>
+                    <div className="flex items-center gap-1 text-[10px] text-emerald-700">
+                      <CheckCircle2 className="w-3 h-3" />
+                      Permanently stored · CC BY 4.0 · Anyone can cite this CID
+                    </div>
                   </CardContent>
                 </Card>
               ))}
             </div>
           )}
+
+          {/* Platform-wide data registry */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-semibold flex items-center gap-1.5">
+                <BookOpen className="w-3.5 h-3.5 text-violet-600" /> Community Data Registry
+              </p>
+              <button onClick={fetchCatalog} className="text-[10px] text-muted-foreground hover:text-foreground flex items-center gap-1">
+                <TrendingUp className="w-3 h-3" /> Refresh
+              </button>
+            </div>
+            <p className="text-[11px] text-muted-foreground">Soil datasets contributed by farmers on this platform — each CID is verifiable on IPFS</p>
+
+            {catalogLoading ? (
+              <div className="space-y-2">
+                <Skeleton className="h-16 w-full" />
+                <Skeleton className="h-16 w-full" />
+              </div>
+            ) : catalog.length === 0 ? (
+              <Card>
+                <CardContent className="p-4 text-center">
+                  <Database className="w-8 h-8 mx-auto text-muted-foreground/40 mb-2" />
+                  <p className="text-sm text-muted-foreground">No datasets yet</p>
+                  <p className="text-[11px] text-muted-foreground">Be the first to publish your soil data to the commons</p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-2">
+                {/* summary stats */}
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="bg-violet-50 border border-violet-100 rounded-lg p-2 text-center">
+                    <p className="text-base font-bold text-violet-700">{catalog.length}</p>
+                    <p className="text-[10px] text-muted-foreground">Datasets</p>
+                  </div>
+                  <div className="bg-violet-50 border border-violet-100 rounded-lg p-2 text-center">
+                    <p className="text-base font-bold text-violet-700">{catalog.reduce((s, e) => s + e.recordCount, 0).toLocaleString("en-IN")}</p>
+                    <p className="text-[10px] text-muted-foreground">Readings</p>
+                  </div>
+                  <div className="bg-violet-50 border border-violet-100 rounded-lg p-2 text-center">
+                    <p className="text-base font-bold text-violet-700">{catalog.reduce((s, e) => s + e.accessCount, 0)}</p>
+                    <p className="text-[10px] text-muted-foreground">Accesses</p>
+                  </div>
+                </div>
+
+                {catalog.map(entry => (
+                  <Card key={entry.id} className="border-violet-100/60">
+                    <CardContent className="p-3 space-y-2">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs font-semibold leading-tight">{entry.datasetTitle}</p>
+                          <p className="text-[10px] text-muted-foreground">{entry.recordCount} readings · {entry.location} · {new Date(entry.createdAt).toLocaleDateString("en-IN")}</p>
+                        </div>
+                        {entry.isReal === "true" ? (
+                          <span className="shrink-0 text-[9px] bg-emerald-600 text-white rounded-full px-2 py-0.5 font-semibold">LIVE</span>
+                        ) : (
+                          <span className="shrink-0 text-[9px] bg-gray-100 text-gray-600 rounded-full px-2 py-0.5">IPFS</span>
+                        )}
+                      </div>
+
+                      {/* NPK mini bars */}
+                      <div className="grid grid-cols-3 gap-1">
+                        {[
+                          { label: "N", value: entry.avgNitrogen.toFixed(0), color: "bg-green-500", max: 300 },
+                          { label: "P", value: entry.avgPhosphorus.toFixed(0), color: "bg-orange-500", max: 150 },
+                          { label: "K", value: entry.avgPotassium.toFixed(0), color: "bg-purple-500", max: 400 },
+                        ].map(({ label, value, color, max }) => (
+                          <div key={label}>
+                            <div className="flex justify-between text-[9px] text-muted-foreground mb-0.5">
+                              <span>{label}</span><span>{value}</span>
+                            </div>
+                            <div className="h-1 bg-muted rounded-full overflow-hidden">
+                              <div className={cn("h-full rounded-full", color)} style={{ width: `${Math.min(100, (parseFloat(value) / max) * 100)}%` }} />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <code className="text-[9px] font-mono text-muted-foreground">{entry.cid.slice(0, 12)}…{entry.cid.slice(-6)}</code>
+                        <a
+                          href={entry.ipfsUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={async () => {
+                            try { await fetch(`/api/data-catalog/${entry.id}/access`, { method: "POST" }); } catch {}
+                          }}
+                          className="inline-flex items-center gap-1 text-[10px] text-blue-600 hover:underline"
+                        >
+                          <ExternalLink className="w-2.5 h-2.5" /> Open
+                        </a>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* What this means callout */}
+          <Card className="border-blue-100 bg-blue-50/40">
+            <CardContent className="p-3">
+              <div className="flex gap-2">
+                <Users className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-xs font-semibold text-blue-900">Why this matters</p>
+                  <p className="text-[11px] text-blue-800 mt-0.5 leading-relaxed">
+                    Each published dataset gets a permanent IPFS CID — a cryptographic fingerprint that makes the data verifiable forever. Research institutions like ICAR and CGIAR use CID-referenced open datasets for soil science. Your data, cited by researchers, traceable back to you.
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
         </TabsContent>
       </Tabs>
     </div>

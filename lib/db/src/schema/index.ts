@@ -13,3 +13,4 @@ export * from "./disease-intel";
 export * from "./loans";
 export * from "./retroactive";
 export * from "./users";
+export * from "./data-catalog";
