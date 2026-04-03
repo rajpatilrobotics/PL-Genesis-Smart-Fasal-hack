@@ -1,15 +1,21 @@
 import { useState } from "react";
 import { useWallet } from "@/lib/wallet-context";
+import { useUserProfile, useUpdateProfile } from "@/lib/useUserProfile";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Wallet, Award, Database, ShieldCheck, Zap, Lock,
   Users, Globe, Clock, CheckCircle2, AlertTriangle,
-  Leaf, Star, TrendingUp
+  Leaf, Star, TrendingUp, MapPin, Sprout, Pencil, Save, X
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { RiskStatus } from "@/lib/wallet-context";
+
+const CROPS = ["Wheat", "Rice", "Maize", "Cotton", "Sugarcane", "Soybean", "Groundnut", "Pulses", "Vegetables", "Fruits", "Other"];
+const STATES = ["Andhra Pradesh", "Bihar", "Chhattisgarh", "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand", "Karnataka", "Kerala", "Madhya Pradesh", "Maharashtra", "Odisha", "Punjab", "Rajasthan", "Tamil Nadu", "Telangana", "Uttar Pradesh", "Uttarakhand", "West Bengal", "Other"];
 
 function RiskBadge({ risk }: { risk: RiskStatus }) {
   return (
@@ -48,32 +54,58 @@ function formatTime(iso: string) {
   return d.toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" });
 }
 
+function formatDate(iso: string) {
+  return new Date(iso).toLocaleDateString("en-IN", { year: "numeric", month: "long", day: "numeric" });
+}
+
 export default function Profile() {
   const { walletAddress, flowRewards, contributionCount, dataHistory, certificates, currentRisk, handleConnect } = useWallet();
+  const { data: profileData, isLoading } = useUserProfile();
+  const { mutateAsync: updateProfile, isPending: isSaving } = useUpdateProfile();
   const [activeTab, setActiveTab] = useState<"timeline" | "expert">("timeline");
+  const [editing, setEditing] = useState(false);
+  const [editForm, setEditForm] = useState<Record<string, string>>({});
 
-  if (!walletAddress) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-6 text-center">
-        <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
-          <Wallet className="w-10 h-10 text-primary" />
-        </div>
-        <div>
-          <h2 className="text-xl font-bold mb-1">Connect Your Wallet</h2>
-          <p className="text-muted-foreground text-sm max-w-xs">
-            Connect your Flow wallet to view your farmer profile, rewards, and data history.
-          </p>
-        </div>
-        <Button onClick={handleConnect} className="rounded-full px-8">
-          <Wallet className="w-4 h-4 mr-2" />
-          Connect Flow Wallet
-        </Button>
-      </div>
-    );
-  }
+  const profile = profileData?.profile;
+
+  const startEdit = () => {
+    setEditForm({
+      fullName: profile?.fullName ?? "",
+      phone: profile?.phone ?? "",
+      village: profile?.village ?? "",
+      district: profile?.district ?? "",
+      state: profile?.state ?? "",
+      farmSizeAcres: profile?.farmSizeAcres?.toString() ?? "",
+      primaryCrop: profile?.primaryCrop ?? "",
+      farmingExperienceYears: profile?.farmingExperienceYears?.toString() ?? "",
+    });
+    setEditing(true);
+  };
+
+  const saveEdit = async () => {
+    await updateProfile({
+      fullName: editForm.fullName,
+      phone: editForm.phone || null as any,
+      village: editForm.village || null as any,
+      district: editForm.district || null as any,
+      state: editForm.state || null as any,
+      farmSizeAcres: editForm.farmSizeAcres ? parseFloat(editForm.farmSizeAcres) as any : null as any,
+      primaryCrop: editForm.primaryCrop || null as any,
+      farmingExperienceYears: editForm.farmingExperienceYears ? parseFloat(editForm.farmingExperienceYears) as any : null as any,
+    });
+    setEditing(false);
+  };
 
   const expertEntries = dataHistory.filter(e => e.accessLevel === "Expert" || e.accessLevel === "Public");
   const totalRewardEarned = dataHistory.reduce((sum, e) => sum + e.reward, 0);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[40vh]">
+        <div className="w-8 h-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-5 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -84,33 +116,135 @@ export default function Profile() {
           <Leaf className="w-40 h-40 -mr-8 -mt-8" />
         </div>
         <CardContent className="p-5 relative z-10">
-          <div className="flex items-start gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-primary/15 flex items-center justify-center shrink-0">
-              <Leaf className="w-7 h-7 text-primary" />
+          {editing ? (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between mb-1">
+                <span className="font-semibold text-sm">Edit Profile</span>
+                <Button variant="ghost" size="sm" onClick={() => setEditing(false)}><X className="w-4 h-4" /></Button>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="col-span-2 space-y-1">
+                  <Label className="text-xs">Full Name *</Label>
+                  <Input value={editForm.fullName} onChange={e => setEditForm(f => ({ ...f, fullName: e.target.value }))} />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Phone</Label>
+                  <Input value={editForm.phone} onChange={e => setEditForm(f => ({ ...f, phone: e.target.value }))} />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Village</Label>
+                  <Input value={editForm.village} onChange={e => setEditForm(f => ({ ...f, village: e.target.value }))} />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">District</Label>
+                  <Input value={editForm.district} onChange={e => setEditForm(f => ({ ...f, district: e.target.value }))} />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">State</Label>
+                  <select value={editForm.state} onChange={e => setEditForm(f => ({ ...f, state: e.target.value }))} className="w-full border rounded-md px-3 py-2 text-xs bg-background">
+                    <option value="">Select state...</option>
+                    {STATES.map(s => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Farm Size (acres)</Label>
+                  <Input type="number" value={editForm.farmSizeAcres} onChange={e => setEditForm(f => ({ ...f, farmSizeAcres: e.target.value }))} />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Primary Crop</Label>
+                  <select value={editForm.primaryCrop} onChange={e => setEditForm(f => ({ ...f, primaryCrop: e.target.value }))} className="w-full border rounded-md px-3 py-2 text-xs bg-background">
+                    <option value="">Select crop...</option>
+                    {CROPS.map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Experience (years)</Label>
+                  <Input type="number" value={editForm.farmingExperienceYears} onChange={e => setEditForm(f => ({ ...f, farmingExperienceYears: e.target.value }))} />
+                </div>
+              </div>
+              <Button className="w-full" onClick={saveEdit} disabled={isSaving || !editForm.fullName.trim()}>
+                <Save className="w-4 h-4 mr-2" />
+                {isSaving ? "Saving..." : "Save Changes"}
+              </Button>
             </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
-                <h2 className="text-lg font-bold">Farmer Profile</h2>
-                {contributionCount >= 3 && (
-                  <Badge className="text-[10px] bg-amber-100 text-amber-700 border border-amber-300 hover:bg-amber-100">
-                    <Star className="w-2.5 h-2.5 mr-1" />
-                    Sustainable Farmer
-                  </Badge>
+          ) : (
+            <div className="flex items-start gap-4">
+              <div className="w-14 h-14 rounded-2xl bg-primary/15 flex items-center justify-center shrink-0">
+                <Leaf className="w-7 h-7 text-primary" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap justify-between">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h2 className="text-lg font-bold">{profile?.fullName ?? "Farmer"}</h2>
+                    {contributionCount >= 3 && (
+                      <Badge className="text-[10px] bg-amber-100 text-amber-700 border border-amber-300 hover:bg-amber-100">
+                        <Star className="w-2.5 h-2.5 mr-1" />
+                        Sustainable Farmer
+                      </Badge>
+                    )}
+                  </div>
+                  <Button variant="ghost" size="sm" className="h-7 px-2" onClick={startEdit}>
+                    <Pencil className="w-3.5 h-3.5" />
+                  </Button>
+                </div>
+
+                {profile?.phone && (
+                  <p className="text-xs text-muted-foreground mt-0.5">{profile.phone}</p>
                 )}
-              </div>
-              <p className="font-mono text-xs text-muted-foreground mt-0.5 truncate">
-                {walletAddress}
-              </p>
-              <div className="flex items-center gap-2 mt-1.5">
-                <span className="text-[10px] bg-green-100 text-green-700 font-bold px-1.5 py-0.5 rounded-full border border-green-200">
-                  Flow Testnet
-                </span>
-                <span className="text-[10px] text-muted-foreground">Network: <span className="font-semibold text-foreground">Flow Blockchain</span></span>
+
+                <div className="flex flex-wrap gap-x-3 gap-y-1 mt-2">
+                  {(profile?.village || profile?.district || profile?.state) && (
+                    <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                      <MapPin className="w-3 h-3" />
+                      {[profile.village, profile.district, profile.state].filter(Boolean).join(", ")}
+                    </span>
+                  )}
+                  {profile?.primaryCrop && (
+                    <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                      <Sprout className="w-3 h-3" />
+                      {profile.primaryCrop}
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {profile?.farmSizeAcres && (
+                    <span className="text-[10px] bg-green-100 text-green-700 font-semibold px-1.5 py-0.5 rounded-full border border-green-200">
+                      {profile.farmSizeAcres} acres
+                    </span>
+                  )}
+                  {profile?.farmingExperienceYears && (
+                    <span className="text-[10px] bg-blue-100 text-blue-700 font-semibold px-1.5 py-0.5 rounded-full border border-blue-200">
+                      {profile.farmingExperienceYears} yrs experience
+                    </span>
+                  )}
+                  {profile?.createdAt && (
+                    <span className="text-[10px] text-muted-foreground">
+                      Member since {formatDate(profile.createdAt)}
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </CardContent>
       </Card>
+
+      {/* Wallet connect prompt */}
+      {!walletAddress && (
+        <Card className="border-dashed border-primary/30">
+          <CardContent className="p-4 flex items-center gap-4">
+            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+              <Wallet className="w-5 h-5 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold">Connect Flow Wallet</p>
+              <p className="text-xs text-muted-foreground">Earn rewards and track contributions</p>
+            </div>
+            <Button size="sm" variant="outline" onClick={handleConnect} className="shrink-0">Connect</Button>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 gap-3">
@@ -236,7 +370,7 @@ export default function Profile() {
             <div className="relative">
               <div className="absolute left-5 top-0 bottom-0 w-0.5 bg-border" />
               <div className="space-y-4">
-                {dataHistory.map((entry, i) => (
+                {dataHistory.map((entry) => (
                   <div key={entry.cid} className="relative pl-12">
                     <div className="absolute left-3.5 top-3 w-3 h-3 rounded-full border-2 border-primary bg-background" />
                     <Card className={cn(
@@ -257,23 +391,20 @@ export default function Profile() {
                             <AccessBadge level={entry.accessLevel} />
                           </div>
                         </div>
-
                         {(entry.aiHealth !== undefined || entry.aiYield !== undefined) && (
                           <div className="flex gap-3 text-xs">
                             <span className="text-muted-foreground">Health: <span className="font-bold text-primary">{entry.aiHealth}%</span></span>
                             <span className="text-muted-foreground">Yield: <span className="font-bold text-primary">{entry.aiYield}%</span></span>
                           </div>
                         )}
-
                         <div className="flex items-center justify-between">
                           <span className="text-xs text-amber-600 font-semibold">+{entry.reward} FLOW</span>
-                          {entry.riskStatus === "High" && (
+                          {entry.riskStatus === "High" ? (
                             <span className="flex items-center gap-1 text-[10px] text-red-600 font-semibold">
                               <AlertTriangle className="w-3 h-3" />
                               Insurance Triggered
                             </span>
-                          )}
-                          {entry.riskStatus !== "High" && (
+                          ) : (
                             <span className="flex items-center gap-1 text-[10px] text-green-600">
                               <CheckCircle2 className="w-3 h-3" />
                               Secure
@@ -300,15 +431,12 @@ export default function Profile() {
               <span className="font-semibold"> Private entries are hidden.</span>
             </p>
           </div>
-
           {expertEntries.length === 0 ? (
             <Card className="border-dashed">
               <CardContent className="p-8 text-center">
                 <Users className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
                 <p className="text-sm font-semibold text-muted-foreground">No expert-accessible entries</p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Run an analysis with "Expert" or "Public" access level.
-                </p>
+                <p className="text-xs text-muted-foreground mt-1">Run an analysis with "Expert" or "Public" access level.</p>
               </CardContent>
             </Card>
           ) : (
@@ -326,7 +454,6 @@ export default function Profile() {
                         <RiskBadge risk={entry.riskStatus} />
                       </div>
                     </div>
-
                     <div className="bg-muted/40 rounded-xl p-2.5 space-y-1">
                       <p className="text-[10px] font-bold text-muted-foreground uppercase mb-1.5">Sensor Data</p>
                       <div className="grid grid-cols-3 gap-x-3 gap-y-1 text-xs">
@@ -338,13 +465,11 @@ export default function Profile() {
                         <span>°C: <span className="font-semibold">{entry.temperature ?? "—"}</span></span>
                       </div>
                     </div>
-
                     {entry.insights && (
                       <p className="text-[10px] text-muted-foreground leading-relaxed border-l-2 border-primary/30 pl-2">
                         {entry.insights}
                       </p>
                     )}
-
                     <div className="flex items-center justify-between text-xs">
                       <span className="font-mono text-[10px] text-muted-foreground truncate max-w-[55%]">
                         {entry.cid.substring(0, 20)}...

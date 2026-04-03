@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import { Switch, Route, Router as WouterRouter, useLocation, Redirect } from "wouter";
 import { QueryClient, QueryClientProvider, useQueryClient } from "@tanstack/react-query";
-import { ClerkProvider, SignIn, SignUp, Show, useClerk } from "@clerk/react";
+import { ClerkProvider, SignIn, SignUp, Show, useClerk, useUser } from "@clerk/react";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import BottomNav from "@/components/layout/BottomNav";
@@ -16,8 +16,10 @@ import Profile from "@/pages/profile";
 import Web3Hub from "@/pages/web3-hub";
 import Credit from "@/pages/credit";
 import FinanceTrade from "@/pages/finance-trade";
+import Onboarding from "@/pages/onboarding";
 import NotFound from "@/pages/not-found";
 import { WalletProvider } from "@/lib/wallet-context";
+import { useUserProfile } from "@/lib/useUserProfile";
 
 const queryClient = new QueryClient();
 
@@ -49,6 +51,21 @@ function SignUpPage() {
       <SignUp routing="path" path={`${basePath}/sign-up`} signInUrl={`${basePath}/sign-in`} />
     </div>
   );
+}
+
+function ProfileGuard({ children }: { children: React.ReactNode }) {
+  const { isSignedIn } = useUser();
+  const [location, setLocation] = useLocation();
+  const { data, isLoading } = useUserProfile();
+
+  useEffect(() => {
+    if (!isSignedIn || isLoading || location === "/onboarding") return;
+    if (data && !data.profile?.profileComplete) {
+      setLocation("/onboarding");
+    }
+  }, [isSignedIn, isLoading, data, location, setLocation]);
+
+  return <>{children}</>;
 }
 
 function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
@@ -97,45 +114,48 @@ function AppShell({ children }: { children: React.ReactNode }) {
 
 function Router() {
   return (
-    <Switch>
-      <Route path="/sign-in/*?" component={SignInPage} />
-      <Route path="/sign-up/*?" component={SignUpPage} />
-      <Route>
-        <AppShell>
-          <Switch>
-            <Route path="/" component={Home} />
-            <Route path="/analytics">
-              <ProtectedRoute component={Analytics} />
-            </Route>
-            <Route path="/ai">
-              <ProtectedRoute component={AiHub} />
-            </Route>
-            <Route path="/insurance">
-              <ProtectedRoute component={Insurance} />
-            </Route>
-            <Route path="/market">
-              <ProtectedRoute component={Market} />
-            </Route>
-            <Route path="/community">
-              <ProtectedRoute component={Community} />
-            </Route>
-            <Route path="/profile">
-              <ProtectedRoute component={Profile} />
-            </Route>
-            <Route path="/web3">
-              <ProtectedRoute component={Web3Hub} />
-            </Route>
-            <Route path="/credit">
-              <ProtectedRoute component={Credit} />
-            </Route>
-            <Route path="/finance">
-              <ProtectedRoute component={FinanceTrade} />
-            </Route>
-            <Route component={NotFound} />
-          </Switch>
-        </AppShell>
-      </Route>
-    </Switch>
+    <ProfileGuard>
+      <Switch>
+        <Route path="/sign-in/*?" component={SignInPage} />
+        <Route path="/sign-up/*?" component={SignUpPage} />
+        <Route path="/onboarding" component={Onboarding} />
+        <Route>
+          <AppShell>
+            <Switch>
+              <Route path="/" component={Home} />
+              <Route path="/analytics">
+                <ProtectedRoute component={Analytics} />
+              </Route>
+              <Route path="/ai">
+                <ProtectedRoute component={AiHub} />
+              </Route>
+              <Route path="/insurance">
+                <ProtectedRoute component={Insurance} />
+              </Route>
+              <Route path="/market">
+                <ProtectedRoute component={Market} />
+              </Route>
+              <Route path="/community">
+                <ProtectedRoute component={Community} />
+              </Route>
+              <Route path="/profile">
+                <ProtectedRoute component={Profile} />
+              </Route>
+              <Route path="/web3">
+                <ProtectedRoute component={Web3Hub} />
+              </Route>
+              <Route path="/credit">
+                <ProtectedRoute component={Credit} />
+              </Route>
+              <Route path="/finance">
+                <ProtectedRoute component={FinanceTrade} />
+              </Route>
+              <Route component={NotFound} />
+            </Switch>
+          </AppShell>
+        </Route>
+      </Switch>
+    </ProfileGuard>
   );
 }
 
