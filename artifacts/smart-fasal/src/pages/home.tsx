@@ -876,7 +876,7 @@ export default function Home() {
             <img
               src="https://www.google.com/s2/favicons?domain=protocol.ai&sz=256"
               alt="Protocol Labs"
-              className="w-8 h-8 rounded-xl object-cover ring-1 ring-black/8 shadow-sm group-hover:scale-105 transition-transform"
+              className="w-8 h-8 rounded-xl object-contain bg-white ring-1 ring-black/8 shadow-sm group-hover:scale-105 transition-transform"
             />
             <div className="text-center">
               <p className="text-xs font-bold text-gray-800 leading-tight">Protocol Labs</p>
@@ -904,7 +904,7 @@ export default function Home() {
                 <img
                   src={avatar}
                   alt={name}
-                  className="w-7 h-7 rounded-lg object-cover ring-1 ring-black/8 shadow-sm group-hover:scale-110 transition-transform duration-200"
+                  className="w-7 h-7 rounded-lg object-contain bg-white ring-1 ring-black/8 shadow-sm group-hover:scale-110 transition-transform duration-200"
                 />
                 <p className="text-[9px] font-bold text-gray-700 leading-tight text-center">{name}</p>
                 <p className="text-[8px] text-gray-400 leading-tight text-center">{sub}</p>
