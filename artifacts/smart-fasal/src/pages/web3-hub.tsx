@@ -2529,12 +2529,36 @@ function HypercertsTab() {
 // MAIN WEB3 HUB
 // ─────────────────────────────────────────────────────────────────────────────
 const TABS = [
-  { value: "flow", label: "Flow", icon: Coins, color: "text-green-600" },
-  { value: "filecoin", label: "Filecoin", icon: Database, color: "text-blue-600" },
-  { value: "lit", label: "Lit", icon: Lock, color: "text-orange-500" },
-  { value: "zama", label: "Zama", icon: FlaskConical, color: "text-violet-600" },
-  { value: "starknet", label: "Starknet", icon: Shield, color: "text-rose-600" },
-  { value: "hyper", label: "Hyper", icon: Leaf, color: "text-teal-600" },
+  {
+    value: "flow", label: "Flow", icon: Coins, color: "text-green-600",
+    logo: "https://avatars.githubusercontent.com/u/62387156",
+    bg: "bg-green-50", ring: "ring-green-200",
+  },
+  {
+    value: "filecoin", label: "Filecoin", icon: Database, color: "text-blue-600",
+    logo: "https://avatars.githubusercontent.com/u/16001298",
+    bg: "bg-blue-50", ring: "ring-blue-200",
+  },
+  {
+    value: "lit", label: "Lit", icon: Lock, color: "text-orange-500",
+    logo: "https://avatars.githubusercontent.com/u/79411349",
+    bg: "bg-orange-50", ring: "ring-orange-200",
+  },
+  {
+    value: "zama", label: "Zama", icon: FlaskConical, color: "text-violet-600",
+    logo: "https://avatars.githubusercontent.com/u/72685663",
+    bg: "bg-violet-50", ring: "ring-violet-200",
+  },
+  {
+    value: "starknet", label: "Starknet", icon: Shield, color: "text-rose-600",
+    logo: "https://avatars.githubusercontent.com/u/92415069",
+    bg: "bg-rose-50", ring: "ring-rose-200",
+  },
+  {
+    value: "hyper", label: "Hyper", icon: Leaf, color: "text-teal-600",
+    logo: "https://avatars.githubusercontent.com/u/106785388",
+    bg: "bg-teal-50", ring: "ring-teal-200",
+  },
 ];
 
 export default function Web3Hub() {
@@ -2561,9 +2585,9 @@ export default function Web3Hub() {
           {/* Protocol pills */}
           <div className="flex gap-1.5 flex-wrap mt-3">
             {TABS.map(tab => (
-              <div key={tab.value} className="flex items-center gap-1 text-[10px] font-semibold bg-white/15 backdrop-blur-sm rounded-full px-2 py-0.5 border border-white/20">
-                <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-                <tab.icon className="w-2.5 h-2.5 text-white" />
+              <div key={tab.value} className="flex items-center gap-1.5 text-[10px] font-semibold bg-white/15 backdrop-blur-sm rounded-full px-2 py-1 border border-white/20">
+                <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse shrink-0" />
+                <img src={tab.logo} alt={tab.label} className="w-3.5 h-3.5 rounded-full object-cover shrink-0" />
                 <span className="text-white">{tab.label}</span>
               </div>
             ))}
@@ -2572,11 +2596,26 @@ export default function Web3Hub() {
       </div>
 
       <Tabs defaultValue="flow">
-        <TabsList className="grid grid-cols-6 h-auto p-1 w-full">
-          {TABS.map(t => (
-            <TabsTrigger key={t.value} value={t.value} className="flex flex-col items-center gap-0.5 py-1.5 px-0 text-[10px] data-[state=active]:shadow">
-              <t.icon className="w-3.5 h-3.5" />
-              {t.label}
+        <TabsList className="grid grid-cols-6 h-auto p-1.5 w-full gap-1 bg-muted/60">
+          {TABS.map(tab => (
+            <TabsTrigger
+              key={tab.value}
+              value={tab.value}
+              className="flex flex-col items-center gap-1 py-2 px-0.5 text-[9px] rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:shadow-black/10 transition-all duration-200"
+            >
+              <div className={cn(
+                "w-7 h-7 rounded-lg overflow-hidden ring-1 transition-all",
+                "data-[state=active]:ring-2",
+                tab.ring,
+              )}>
+                <img
+                  src={tab.logo}
+                  alt={tab.label}
+                  className="w-full h-full object-cover"
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                />
+              </div>
+              <span className="font-semibold leading-none">{tab.label}</span>
             </TabsTrigger>
           ))}
         </TabsList>
