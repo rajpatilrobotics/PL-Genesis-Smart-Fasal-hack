@@ -65,7 +65,7 @@ export default function TopHeader() {
               <img
                 src="/logo.jpeg"
                 alt="Smart Fasal"
-                className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl object-cover shadow-lg ring-2 ring-emerald-200/80"
+                className="w-12 h-12 sm:w-14 sm:h-14 rounded-full object-cover shadow-lg ring-2 ring-emerald-200/80"
               />
               <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 rounded-full border-2 border-white shadow-sm" />
             </div>
