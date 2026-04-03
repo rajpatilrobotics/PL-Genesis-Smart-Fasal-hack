@@ -12,32 +12,22 @@ const clerkEnabled = !!import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
 function ClerkAuthButtonInner() {
   const { isSignedIn, user } = useUser();
-  const { signOut } = useClerk();
   const [, setLocation] = useLocation();
   const { t } = useTranslation();
 
   if (isSignedIn) {
     const name = user.firstName || user.emailAddresses[0]?.emailAddress?.split("@")[0] || "Farmer";
     return (
-      <div className="flex items-center gap-1.5">
-        <button
-          onClick={() => setLocation("/profile")}
-          className="flex items-center gap-1.5 text-xs font-semibold text-primary hover:text-primary/80 transition-colors bg-primary/8 border border-primary/15 rounded-full px-2.5 py-1"
-          title={t("header.myProfile")}
-        >
-          {user.imageUrl
-            ? <img src={user.imageUrl} alt={name} className="w-5 h-5 rounded-full object-cover ring-1 ring-primary/30" />
-            : <UserCircle className="w-4 h-4" />}
-          <span className="max-w-[70px] truncate hidden sm:inline">{name}</span>
-        </button>
-        <button
-          onClick={() => signOut(() => setLocation("/"))}
-          className="text-muted-foreground hover:text-destructive transition-colors p-1 rounded-full hover:bg-destructive/8"
-          title={t("header.signOut")}
-        >
-          <LogOut className="w-3.5 h-3.5" />
-        </button>
-      </div>
+      <button
+        onClick={() => setLocation("/profile")}
+        className="flex items-center gap-1.5 text-xs font-semibold text-primary hover:text-primary/80 transition-colors bg-primary/8 border border-primary/15 rounded-full px-2.5 py-1"
+        title={t("header.myProfile")}
+      >
+        {user.imageUrl
+          ? <img src={user.imageUrl} alt={name} className="w-5 h-5 rounded-full object-cover ring-1 ring-primary/30" />
+          : <UserCircle className="w-4 h-4" />}
+        <span className="max-w-[70px] truncate hidden sm:inline">{name}</span>
+      </button>
     );
   }
 

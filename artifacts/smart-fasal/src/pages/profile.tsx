@@ -2,6 +2,8 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useWallet } from "@/lib/wallet-context";
 import { useUserProfile, useUpdateProfile } from "@/lib/useUserProfile";
+import { useClerk, useUser } from "@clerk/react";
+import { useLocation } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -10,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import {
   Wallet, Award, Database, ShieldCheck, Zap, Lock,
   Users, Globe, Clock, CheckCircle2, AlertTriangle,
-  Leaf, Star, TrendingUp, MapPin, Sprout, Pencil, Save, X
+  Leaf, Star, TrendingUp, MapPin, Sprout, Pencil, Save, X, LogOut
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { RiskStatus } from "@/lib/wallet-context";
@@ -59,9 +61,14 @@ function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("en-IN", { year: "numeric", month: "long", day: "numeric" });
 }
 
+const clerkEnabled = !!import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
+
 export default function Profile() {
   const { t } = useTranslation();
   const { walletAddress, flowRewards, contributionCount, dataHistory, certificates, currentRisk, handleConnect } = useWallet();
+  const { signOut } = useClerk();
+  const { isSignedIn } = useUser();
+  const [, setLocation] = useLocation();
   const { data: profileData, isLoading } = useUserProfile();
   const { mutateAsync: updateProfile, isPending: isSaving } = useUpdateProfile();
   const [activeTab, setActiveTab] = useState<"timeline" | "expert">("timeline");
@@ -500,6 +507,20 @@ export default function Profile() {
               ))}
             </div>
           )}
+        </div>
+      )}
+
+      {/* Sign Out */}
+      {clerkEnabled && isSignedIn && (
+        <div className="pt-2 pb-4">
+          <Button
+            variant="outline"
+            className="w-full border-destructive/30 text-destructive hover:bg-destructive/5 hover:border-destructive/60 font-semibold gap-2"
+            onClick={() => signOut(() => setLocation("/"))}
+          >
+            <LogOut className="w-4 h-4" />
+            Sign Out
+          </Button>
         </div>
       )}
     </div>
