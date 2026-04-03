@@ -93,7 +93,7 @@ export default function Home() {
   const [pipelineRunning, setPipelineRunning] = useState(false);
   const [pipelineResult, setPipelineResult] = useState<PipelineResult | null>(null);
   const [steps, setSteps] = useState<PipelineStep[]>([]);
-  const [displaySensor, setDisplaySensor] = useState({ ...DUMMY_SENSOR_BASE });
+  const [displaySensor, setDisplaySensor] = useState({ nitrogen: 0, phosphorus: 0, potassium: 0, ph: 0, moisture: 0 });
   const [isSampling, setIsSampling] = useState(false);
   const [tick, setTick] = useState(0);
 
@@ -115,13 +115,6 @@ export default function Home() {
   useEffect(() => {
     if (sensorData) {
       setLastUpdated(new Date());
-      setDisplaySensor({
-        nitrogen: sensorData.nitrogen,
-        phosphorus: sensorData.phosphorus,
-        potassium: sensorData.potassium,
-        ph: sensorData.ph,
-        moisture: sensorData.moisture,
-      });
     }
   }, [sensorData]);
 
@@ -484,13 +477,11 @@ export default function Home() {
                   onClick={handleResample}
                   disabled={isSampling}
                   className={cn(
-                    "text-[9px] font-bold px-1.5 py-0.5 rounded tracking-wide text-white transition-all duration-200 select-none",
-                    isSampling
-                      ? "bg-amber-500 animate-pulse cursor-wait scale-105"
-                      : "bg-red-500 hover:bg-red-600 hover:scale-105 cursor-pointer active:scale-95"
+                    "text-[9px] font-bold px-1.5 py-0.5 rounded tracking-wide text-white transition-all duration-200 select-none bg-red-500",
+                    isSampling ? "opacity-70 cursor-wait" : "hover:bg-red-600 hover:scale-105 cursor-pointer active:scale-95"
                   )}
                 >
-                  {isSampling ? "SCAN..." : "LIVE"}
+                  LIVE
                 </button>
               </div>
               <div className="flex items-center gap-1.5 mt-0.5">
