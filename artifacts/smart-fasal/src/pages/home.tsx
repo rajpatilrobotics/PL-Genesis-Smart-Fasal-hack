@@ -393,7 +393,7 @@ export default function Home() {
 
   const riskToDisplay: RiskStatus = pipelineResult?.riskLevel ?? (insuranceRisk?.riskLevel === "HIGH" ? "High" : insuranceRisk?.riskLevel === "LOW" ? "Low" : "Medium");
 
-  const glassCard = "rounded-2xl border border-white/80 bg-white/65 backdrop-blur-2xl shadow-lg shadow-emerald-100/60 transition-all duration-200 hover:-translate-y-1 hover:shadow-xl hover:shadow-emerald-300/40 hover:bg-white/75 active:translate-y-0 active:shadow-lg";
+  const glassCard = "rounded-2xl border border-white/50 bg-white/35 backdrop-blur-2xl shadow-md shadow-emerald-100/40 transition-all duration-200 hover:-translate-y-1 hover:shadow-xl hover:shadow-emerald-300/30 hover:bg-white/45 active:translate-y-0 active:shadow-md";
 
   return (
     <div className="relative -mx-4 -mt-5 min-h-screen animate-in fade-in slide-in-from-bottom-4 duration-500"
@@ -477,9 +477,9 @@ export default function Home() {
         <div className={cn(
           glassCard,
           "flex items-center justify-between px-4 py-3.5",
-          riskToDisplay === "Low" ? "border-emerald-200/80 bg-emerald-50/70" :
-          riskToDisplay === "Medium" ? "border-amber-200/80 bg-amber-50/70" :
-          "border-red-200/80 bg-red-50/70"
+          riskToDisplay === "Low" ? "border-emerald-200/50 bg-emerald-50/40" :
+          riskToDisplay === "Medium" ? "border-amber-200/50 bg-amber-50/40" :
+          "border-red-200/50 bg-red-50/40"
         )}>
           <div className="flex items-center gap-3">
             <div className={cn(
@@ -775,9 +775,9 @@ export default function Home() {
         {pipelineResult && !pipelineRunning && (
           <div className={cn(
             glassCard, "p-4 space-y-4",
-            pipelineResult.riskLevel === "High" ? "border-red-200/80 bg-red-50/60" :
-            pipelineResult.riskLevel === "Low" ? "border-emerald-200/80 bg-emerald-50/60" :
-            "border-amber-200/80 bg-amber-50/60"
+            pipelineResult.riskLevel === "High" ? "border-red-200/50 bg-red-50/35" :
+            pipelineResult.riskLevel === "Low" ? "border-emerald-200/50 bg-emerald-50/35" :
+            "border-amber-200/50 bg-amber-50/35"
           )}>
             <div className="flex items-center justify-between">
               <p className="font-bold text-sm text-gray-800">{t("home.analysisDone")}</p>
@@ -795,7 +795,7 @@ export default function Home() {
                 { label: t("ai.riskLabel"), value: pipelineResult.riskLevel, color: pipelineResult.riskLevel === "Low" ? "text-emerald-700" : pipelineResult.riskLevel === "High" ? "text-red-700" : "text-amber-700" },
                 { label: t("ai.yieldLabel"), value: `${pipelineResult.aiYield}%`, color: "text-sky-700" },
               ].map(({ label, value, color }) => (
-                <div key={label} className="text-center p-2.5 bg-white/70 rounded-xl border border-white/80 shadow-sm">
+                <div key={label} className="text-center p-2.5 bg-white/40 rounded-xl border border-white/50 shadow-sm backdrop-blur-sm">
                   <p className="text-[10px] uppercase font-bold text-gray-400 mb-1">{label}</p>
                   <p className={cn("text-lg font-bold", color)}>{value}</p>
                 </div>
@@ -805,11 +805,11 @@ export default function Home() {
             <p className="text-xs text-gray-500 leading-relaxed">{pipelineResult.fertilizerAdvice}</p>
 
             <div className="grid grid-cols-2 gap-2 text-xs">
-              <div className="bg-white/70 rounded-xl border border-white/80 p-2.5 shadow-sm">
+              <div className="bg-white/40 rounded-xl border border-white/50 p-2.5 shadow-sm backdrop-blur-sm">
                 <p className="text-gray-400 mb-0.5">{t("home.cidFilecoin")}</p>
                 <p className="font-mono font-semibold text-[10px] break-all text-blue-600">{pipelineResult.cid.substring(0, 20)}...</p>
               </div>
-              <div className="bg-white/70 rounded-xl border border-white/80 p-2.5 shadow-sm">
+              <div className="bg-white/40 rounded-xl border border-white/50 p-2.5 shadow-sm backdrop-blur-sm">
                 <p className="text-gray-400 mb-0.5">{t("home.rewardEarned")}</p>
                 <p className="font-bold text-amber-600">+{pipelineResult.rewardEarned} FLOW</p>
               </div>
