@@ -93,7 +93,7 @@ export default function Home() {
   const [pipelineRunning, setPipelineRunning] = useState(false);
   const [pipelineResult, setPipelineResult] = useState<PipelineResult | null>(null);
   const [steps, setSteps] = useState<PipelineStep[]>([]);
-  const [displaySensor, setDisplaySensor] = useState({ nitrogen: 0, phosphorus: 0, potassium: 0, ph: 0, moisture: 0 });
+  const [displaySensor, setDisplaySensor] = useState(DUMMY_SENSOR_BASE);
   const [isSampling, setIsSampling] = useState(false);
   const [tick, setTick] = useState(0);
 
@@ -265,11 +265,11 @@ export default function Home() {
     let filecoinReal = false;
     try {
       const farmPayload = {
-        nitrogen: privacyEnabled ? "***" : sensorData.nitrogen,
-        phosphorus: privacyEnabled ? "***" : sensorData.phosphorus,
-        potassium: privacyEnabled ? "***" : sensorData.potassium,
-        ph: sensorData.ph,
-        moisture: sensorData.moisture,
+        nitrogen: privacyEnabled ? "***" : activeSensor.nitrogen,
+        phosphorus: privacyEnabled ? "***" : activeSensor.phosphorus,
+        potassium: privacyEnabled ? "***" : activeSensor.potassium,
+        ph: activeSensor.ph,
+        moisture: activeSensor.moisture,
         temperature: weather?.temperature,
         timestamp: new Date().toISOString(),
         walletAddress: walletAddress ?? "anonymous",
@@ -366,11 +366,11 @@ export default function Home() {
         aiHealth,
         aiYield,
         insights: fertilizerAdvice,
-        nitrogen: sensorData.nitrogen,
-        phosphorus: sensorData.phosphorus,
-        potassium: sensorData.potassium,
-        ph: sensorData.ph,
-        moisture: sensorData.moisture,
+        nitrogen: activeSensor.nitrogen,
+        phosphorus: activeSensor.phosphorus,
+        potassium: activeSensor.potassium,
+        ph: activeSensor.ph,
+        moisture: activeSensor.moisture,
         temperature: weather?.temperature,
       });
     }
@@ -709,7 +709,7 @@ export default function Home() {
 
             <button
               onClick={runPipeline}
-              disabled={!sensorData || pipelineRunning}
+              disabled={pipelineRunning}
               className={cn(
                 "w-full h-12 font-bold text-base rounded-xl transition-all duration-200 flex items-center justify-center gap-2",
                 "bg-amber-400 text-green-900 shadow-xl shadow-amber-400/30",
@@ -729,7 +729,7 @@ export default function Home() {
             </button>
 
             {!sensorData && (
-              <p className="text-center text-xs text-green-200/50">Tap the clock above to sync sensor data first</p>
+              <p className="text-center text-xs text-green-200/50">Using demo sensor data — tap the clock to sync live readings</p>
             )}
           </div>
         </div>
