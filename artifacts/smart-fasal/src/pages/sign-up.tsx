@@ -249,7 +249,7 @@ export default function SignUp() {
               className="flex items-center gap-1.5 text-blue-600 text-xs hover:text-blue-800 transition-colors"
             >
               Developed by Raj Patil
-              <img src="https://upload.wikimedia.org/wikipedia/commons/c/ca/LinkedIn_logo_initials.png" alt="LinkedIn" className="w-4 h-4 rounded-sm" />
+              <img src="https://upload.wikimedia.org/wikipedia/commons/c/ca/LinkedIn_logo_initials.png" alt="LinkedIn" className="w-4 h-4" />
             </a>
           </div>
         </div>
