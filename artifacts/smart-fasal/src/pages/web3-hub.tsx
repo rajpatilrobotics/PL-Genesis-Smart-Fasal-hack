@@ -2547,7 +2547,7 @@ const TABS = [
   },
   {
     value: "lit", label: "Lit", icon: Lock, color: "text-orange-500",
-    logo: "/lit-logo.svg",
+    logo: "/lit-logo.png",
     bg: "bg-orange-50", ring: "ring-orange-200",
   },
   {
@@ -2557,12 +2557,12 @@ const TABS = [
   },
   {
     value: "starknet", label: "Starknet", icon: Shield, color: "text-rose-600",
-    logo: "/starknet-logo.svg",
+    logo: "/starknet-logo.png",
     bg: "bg-rose-50", ring: "ring-rose-200",
   },
   {
     value: "hyper", label: "Hyper", icon: Leaf, color: "text-teal-600",
-    logo: "https://avatars.githubusercontent.com/u/124626532",
+    logo: "/hypercerts-logo.png",
     bg: "bg-teal-50", ring: "ring-teal-200",
   },
 ];
