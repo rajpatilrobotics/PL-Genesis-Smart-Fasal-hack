@@ -734,7 +734,7 @@ importers:
     dependencies:
       openai:
         specifier: ^6.27.0
-        version: 6.33.0(ws@8.20.0)(zod@4.3.6)
+        version: 6.33.0(ws@8.18.3)(zod@4.3.6)
       p-limit:
         specifier: ^7.3.0
         version: 7.3.0
@@ -836,10 +836,6 @@ packages:
     engines: {node: '>=6.9.0'}
     peerDependencies:
       '@babel/core': ^7.0.0-0
-
-  '@babel/runtime@7.28.6':
-    resolution: {integrity: sha512-05WQkdpL9COIMz4LjTxGpPNCdlpyimKppYNoJ5Di5EUObifl8t4tuLuUBBZEpoLYOmfvIWrsp9fCl0HoPRVTdA==}
-    engines: {node: '>=6.9.0'}
 
   '@babel/runtime@7.29.2':
     resolution: {integrity: sha512-JiDShH45zKHWyGe4ZNVRrCjBz8Nh9TMmZG1kh4QTK8hCBTWBi8Da+i7s1fJw7/lYpM4ccepSNfqzZ/QvABBi5g==}
@@ -3434,8 +3430,8 @@ packages:
   convert-source-map@2.0.0:
     resolution: {integrity: sha512-Kvp459HrV2FEJ1CAsi1Ku+MY3kasH19TFykTz2xWmMeq6bk2NU3XXvfJ+Q61m0xktWwt+1HSYf3JZsTms3aRJg==}
 
-  cookie-es@1.2.2:
-    resolution: {integrity: sha512-+W7VmiVINB+ywl1HGXJXmrqkOhpKrIiVZV6tQuV54ZyQC7MMuBt81Vc336GMLoHBq5hV/F9eXgt5Mnx0Rha5Fg==}
+  cookie-es@1.2.3:
+    resolution: {integrity: sha512-lXVyvUvrNXblMqzIRrxHb57UUVmqsSWlxqt3XIjCkUP0wDAf6uicO6KMbEgYrMNtEvWgWHwe42CKxPu9MYAnWw==}
 
   cookie-parser@1.4.7:
     resolution: {integrity: sha512-nGUvgXnotP3BsjiLX2ypbQnWoGUPIIfHQNZkkC668ntrzGWEZVW70HDEB1qnNGMicPje6EttlIgzo51YSwNQGw==}
@@ -3470,9 +3466,6 @@ packages:
 
   cross-fetch@3.1.8:
     resolution: {integrity: sha512-cvA+JwZoU0Xq+h6WkMvAUqPEYy92Obet6UdKLfW60qn99ftItKjB5T+BkyWOFWe2pUyfQ+IJHmpOTznqk1M6Kg==}
-
-  cross-fetch@3.2.0:
-    resolution: {integrity: sha512-Q+xVJLoGOeIMXZmbUK4HYk+69cQH6LudR0Vu/pRm2YlU/hDV9CiS0gKUMaWY5f2NeUH9C1nV3bsTlCo0FsTV1Q==}
 
   cross-fetch@4.1.0:
     resolution: {integrity: sha512-uKm5PU+MHTootlWEY+mZ4vvXoCn4fLQxT9dSc1sXVMSFkINTJVN8cAQROpwcKm8bJ/c7rgZVIBWzH5T78sNZZw==}
@@ -3606,8 +3599,8 @@ packages:
     resolution: {integrity: sha512-rBMvIzlpA8v6E+SJZoo++HAYqsLrkg7MSfIinMPFhmkorw7X+dOXVJQs+QT69zGkzMyfDnIMN2Wid1+NbL3T+A==}
     engines: {node: '>= 0.4'}
 
-  defu@6.1.4:
-    resolution: {integrity: sha512-mEQCMmwJu317oSz8CwdIOdwf3xMif1ttiM8LTufzc3g6kR+9Pe236twL8j3IYT1F7GfRgGcW6MWxzZjLIkuHIg==}
+  defu@6.1.6:
+    resolution: {integrity: sha512-f8mefEW4WIVg4LckePx3mALjQSPQgFlg9U8yaPdlsbdYcHQyj9n2zL2LJEA52smeYxOvmd/nB7TpMtHGMTHcug==}
 
   delayed-stream@1.0.0:
     resolution: {integrity: sha512-ZySD7Nf91aLB0RxL4KGrKHBXl7Eds1DAmEdcoVawXnLD7SDhpNgtuII2aAkg7a7QS41jxPSZ17p4VdGnMHk3MQ==}
@@ -4174,8 +4167,8 @@ packages:
   graceful-fs@4.2.11:
     resolution: {integrity: sha512-RbJ5/jmFcNNCcDV5o9eTnBLJ/HszWV0P73bc+Ff4nS/rJj+YaS6IGyiOL0VoBYX+l1Wrl3k63h/KrH+nhJ0XvQ==}
 
-  h3@1.15.10:
-    resolution: {integrity: sha512-YzJeWSkDZxAhvmp8dexjRK5hxziRO7I9m0N53WhvYL5NiWfkUkzssVzY9jvGu0HBoLFW6+duYmNSn6MaZBCCtg==}
+  h3@1.15.11:
+    resolution: {integrity: sha512-L3THSe2MPeBwgIZVSH5zLdBBU90TOxarvhK9d04IDY2AmVS8j2Jz2LIWtwsGOU3lu2I5jCN7FNvVfY2+XyF+mg==}
 
   hamt-sharding@2.0.1:
     resolution: {integrity: sha512-vnjrmdXG9dDs1m/H4iJ6z0JFI2NtgsW5keRkTcM85NGak69Mkf5PHUqBz+Xs0T4sg0ppvj9O5EGAJo40FTxmmA==}
@@ -6473,18 +6466,6 @@ packages:
       utf-8-validate:
         optional: true
 
-  ws@8.20.0:
-    resolution: {integrity: sha512-sAt8BhgNbzCtgGbt2OxmpuryO63ZoDk/sqaB/znQm94T4fCEsy/yV+7CdC1kJhOU9lboAEU7R3kquuycDoibVA==}
-    engines: {node: '>=10.0.0'}
-    peerDependencies:
-      bufferutil: ^4.0.1
-      utf-8-validate: '>=5.0.2'
-    peerDependenciesMeta:
-      bufferutil:
-        optional: true
-      utf-8-validate:
-        optional: true
-
   xtend@4.0.2:
     resolution: {integrity: sha512-LKYU1iAXJXUgAXn9URjiu+MWhyUXHsvfp7mcuYm9dSUKK0/CjtrUwFAxD82/mCWbtLsGjFIad0wIsod4zrTAEQ==}
     engines: {node: '>=0.4'}
@@ -6679,8 +6660,6 @@ snapshots:
       '@babel/core': 7.29.0
       '@babel/helper-plugin-utils': 7.28.6
 
-  '@babel/runtime@7.28.6': {}
-
   '@babel/runtime@7.29.2': {}
 
   '@babel/template@7.28.6':
@@ -6785,13 +6764,13 @@ snapshots:
     dependencies:
       '@ethersproject/address': 5.8.0
       '@ethersproject/bignumber': 5.8.0
-      '@ethersproject/bytes': 5.7.0
+      '@ethersproject/bytes': 5.8.0
       '@ethersproject/constants': 5.8.0
       '@ethersproject/hash': 5.8.0
       '@ethersproject/keccak256': 5.8.0
       '@ethersproject/logger': 5.8.0
       '@ethersproject/properties': 5.8.0
-      '@ethersproject/strings': 5.7.0
+      '@ethersproject/strings': 5.8.0
 
   '@ethersproject/abi@5.8.0':
     dependencies:
@@ -6808,11 +6787,11 @@ snapshots:
   '@ethersproject/abstract-provider@5.7.0':
     dependencies:
       '@ethersproject/bignumber': 5.8.0
-      '@ethersproject/bytes': 5.7.0
+      '@ethersproject/bytes': 5.8.0
       '@ethersproject/logger': 5.8.0
       '@ethersproject/networks': 5.8.0
       '@ethersproject/properties': 5.8.0
-      '@ethersproject/transactions': 5.7.0
+      '@ethersproject/transactions': 5.8.0
       '@ethersproject/web': 5.8.0
 
   '@ethersproject/abstract-provider@5.8.0':
@@ -6956,17 +6935,17 @@ snapshots:
   '@ethersproject/hdnode@5.7.0':
     dependencies:
       '@ethersproject/abstract-signer': 5.8.0
-      '@ethersproject/basex': 5.8.0
+      '@ethersproject/basex': 5.7.0
       '@ethersproject/bignumber': 5.8.0
       '@ethersproject/bytes': 5.8.0
       '@ethersproject/logger': 5.8.0
-      '@ethersproject/pbkdf2': 5.8.0
+      '@ethersproject/pbkdf2': 5.7.0
       '@ethersproject/properties': 5.8.0
-      '@ethersproject/sha2': 5.8.0
+      '@ethersproject/sha2': 5.7.0
       '@ethersproject/signing-key': 5.8.0
       '@ethersproject/strings': 5.8.0
       '@ethersproject/transactions': 5.8.0
-      '@ethersproject/wordlists': 5.8.0
+      '@ethersproject/wordlists': 5.7.0
 
   '@ethersproject/hdnode@5.8.0':
     dependencies:
@@ -6988,12 +6967,12 @@ snapshots:
       '@ethersproject/abstract-signer': 5.8.0
       '@ethersproject/address': 5.8.0
       '@ethersproject/bytes': 5.8.0
-      '@ethersproject/hdnode': 5.8.0
+      '@ethersproject/hdnode': 5.7.0
       '@ethersproject/keccak256': 5.8.0
       '@ethersproject/logger': 5.8.0
-      '@ethersproject/pbkdf2': 5.8.0
+      '@ethersproject/pbkdf2': 5.7.0
       '@ethersproject/properties': 5.8.0
-      '@ethersproject/random': 5.8.0
+      '@ethersproject/random': 5.7.0
       '@ethersproject/strings': 5.8.0
       '@ethersproject/transactions': 5.8.0
       aes-js: 3.0.0
@@ -7040,7 +7019,7 @@ snapshots:
   '@ethersproject/pbkdf2@5.7.0':
     dependencies:
       '@ethersproject/bytes': 5.8.0
-      '@ethersproject/sha2': 5.8.0
+      '@ethersproject/sha2': 5.7.0
 
   '@ethersproject/pbkdf2@5.8.0':
     dependencies:
@@ -7083,13 +7062,13 @@ snapshots:
 
   '@ethersproject/providers@5.7.2':
     dependencies:
-      '@ethersproject/abstract-provider': 5.7.0
+      '@ethersproject/abstract-provider': 5.8.0
       '@ethersproject/abstract-signer': 5.8.0
       '@ethersproject/address': 5.8.0
       '@ethersproject/base64': 5.8.0
       '@ethersproject/basex': 5.8.0
       '@ethersproject/bignumber': 5.8.0
-      '@ethersproject/bytes': 5.7.0
+      '@ethersproject/bytes': 5.8.0
       '@ethersproject/constants': 5.8.0
       '@ethersproject/hash': 5.8.0
       '@ethersproject/logger': 5.8.0
@@ -7098,8 +7077,8 @@ snapshots:
       '@ethersproject/random': 5.8.0
       '@ethersproject/rlp': 5.8.0
       '@ethersproject/sha2': 5.8.0
-      '@ethersproject/strings': 5.7.0
-      '@ethersproject/transactions': 5.7.0
+      '@ethersproject/strings': 5.8.0
+      '@ethersproject/transactions': 5.8.0
       '@ethersproject/web': 5.8.0
       bech32: 1.1.4
       ws: 7.4.6
@@ -7189,7 +7168,7 @@ snapshots:
       '@ethersproject/bytes': 5.8.0
       '@ethersproject/keccak256': 5.8.0
       '@ethersproject/logger': 5.8.0
-      '@ethersproject/sha2': 5.8.0
+      '@ethersproject/sha2': 5.7.0
       '@ethersproject/strings': 5.8.0
 
   '@ethersproject/solidity@5.8.0':
@@ -7203,7 +7182,7 @@ snapshots:
 
   '@ethersproject/strings@5.7.0':
     dependencies:
-      '@ethersproject/bytes': 5.7.0
+      '@ethersproject/bytes': 5.8.0
       '@ethersproject/constants': 5.8.0
       '@ethersproject/logger': 5.8.0
 
@@ -7251,11 +7230,11 @@ snapshots:
 
   '@ethersproject/wallet@5.7.0':
     dependencies:
-      '@ethersproject/abstract-provider': 5.7.0
+      '@ethersproject/abstract-provider': 5.8.0
       '@ethersproject/abstract-signer': 5.8.0
       '@ethersproject/address': 5.8.0
       '@ethersproject/bignumber': 5.8.0
-      '@ethersproject/bytes': 5.7.0
+      '@ethersproject/bytes': 5.8.0
       '@ethersproject/hash': 5.8.0
       '@ethersproject/hdnode': 5.8.0
       '@ethersproject/json-wallets': 5.8.0
@@ -7264,7 +7243,7 @@ snapshots:
       '@ethersproject/properties': 5.8.0
       '@ethersproject/random': 5.8.0
       '@ethersproject/signing-key': 5.8.0
-      '@ethersproject/transactions': 5.7.0
+      '@ethersproject/transactions': 5.8.0
       '@ethersproject/wordlists': 5.8.0
 
   '@ethersproject/wallet@5.8.0':
@@ -7450,10 +7429,10 @@ snapshots:
     dependencies:
       '@lit-protocol/constants': 8.0.2(typescript@5.9.3)
       '@lit-protocol/contracts': 0.5.3(typescript@5.9.3)
-      '@openagenda/verror': 3.2.0
+      '@openagenda/verror': 3.1.4
       '@t3-oss/env-core': 0.13.8(typescript@5.9.3)(zod@3.24.3)
-      '@typechain/ethers-v6': 0.5.1(ethers@5.8.0)(typechain@8.3.2(typescript@5.9.3))(typescript@5.9.3)
-      ethers: 5.8.0
+      '@typechain/ethers-v6': 0.5.1(ethers@5.7.2)(typechain@8.3.2(typescript@5.9.3))(typescript@5.9.3)
+      ethers: 5.7.2
       tslib: 2.8.1
       typechain: 8.3.2(typescript@5.9.3)
       viem: 2.29.4(typescript@5.9.3)(zod@3.24.3)
@@ -7501,12 +7480,12 @@ snapshots:
       '@lit-protocol/logger': 8.0.2
       '@lit-protocol/schemas': 8.0.2(typescript@5.9.3)
       '@lit-protocol/types': 8.0.2(typescript@5.9.3)
-      '@openagenda/verror': 3.2.0
+      '@openagenda/verror': 3.1.4
       '@t3-oss/env-core': 0.13.8(typescript@5.9.3)(zod@3.24.3)
-      '@typechain/ethers-v6': 0.5.1(ethers@5.8.0)(typechain@8.3.2(typescript@5.9.3))(typescript@5.9.3)
-      ethers: 5.8.0
+      '@typechain/ethers-v6': 0.5.1(ethers@5.7.2)(typechain@8.3.2(typescript@5.9.3))(typescript@5.9.3)
+      ethers: 5.7.2
       pino: 9.14.0
-      siwe: 2.3.2(ethers@5.8.0)
+      siwe: 2.3.2(ethers@5.7.2)
       tslib: 2.8.1
       typechain: 8.3.2(typescript@5.9.3)
       viem: 2.29.4(typescript@5.9.3)(zod@3.24.3)
@@ -7634,10 +7613,10 @@ snapshots:
   '@lit-protocol/constants@8.0.2(typescript@5.9.3)':
     dependencies:
       '@lit-protocol/contracts': 0.5.3(typescript@5.9.3)
-      '@openagenda/verror': 3.2.0
+      '@openagenda/verror': 3.1.4
       '@t3-oss/env-core': 0.13.8(typescript@5.9.3)(zod@3.24.3)
-      '@typechain/ethers-v6': 0.5.1(ethers@5.8.0)(typechain@8.3.2(typescript@5.9.3))(typescript@5.9.3)
-      ethers: 5.8.0
+      '@typechain/ethers-v6': 0.5.1(ethers@5.7.2)(typechain@8.3.2(typescript@5.9.3))(typescript@5.9.3)
+      ethers: 5.7.2
       tslib: 2.8.1
       typechain: 8.3.2(typescript@5.9.3)
       viem: 2.29.4(typescript@5.9.3)(zod@3.24.3)
@@ -7970,11 +7949,11 @@ snapshots:
       '@lit-protocol/access-control-conditions-schemas': 8.0.2(typescript@5.9.3)
       '@lit-protocol/constants': 8.0.2(typescript@5.9.3)
       '@lit-protocol/contracts': 0.5.3(typescript@5.9.3)
-      '@openagenda/verror': 3.2.0
+      '@openagenda/verror': 3.1.4
       '@t3-oss/env-core': 0.13.8(typescript@5.9.3)(zod@3.24.3)
-      '@typechain/ethers-v6': 0.5.1(ethers@5.8.0)(typechain@8.3.2(typescript@5.9.3))(typescript@5.9.3)
-      ethers: 5.8.0
-      siwe: 2.3.2(ethers@5.8.0)
+      '@typechain/ethers-v6': 0.5.1(ethers@5.7.2)(typechain@8.3.2(typescript@5.9.3))(typescript@5.9.3)
+      ethers: 5.7.2
+      siwe: 2.3.2(ethers@5.7.2)
       tslib: 2.8.1
       typechain: 8.3.2(typescript@5.9.3)
       viem: 2.29.4(typescript@5.9.3)(zod@3.24.3)
@@ -8029,11 +8008,11 @@ snapshots:
       '@lit-protocol/constants': 8.0.2(typescript@5.9.3)
       '@lit-protocol/contracts': 0.5.3(typescript@5.9.3)
       '@lit-protocol/schemas': 8.0.2(typescript@5.9.3)
-      '@openagenda/verror': 3.2.0
+      '@openagenda/verror': 3.1.4
       '@t3-oss/env-core': 0.13.8(typescript@5.9.3)(zod@3.24.3)
-      '@typechain/ethers-v6': 0.5.1(ethers@5.8.0)(typechain@8.3.2(typescript@5.9.3))(typescript@5.9.3)
-      ethers: 5.8.0
-      siwe: 2.3.2(ethers@5.8.0)
+      '@typechain/ethers-v6': 0.5.1(ethers@5.7.2)(typechain@8.3.2(typescript@5.9.3))(typescript@5.9.3)
+      ethers: 5.7.2
+      siwe: 2.3.2(ethers@5.7.2)
       tslib: 2.8.1
       typechain: 8.3.2(typescript@5.9.3)
       viem: 2.29.4(typescript@5.9.3)(zod@3.24.3)
@@ -8377,7 +8356,7 @@ snapshots:
 
   '@onflow/fcl@1.21.10(@types/react@19.2.14)(jiti@2.6.1)(postcss@8.5.8)(react@19.1.0)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.2)(zod@3.25.76)':
     dependencies:
-      '@babel/runtime': 7.28.6
+      '@babel/runtime': 7.29.2
       '@onflow/config': 1.11.1
       '@onflow/fcl-core': 1.30.2
       '@onflow/fcl-wc': 6.0.22(@onflow/fcl-core@1.30.2)(@types/react@19.2.14)(jiti@2.6.1)(postcss@8.5.8)(react@19.1.0)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.2)(zod@3.25.76)
@@ -8473,8 +8452,8 @@ snapshots:
       buffer: 6.0.3
       cross-fetch: 4.1.0
       events: 3.3.0
-      isomorphic-ws: 5.0.0(ws@8.20.0)
-      ws: 8.20.0
+      isomorphic-ws: 5.0.0(ws@8.18.3)
+      ws: 8.18.3
     transitivePeerDependencies:
       - '@onflow/util-config'
       - bufferutil
@@ -8487,7 +8466,7 @@ snapshots:
 
   '@onflow/types@1.5.0':
     dependencies:
-      '@babel/runtime': 7.28.6
+      '@babel/runtime': 7.29.2
       '@onflow/util-logger': 1.3.4
     transitivePeerDependencies:
       - '@onflow/util-config'
@@ -9881,14 +9860,6 @@ snapshots:
       typechain: 8.3.2(typescript@5.9.3)
       typescript: 5.9.3
 
-  '@typechain/ethers-v6@0.5.1(ethers@5.8.0)(typechain@8.3.2(typescript@5.9.3))(typescript@5.9.3)':
-    dependencies:
-      ethers: 5.8.0
-      lodash: 4.17.23
-      ts-essentials: 7.0.3(typescript@5.9.3)
-      typechain: 8.3.2(typescript@5.9.3)
-      typescript: 5.9.3
-
   '@types/babel__core@7.20.5':
     dependencies:
       '@babel/parser': 7.29.0
@@ -10229,7 +10200,7 @@ snapshots:
     dependencies:
       '@walletconnect/jsonrpc-utils': 1.0.8
       '@walletconnect/safe-json': 1.0.2
-      cross-fetch: 3.2.0
+      cross-fetch: 3.1.8
       events: 3.3.0
     transitivePeerDependencies:
       - encoding
@@ -11096,7 +11067,7 @@ snapshots:
 
   convert-source-map@2.0.0: {}
 
-  cookie-es@1.2.2: {}
+  cookie-es@1.2.3: {}
 
   cookie-parser@1.4.7:
     dependencies:
@@ -11121,12 +11092,6 @@ snapshots:
   crc-32@1.2.2: {}
 
   cross-fetch@3.1.8:
-    dependencies:
-      node-fetch: 2.7.0
-    transitivePeerDependencies:
-      - encoding
-
-  cross-fetch@3.2.0:
     dependencies:
       node-fetch: 2.7.0
     transitivePeerDependencies:
@@ -11239,7 +11204,7 @@ snapshots:
       es-errors: 1.3.0
       gopd: 1.2.0
 
-  defu@6.1.4: {}
+  defu@6.1.6: {}
 
   delayed-stream@1.0.0: {}
 
@@ -11833,11 +11798,11 @@ snapshots:
 
   graceful-fs@4.2.11: {}
 
-  h3@1.15.10:
+  h3@1.15.11:
     dependencies:
-      cookie-es: 1.2.2
+      cookie-es: 1.2.3
       crossws: 0.3.5
-      defu: 6.1.4
+      defu: 6.1.6
       destr: 2.0.5
       iron-webcrypto: 1.2.1
       node-mock-http: 1.0.4
@@ -12150,9 +12115,9 @@ snapshots:
 
   isexe@2.0.0: {}
 
-  isomorphic-ws@5.0.0(ws@8.20.0):
+  isomorphic-ws@5.0.0(ws@8.18.3):
     dependencies:
-      ws: 8.20.0
+      ws: 8.18.3
 
   isows@1.0.7(ws@8.18.1):
     dependencies:
@@ -12554,7 +12519,7 @@ snapshots:
   normalize-package-data@2.5.0:
     dependencies:
       hosted-git-info: 2.8.9
-      resolve: 1.22.11
+      resolve: 1.17.0
       semver: 5.7.2
       validate-npm-package-license: 3.0.4
 
@@ -12604,9 +12569,9 @@ snapshots:
     dependencies:
       mimic-fn: 2.1.0
 
-  openai@6.33.0(ws@8.20.0)(zod@4.3.6):
+  openai@6.33.0(ws@8.18.3)(zod@4.3.6):
     optionalDependencies:
-      ws: 8.20.0
+      ws: 8.18.3
       zod: 4.3.6
 
   orval@8.5.3(prettier@3.8.1)(typescript@5.9.3):
@@ -13945,7 +13910,7 @@ snapshots:
       anymatch: 3.1.3
       chokidar: 5.0.0
       destr: 2.0.5
-      h3: 1.15.10
+      h3: 1.15.11
       lru-cache: 11.2.7
       node-fetch-native: 1.6.7
       ofetch: 1.5.1
@@ -14211,8 +14176,6 @@ snapshots:
   ws@8.18.1: {}
 
   ws@8.18.3: {}
-
-  ws@8.20.0: {}
 
   xtend@4.0.2: {}
 
