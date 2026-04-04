@@ -110,7 +110,7 @@ export default function SignIn() {
       <div className="relative z-10 w-full max-w-sm">
         <div className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl shadow-black/20 p-8 border border-white/40">
           <div className="flex flex-col items-center mb-6">
-            <div className="w-20 h-20 rounded-full overflow-hidden shadow-lg shadow-emerald-200 ring-2 ring-emerald-100 mb-3">
+            <div className="w-24 h-24 rounded-full overflow-hidden shadow-lg shadow-emerald-200 ring-2 ring-emerald-100 mb-3">
               <img src={`${BASE}/logo.jpeg`} alt="Smart Fasal" className="w-full h-full object-cover" />
             </div>
             <h1 className="text-2xl font-extrabold text-gray-900 leading-tight">Smart Fasal</h1>
