@@ -8,6 +8,19 @@ import { supabase } from "@/lib/supabase";
 
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
 
+function StackBadges() {
+  const items = ["Filecoin", "Flow", "Lit Protocol", "Starknet", "NEAR"];
+  return (
+    <div className="flex flex-wrap justify-center gap-1.5 mt-4">
+      {items.map(name => (
+        <span key={name} className="px-2 py-0.5 rounded-full bg-white/10 text-white/60 text-[10px] font-medium border border-white/10">
+          {name}
+        </span>
+      ))}
+    </div>
+  );
+}
+
 export default function SignIn() {
   const [, setLocation] = useLocation();
   const [email, setEmail] = useState("");
@@ -99,10 +112,11 @@ export default function SignIn() {
           <img src={`${BASE}/logo.jpeg`} alt="Smart Fasal" className="w-10 h-10 rounded-xl object-cover ring-2 ring-white/30 shadow-lg" />
           <span className="text-2xl font-extrabold text-white tracking-tight drop-shadow">Smart Fasal</span>
         </div>
-        <p className="text-emerald-100/70 text-xs font-medium">🌾 AI · IoT · Web3 Agriculture Platform</p>
+        <p className="text-emerald-100/70 text-xs font-medium">AI-Powered Precision Agriculture for the Next Billion Farmers</p>
+        <StackBadges />
       </div>
 
-      <div className="relative z-10 w-full max-w-sm mt-24">
+      <div className="relative z-10 w-full max-w-sm mt-32">
         <div className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl shadow-black/20 p-8 border border-white/40">
           <div className="flex flex-col items-center mb-6">
             <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center mb-3 shadow-lg shadow-emerald-200">
