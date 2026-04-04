@@ -105,20 +105,43 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    if (!navigator.geolocation) { setLocationStatus("denied"); return; }
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setGpsCoords({ lat: pos.coords.latitude, lon: pos.coords.longitude });
-        setLocationStatus("granted");
-      },
-      () => setLocationStatus("denied"),
-      { timeout: 10000, enableHighAccuracy: false }
-    );
+    let gpsResolved = false;
+
+    // Try IP geolocation via our own backend (no permission needed, uses real user IP from headers)
+    const tryIpGeo = async () => {
+      try {
+        const res = await fetch("/api/geoip");
+        const data = await res.json() as { lat: number | null; lon: number | null; location: string | null };
+        if (data.lat !== null && data.lon !== null && !gpsResolved) {
+          setGpsCoords({ lat: data.lat, lon: data.lon });
+          setLocationStatus("granted");
+        } else if (!gpsResolved) {
+          setLocationStatus("denied");
+        }
+      } catch {
+        if (!gpsResolved) setLocationStatus("denied");
+      }
+    };
+
+    // Also try GPS (more accurate, user may grant it in real browser)
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          gpsResolved = true;
+          setGpsCoords({ lat: pos.coords.latitude, lon: pos.coords.longitude });
+          setLocationStatus("granted");
+        },
+        () => { /* GPS denied — IP geo already handles fallback */ },
+        { timeout: 8000, enableHighAccuracy: false }
+      );
+    }
+
+    tryIpGeo();
   }, []);
 
   const weatherParams = gpsCoords ?? {};
   const { data: weather, isLoading: loadingWeather } = useGetWeather(weatherParams, {
-    query: { queryKey: getGetWeatherQueryKey(weatherParams), enabled: locationStatus !== "pending" }
+    query: { queryKey: getGetWeatherQueryKey(weatherParams), staleTime: 5 * 60 * 1000 }
   });
 
   const { data: sensorData, isLoading: loadingSensor } = useGetLatestSensorData({
@@ -459,12 +482,7 @@ export default function Home() {
           style={{ background: "linear-gradient(135deg, #0ea5e9 0%, #38bdf8 50%, #7dd3fc 100%)", border: "1px solid rgba(255,255,255,0.35)" }}>
           <div className="absolute -top-4 -right-4 w-24 h-24 rounded-full bg-white/20 blur-2xl" />
           <div className="relative p-3.5">
-            {locationStatus === "pending" ? (
-              <div className="flex items-center gap-2 py-1">
-                <Loader2 className="w-4 h-4 text-white animate-spin" />
-                <span className="text-xs text-white/80 font-medium">Getting your location…</span>
-              </div>
-            ) : loadingWeather ? (
+            {loadingWeather ? (
               <div className="space-y-1.5">
                 <Skeleton className="h-3 w-16 bg-white/30" />
                 <Skeleton className="h-7 w-24 bg-white/30" />
