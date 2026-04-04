@@ -267,73 +267,74 @@ export default function Profile() {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 gap-3">
-        <Card className="bg-amber-50 border-amber-200">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <Zap className="w-4 h-4 text-amber-600" />
-              <span className="text-xs font-semibold text-amber-700">Total Rewards</span>
+        <div className="glass-glow-amber rounded-2xl border border-white/50 bg-white/35 backdrop-blur-2xl p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="w-7 h-7 rounded-xl bg-amber-100/70 flex items-center justify-center">
+              <Zap className="w-3.5 h-3.5 text-amber-600" />
             </div>
-            <p className="text-2xl font-bold text-amber-700">{flowRewards + totalRewardEarned}</p>
-            <p className="text-[10px] text-amber-600 mt-0.5">FLOW tokens earned</p>
-          </CardContent>
-        </Card>
+            <span className="text-xs font-semibold text-amber-700">Total Rewards</span>
+          </div>
+          <p className="text-2xl font-bold text-amber-700">{flowRewards + totalRewardEarned}</p>
+          <p className="text-[10px] text-amber-600 mt-0.5">FLOW tokens earned</p>
+        </div>
 
-        <Card className="bg-blue-50 border-blue-200">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <Database className="w-4 h-4 text-blue-600" />
-              <span className="text-xs font-semibold text-blue-700">Contributions</span>
+        <div className="glass-glow-blue rounded-2xl border border-white/50 bg-white/35 backdrop-blur-2xl p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="w-7 h-7 rounded-xl bg-blue-100/70 flex items-center justify-center">
+              <Database className="w-3.5 h-3.5 text-blue-600" />
             </div>
-            <p className="text-2xl font-bold text-blue-700">{contributionCount}</p>
-            <p className="text-[10px] text-blue-600 mt-0.5">Data uploads</p>
-          </CardContent>
-        </Card>
+            <span className="text-xs font-semibold text-blue-700">Contributions</span>
+          </div>
+          <p className="text-2xl font-bold text-blue-700">{contributionCount}</p>
+          <p className="text-[10px] text-blue-600 mt-0.5">Data uploads</p>
+        </div>
 
-        <Card className={cn(
-          "border",
-          currentRisk === "Low" ? "bg-green-50 border-green-200" :
-          currentRisk === "High" ? "bg-red-50 border-red-200" : "bg-yellow-50 border-yellow-200"
+        <div className={cn(
+          "rounded-2xl border border-white/50 bg-white/35 backdrop-blur-2xl p-4",
+          currentRisk === "Low" ? "glass-glow-emerald" :
+          currentRisk === "High" ? "glass-glow" : "glass-glow-amber"
         )}>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <ShieldCheck className={cn("w-4 h-4",
+          <div className="flex items-center gap-2 mb-2">
+            <div className={cn("w-7 h-7 rounded-xl flex items-center justify-center",
+              currentRisk === "Low" ? "bg-green-100/70" :
+              currentRisk === "High" ? "bg-red-100/70" : "bg-yellow-100/70"
+            )}>
+              <ShieldCheck className={cn("w-3.5 h-3.5",
                 currentRisk === "Low" ? "text-green-600" :
                 currentRisk === "High" ? "text-red-600" : "text-yellow-600"
               )} />
-              <span className={cn("text-xs font-semibold",
-                currentRisk === "Low" ? "text-green-700" :
-                currentRisk === "High" ? "text-red-700" : "text-yellow-700"
-              )}>Risk Level</span>
             </div>
-            <RiskBadge risk={currentRisk} />
-            <p className="text-[10px] text-muted-foreground mt-1">
-              {currentRisk === "High" ? "Insurance triggered" : "Current status"}
-            </p>
-          </CardContent>
-        </Card>
+            <span className={cn("text-xs font-semibold",
+              currentRisk === "Low" ? "text-green-700" :
+              currentRisk === "High" ? "text-red-700" : "text-yellow-700"
+            )}>Risk Level</span>
+          </div>
+          <RiskBadge risk={currentRisk} />
+          <p className="text-[10px] text-muted-foreground mt-1">
+            {currentRisk === "High" ? "Insurance triggered" : "Current status"}
+          </p>
+        </div>
 
-        <Card className="bg-purple-50 border-purple-200">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <Award className="w-4 h-4 text-purple-600" />
-              <span className="text-xs font-semibold text-purple-700">Certificates</span>
+        <div className="glass-glow-violet rounded-2xl border border-white/50 bg-white/35 backdrop-blur-2xl p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="w-7 h-7 rounded-xl bg-purple-100/70 flex items-center justify-center">
+              <Award className="w-3.5 h-3.5 text-purple-600" />
             </div>
-            <p className="text-2xl font-bold text-purple-700">{certificates.length}</p>
-            <p className="text-[10px] text-purple-600 mt-0.5">Hypercerts earned</p>
-          </CardContent>
-        </Card>
+            <span className="text-xs font-semibold text-purple-700">Certificates</span>
+          </div>
+          <p className="text-2xl font-bold text-purple-700">{certificates.length}</p>
+          <p className="text-[10px] text-purple-600 mt-0.5">Hypercerts earned</p>
+        </div>
       </div>
 
       {/* Hypercerts */}
       {certificates.length > 0 && (
-        <Card>
-          <CardHeader className="pb-2 pt-4">
-            <CardTitle className="text-sm flex items-center gap-2">
-              <Award className="w-4 h-4 text-amber-500" />
-              Hypercerts Earned
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pb-4 flex flex-wrap gap-2">
+        <div className="glass-glow-amber rounded-2xl border border-white/50 bg-white/35 backdrop-blur-2xl">
+          <div className="p-4 pb-2 flex items-center gap-2">
+            <Award className="w-4 h-4 text-amber-500" />
+            <span className="text-sm font-semibold">Hypercerts Earned</span>
+          </div>
+          <div className="pb-4 px-4 flex flex-wrap gap-2">
             {certificates.map((cert) => (
               <div key={cert} className="flex items-center gap-1.5 bg-amber-50 border border-amber-200 rounded-xl px-3 py-1.5 text-xs font-semibold text-amber-700">
                 <Star className="w-3 h-3 text-amber-500" />
@@ -341,13 +342,13 @@ export default function Profile() {
               </div>
             ))}
             {contributionCount < 3 && (
-              <div className="flex items-center gap-1.5 bg-muted/50 border border-dashed border-muted-foreground/30 rounded-xl px-3 py-1.5 text-xs text-muted-foreground">
+              <div className="flex items-center gap-1.5 bg-white/50 border border-dashed border-muted-foreground/30 rounded-xl px-3 py-1.5 text-xs text-muted-foreground">
                 <Star className="w-3 h-3" />
                 Sustainable Farmer ({3 - contributionCount} more uploads)
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
 
       {/* Tabs */}
@@ -378,13 +379,13 @@ export default function Profile() {
       {activeTab === "timeline" && (
         <div>
           {dataHistory.length === 0 ? (
-            <Card className="border-dashed">
-              <CardContent className="p-8 text-center">
+            <div className="glass-glow rounded-2xl border border-dashed border-white/50 bg-white/30 backdrop-blur-xl">
+              <div className="p-8 text-center">
                 <TrendingUp className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
                 <p className="text-sm font-semibold text-muted-foreground">No data yet</p>
                 <p className="text-xs text-muted-foreground mt-1">Run the "Analyze Farm" pipeline to start your timeline.</p>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           ) : (
             <div className="relative">
               <div className="absolute left-5 top-0 bottom-0 w-0.5 bg-border" />
@@ -392,12 +393,12 @@ export default function Profile() {
                 {dataHistory.map((entry) => (
                   <div key={entry.cid} className="relative pl-12">
                     <div className="absolute left-3.5 top-3 w-3 h-3 rounded-full border-2 border-primary bg-background" />
-                    <Card className={cn(
-                      "border",
-                      entry.riskStatus === "High" ? "border-red-100" :
-                      entry.riskStatus === "Low" ? "border-green-100" : "border-yellow-100"
+                    <div className={cn(
+                      "glass-glow rounded-2xl border border-white/50 bg-white/35 backdrop-blur-xl",
+                      entry.riskStatus === "High" ? "border-l-4 border-l-red-300" :
+                      entry.riskStatus === "Low" ? "border-l-4 border-l-green-300" : "border-l-4 border-l-yellow-300"
                     )}>
-                      <CardContent className="p-3.5 space-y-2.5">
+                      <div className="p-3.5 space-y-2.5">
                         <div className="flex items-start justify-between gap-2">
                           <div className="min-w-0">
                             <p className="text-[10px] text-muted-foreground">{formatTime(entry.timestamp)}</p>
@@ -430,8 +431,8 @@ export default function Profile() {
                             </span>
                           )}
                         </div>
-                      </CardContent>
-                    </Card>
+                      </div>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -443,7 +444,7 @@ export default function Profile() {
       {/* Expert View Tab */}
       {activeTab === "expert" && (
         <div className="space-y-3">
-          <div className="flex items-center gap-2 p-3 rounded-xl bg-blue-50 border border-blue-200">
+          <div className="flex items-center gap-2 p-3 rounded-xl bg-blue-50/60 border border-blue-200/60 backdrop-blur-sm">
             <Users className="w-4 h-4 text-blue-600 shrink-0" />
             <p className="text-xs text-blue-700 font-medium">
               Showing {expertEntries.length} entries accessible to verified experts via Lit Protocol.
@@ -451,18 +452,18 @@ export default function Profile() {
             </p>
           </div>
           {expertEntries.length === 0 ? (
-            <Card className="border-dashed">
-              <CardContent className="p-8 text-center">
+            <div className="glass-glow-blue rounded-2xl border border-dashed border-white/50 bg-white/30 backdrop-blur-xl">
+              <div className="p-8 text-center">
                 <Users className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
                 <p className="text-sm font-semibold text-muted-foreground">No expert-accessible entries</p>
                 <p className="text-xs text-muted-foreground mt-1">Run an analysis with "Expert" or "Public" access level.</p>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           ) : (
             <div className="space-y-3">
               {expertEntries.map((entry) => (
-                <Card key={entry.cid} className="border-blue-100">
-                  <CardContent className="p-3.5 space-y-2.5">
+                <div key={entry.cid} className="glass-glow-blue rounded-2xl border border-white/50 bg-white/35 backdrop-blur-2xl">
+                  <div className="p-3.5 space-y-2.5">
                     <div className="flex items-center justify-between gap-2">
                       <div className="min-w-0">
                         <p className="text-xs font-semibold">Farm Analysis Entry</p>
@@ -495,8 +496,8 @@ export default function Profile() {
                       </span>
                       <span className="text-amber-600 font-semibold">+{entry.reward} FLOW</span>
                     </div>
-                  </CardContent>
-                </Card>
+                  </div>
+                </div>
               ))}
             </div>
           )}

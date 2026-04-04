@@ -221,33 +221,55 @@ export default function Insurance() {
     return "bg-blue-50 border-blue-200 text-blue-800";
   };
 
+  const glassCard = "glass-glow-sky rounded-2xl border border-white/50 bg-white/35 backdrop-blur-2xl hover:bg-white/45";
+
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div>
-        <h2 className="text-2xl font-bold tracking-tight">{t("insurance.title")}</h2>
-        <p className="text-muted-foreground text-sm">
-          Auto-triggered payouts via live weather oracle · Policies stored on IPFS
-        </p>
-        {walletAddress && (
-          <div className="mt-2 flex items-center gap-1.5 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-1.5 w-fit">
-            <Zap className="w-3.5 h-3.5 text-amber-500" />
-            Filing a claim earns <strong>+50 FLOW</strong>
-          </div>
-        )}
+    <div className="relative -mx-4 -mt-5 min-h-screen animate-in fade-in slide-in-from-bottom-4 duration-500"
+      style={{ background: "linear-gradient(165deg, #f0f9ff 0%, #e0f2fe 30%, #bae6fd 60%, #e0f7fa 100%)" }}>
+
+      {/* Sky/blue blobs */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute -top-20 -right-20 w-72 h-72 rounded-full bg-sky-300/30 blur-3xl" />
+        <div className="absolute top-1/4 -left-16 w-60 h-60 rounded-full bg-blue-200/25 blur-3xl" />
+        <div className="absolute top-2/3 right-0 w-56 h-56 rounded-full bg-cyan-200/30 blur-3xl" />
+        <div className="absolute bottom-0 left-1/3 w-40 h-40 rounded-full bg-sky-100/20 blur-2xl" />
       </div>
 
+      <div className="relative space-y-5 px-4 pt-5 pb-28">
+
+        {/* Hero Header */}
+        <div className="relative rounded-2xl overflow-hidden p-4 shadow-xl transition-all duration-200 hover:-translate-y-1 hover:shadow-2xl hover:shadow-sky-500/30 active:translate-y-0"
+          style={{ background: "linear-gradient(135deg, #0369a1 0%, #0284c7 45%, #38bdf8 100%)", border: "1px solid rgba(255,255,255,0.35)" }}>
+          <div className="absolute -top-4 -right-4 w-36 h-36 rounded-full bg-sky-300/20 blur-2xl" />
+          <div className="absolute bottom-0 left-0 w-28 h-16 rounded-full bg-blue-300/20 blur-xl" />
+          <div className="absolute inset-0 opacity-5"
+            style={{ backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.8) 1px, transparent 1px)", backgroundSize: "20px 20px" }} />
+          <div className="relative flex items-center justify-between">
+            <div>
+              <div className="flex items-center gap-2.5 mb-1">
+                <div className="w-7 h-7 rounded-lg bg-white/20 flex items-center justify-center shrink-0">
+                  <ShieldCheck className="w-4 h-4 text-white" />
+                </div>
+                <h2 className="text-xl font-extrabold text-white tracking-tight drop-shadow-sm">{t("insurance.title")}</h2>
+              </div>
+              <p className="text-sky-100/80 text-xs mt-0.5 font-medium">Auto-triggered payouts via live weather oracle · IPFS policies</p>
+            </div>
+            {walletAddress && (
+              <div className="flex items-center gap-1.5 text-xs font-bold text-amber-900 bg-amber-200/90 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-md">
+                <Zap className="w-3 h-3 text-amber-600" /> +50 FLOW per claim
+              </div>
+            )}
+          </div>
+        </div>
+
       {/* ── Weather Oracle Live Panel ──────────────────────────────────── */}
-      <Card className="border-sky-200 bg-gradient-to-br from-sky-50 to-blue-50">
-        <CardHeader className="pb-2">
-          <CardTitle className="flex items-center gap-2 text-sky-800 text-base">
-            <Satellite className="w-4 h-4" />
-            Live Weather Oracle
-            <Badge variant="outline" className="text-[10px] border-sky-300 text-sky-700 ml-auto">
-              Open-Meteo API
-            </Badge>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
+      <div className={`${glassCard}`}>
+        <div className="p-4 pb-2 flex items-center gap-2">
+          <Satellite className="w-4 h-4 text-sky-700" />
+          <span className="font-semibold text-sky-800 text-base">Live Weather Oracle</span>
+          <Badge variant="outline" className="text-[10px] border-sky-300 text-sky-700 ml-auto">Open-Meteo API</Badge>
+        </div>
+        <div className="px-4 pb-4">
           {loadingWeather ? (
             <div className="grid grid-cols-2 gap-2">
               <Skeleton className="h-14 w-full" />
@@ -286,14 +308,14 @@ export default function Insurance() {
           ) : (
             <p className="text-sm text-muted-foreground text-center py-4">Weather oracle offline</p>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* ── Active Policy ──────────────────────────────────────────────── */}
       {!loadingPolicies && (
         activePolicy ? (
-          <Card className={`border-2 ${activePlanDetails?.color}`}>
-            <CardContent className="p-4">
+          <div className={glassCard}>
+            <div className="p-4">
               <div className="flex items-start justify-between mb-3">
                 <div>
                   <div className="flex items-center gap-2">
@@ -354,11 +376,11 @@ export default function Insurance() {
                   {cancelPolicy.isPending ? "Cancelling…" : "Cancel This Policy"}
                 </Button>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         ) : (
-          <Card className="border-dashed border-2 border-muted-foreground/30">
-            <CardContent className="p-5 text-center">
+          <div className={`${glassCard} border-dashed`}>
+            <div className="p-5 text-center">
               <ShieldAlert className="w-10 h-10 mx-auto mb-2 text-muted-foreground opacity-40" />
               <p className="font-semibold text-sm mb-1">No Active Policy</p>
               <p className="text-xs text-muted-foreground mb-3">
@@ -470,20 +492,18 @@ export default function Insurance() {
                   )}
                 </DialogContent>
               </Dialog>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         )
       )}
 
       {/* ── Risk Assessment ────────────────────────────────────────────── */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <ShieldAlert className="w-4 h-4 text-primary" />
-            Current Risk Assessment
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
+      <div className={glassCard}>
+        <div className="p-4 pb-2 flex items-center gap-2">
+          <ShieldAlert className="w-4 h-4 text-primary" />
+          <span className="font-semibold text-base">Current Risk Assessment</span>
+        </div>
+        <div className="px-4 pb-4">
           {loadingRisk ? (
             <Skeleton className="h-28 w-full" />
           ) : risk ? (
@@ -543,8 +563,8 @@ export default function Insurance() {
           ) : (
             <div className="text-center text-muted-foreground py-4 text-sm">Risk data unavailable</div>
           )}
-        </CardContent>
-        <CardFooter>
+        </div>
+        <div className="px-4 pb-4 pt-0">
           {risk?.eligibleForClaim && (
             <Dialog open={claimOpen} onOpenChange={setClaimOpen}>
               <DialogTrigger asChild>
@@ -707,8 +727,8 @@ export default function Insurance() {
               </DialogContent>
             </Dialog>
           )}
-        </CardFooter>
-      </Card>
+        </div>
+      </div>
 
       {/* ── Claims History ─────────────────────────────────────────────── */}
       <div>
@@ -729,8 +749,8 @@ export default function Insurance() {
               })();
 
               return (
-                <Card key={claim.id} className={claim.weatherValidated ? "border-green-200" : ""}>
-                  <CardContent className="p-4 space-y-3">
+                <div key={claim.id} className={glassCard}>
+                  <div className="p-4 space-y-3">
                     {/* Header row */}
                     <div className="flex justify-between items-start">
                       <div>
@@ -810,26 +830,26 @@ export default function Insurance() {
                         <span>+{claim.rewardPoints} FLOW</span>
                       </div>
                     )}
-                  </CardContent>
-                </Card>
+                  </div>
+                </div>
               );
             })}
           </div>
         ) : (
-          <Card>
-            <CardContent className="p-8 text-center text-muted-foreground">
+          <div className={`${glassCard} border-dashed`}>
+            <div className="p-8 text-center text-muted-foreground">
               <ShieldCheck className="w-10 h-10 mx-auto mb-3 opacity-20" />
               <p className="text-sm font-medium">No claims filed yet.</p>
               <p className="text-xs mt-1">File a claim when weather events impact your farm.</p>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         )}
       </div>
 
       {/* ── Get Covered CTA (when policy exists — upgrade prompt) ─────── */}
       {activePolicy && (
-        <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-green-200">
-          <CardContent className="p-4 flex items-center justify-between">
+        <div className="glass-glow-emerald rounded-2xl border border-green-200/60 bg-green-50/30 backdrop-blur-xl">
+          <div className="p-4 flex items-center justify-between">
             <div>
               <p className="font-bold text-sm text-green-800">Want broader coverage?</p>
               <p className="text-xs text-green-700">Upgrade to Premium for pest & disease protection.</p>
@@ -891,13 +911,13 @@ export default function Insurance() {
                 )}
               </DialogContent>
             </Dialog>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
 
       {/* ── Demo Reset ─────────────────────────────────────────────────────── */}
-      <Card className="border border-dashed border-orange-300 bg-orange-50/50">
-        <CardContent className="p-4 flex items-center justify-between gap-3">
+      <div className="glass-glow-amber rounded-2xl border border-dashed border-orange-300/70 bg-orange-50/25 backdrop-blur-xl">
+        <div className="p-4 flex items-center justify-between gap-3">
           <div>
             <p className="text-xs font-bold text-orange-700 flex items-center gap-1">
               <RotateCcw className="w-3.5 h-3.5" /> Demo Reset
@@ -916,8 +936,10 @@ export default function Insurance() {
             <Trash2 className="w-3.5 h-3.5" />
             {resetDemo.isPending ? "Resetting…" : "Reset All Data"}
           </Button>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
+
+      </div>
     </div>
   );
 }

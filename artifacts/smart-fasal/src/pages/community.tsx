@@ -358,38 +358,64 @@ export default function Community() {
     });
   };
 
+  const glassCard = "glass-glow-teal rounded-2xl border border-white/50 bg-white/35 backdrop-blur-2xl hover:bg-white/45";
+
   return (
-    <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500 flex flex-col h-[calc(100vh-8rem)]">
-      <div>
-        <h2 className="text-2xl font-bold tracking-tight">{t("community.title")}</h2>
-        <p className="text-muted-foreground text-sm flex items-center gap-2">
-          {t("community.connectLearnGrow")}
-          <span className="inline-flex items-center gap-1 text-green-600 font-medium text-xs">
-            <Circle className="w-2 h-2 fill-green-500 text-green-500 animate-pulse" />
-            {onlineCount} {t("community.onlineFarmers")}
-          </span>
-        </p>
+    <div className="relative -mx-4 -mt-5 min-h-screen animate-in fade-in slide-in-from-bottom-4 duration-500"
+      style={{ background: "linear-gradient(165deg, #f0fdfa 0%, #ccfbf1 25%, #cffafe 55%, #e0f2fe 100%)" }}>
+
+      {/* Teal/sky blobs */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute -top-20 -right-20 w-72 h-72 rounded-full bg-teal-300/30 blur-3xl" />
+        <div className="absolute top-1/4 -left-16 w-60 h-60 rounded-full bg-cyan-200/25 blur-3xl" />
+        <div className="absolute top-2/3 right-0 w-56 h-56 rounded-full bg-sky-200/30 blur-3xl" />
+        <div className="absolute bottom-0 left-1/3 w-40 h-40 rounded-full bg-emerald-100/20 blur-2xl" />
       </div>
 
+      <div className="relative px-4 pt-5 pb-28 flex flex-col" style={{ minHeight: "100vh" }}>
+
+        {/* Hero Header */}
+        <div className="relative rounded-2xl overflow-hidden p-4 shadow-xl transition-all duration-200 hover:-translate-y-1 hover:shadow-2xl hover:shadow-teal-500/30 active:translate-y-0 mb-4"
+          style={{ background: "linear-gradient(135deg, #0f766e 0%, #0d9488 45%, #06b6d4 100%)", border: "1px solid rgba(255,255,255,0.35)" }}>
+          <div className="absolute -top-4 -right-4 w-36 h-36 rounded-full bg-teal-300/20 blur-2xl" />
+          <div className="absolute bottom-0 left-0 w-28 h-16 rounded-full bg-cyan-300/20 blur-xl" />
+          <div className="absolute inset-0 opacity-5"
+            style={{ backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.8) 1px, transparent 1px)", backgroundSize: "20px 20px" }} />
+          <div className="relative flex items-center justify-between">
+            <div>
+              <div className="flex items-center gap-2.5 mb-1">
+                <div className="w-7 h-7 rounded-lg bg-white/20 flex items-center justify-center shrink-0">
+                  <Users className="w-4 h-4 text-white" />
+                </div>
+                <h2 className="text-xl font-extrabold text-white tracking-tight drop-shadow-sm">{t("community.title")}</h2>
+              </div>
+              <p className="text-teal-100/80 text-xs mt-0.5 font-medium">{t("community.connectLearnGrow")}</p>
+            </div>
+            <div className="flex items-center gap-1.5 text-xs font-bold text-green-900 bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-md">
+              <Circle className="w-2 h-2 fill-green-500 text-green-500 animate-pulse" />
+              {onlineCount} {t("community.onlineFarmers")}
+            </div>
+          </div>
+        </div>
+
       <Tabs defaultValue="feed" className="flex-1 flex flex-col min-h-0">
-        <TabsList className="grid w-full grid-cols-4 mb-4 h-10">
-          <TabsTrigger value="feed" className="text-xs">📢 {t("community.feed")}</TabsTrigger>
-          <TabsTrigger value="alerts" className="text-xs relative">
+        <TabsList className="grid w-full grid-cols-4 mb-4 h-auto p-1 bg-white/50 backdrop-blur-sm border border-white/60">
+          <TabsTrigger value="feed" className="text-xs py-1.5 data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:shadow-teal-200/60">📢 {t("community.feed")}</TabsTrigger>
+          <TabsTrigger value="alerts" className="text-xs py-1.5 relative data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:shadow-teal-200/60">
             🚨 {t("community.alerts")}
             <span className={cn(
               "absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-red-500 transition-all",
               alertsPulse && "scale-150 opacity-0"
             )} />
           </TabsTrigger>
-          <TabsTrigger value="chat" className="text-xs">💬 {t("community.chat")}</TabsTrigger>
-          <TabsTrigger value="experts" className="text-xs">🎓 {t("community.experts")}</TabsTrigger>
+          <TabsTrigger value="chat" className="text-xs py-1.5 data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:shadow-teal-200/60">💬 {t("community.chat")}</TabsTrigger>
+          <TabsTrigger value="experts" className="text-xs py-1.5 data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:shadow-teal-200/60">🎓 {t("community.experts")}</TabsTrigger>
         </TabsList>
 
         {/* ─────────── FEED TAB ─────────── */}
         <TabsContent value="feed" className="flex-1 overflow-y-auto pb-4 space-y-3 pr-1">
           {/* Create Post */}
-          <Card className="border-primary/20 shadow-sm">
-            <CardContent className="p-4 space-y-3">
+          <div className={`${glassCard} p-4 space-y-3`}>
               <Textarea
                 placeholder="Share a tip, ask a question, alert the community..."
                 className="resize-none border-0 focus-visible:ring-0 px-0 shadow-none min-h-[72px]"
@@ -424,8 +450,7 @@ export default function Community() {
                   Post
                 </Button>
               </div>
-            </CardContent>
-          </Card>
+          </div>
 
           {/* Category Filter */}
           <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-hide">
@@ -467,14 +492,14 @@ export default function Community() {
               const isGroupBuy = cat === "group_buy";
 
               return (
-                <Card
+                <div
                   key={post.id}
                   className={cn(
-                    "overflow-hidden transition-all",
+                    glassCard, "overflow-hidden transition-all",
                     isGroupBuy && "ring-2 ring-amber-300 shadow-amber-100 shadow-md"
                   )}
                 >
-                  <CardHeader className={cn("p-4 pb-2 flex flex-row items-start gap-3 space-y-0", isGroupBuy && "bg-amber-50/60")}>
+                  <div className={cn("p-4 pb-2 flex flex-row items-start gap-3", isGroupBuy && "bg-amber-50/30")}>
                     <Avatar className="w-9 h-9 border-2 border-primary/20 flex-shrink-0">
                       <AvatarFallback className={cn("font-bold text-sm", isGroupBuy ? "bg-amber-100 text-amber-700" : "bg-primary/10 text-primary")}>
                         {post.author.substring(0, 2).toUpperCase()}
@@ -502,9 +527,9 @@ export default function Community() {
                         <CategoryBadge category={cat} />
                       </div>
                     </div>
-                  </CardHeader>
+                  </div>
 
-                  <CardContent className="p-4 pt-2 space-y-3">
+                  <div className="p-4 pt-2 space-y-3">
                     <p className="text-sm whitespace-pre-wrap leading-relaxed">{post.content}</p>
 
                     {post.imageUrl && (
@@ -525,9 +550,9 @@ export default function Community() {
                         Verified on Filecoin: {post.filecoinCid.substring(0, 20)}...
                       </div>
                     )}
-                  </CardContent>
+                  </div>
 
-                  <CardFooter className="p-3 bg-muted/20 border-t border-border flex flex-col items-stretch gap-2">
+                  <div className="p-3 bg-white/20 border-t border-white/30 flex flex-col items-stretch gap-2">
                     <div className="flex gap-4 w-full">
                       <button
                         onClick={() => handleLike(post.id)}
@@ -573,8 +598,8 @@ export default function Community() {
                         </Button>
                       </div>
                     )}
-                  </CardFooter>
-                </Card>
+                  </div>
+                </div>
               );
             })}
           </div>
@@ -605,8 +630,8 @@ export default function Community() {
           {MOCK_ALERTS.map(alert => {
             const sev = SEVERITY_CONFIG[alert.severity];
             return (
-              <Card key={alert.id} className={cn("border", sev.bg)}>
-                <CardContent className="p-4 space-y-2">
+              <div key={alert.id} className={cn(glassCard, "border-l-4")} style={{ borderLeftColor: alert.severity === "CRITICAL" ? "#ef4444" : alert.severity === "HIGH" ? "#f97316" : "#eab308" }}>
+                <div className="p-4 space-y-2">
                   <div className="flex items-start gap-3">
                     <div className={cn("mt-0.5 p-1.5 rounded-full", alert.type === "disease" ? "bg-orange-100" : "bg-blue-100")}>
                       {alert.type === "disease"
@@ -633,20 +658,20 @@ export default function Community() {
                       </p>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             );
           })}
 
-          <Card className="bg-muted/30 border-dashed">
-            <CardContent className="p-4 text-center space-y-1">
+          <div className={`${glassCard} border-dashed`}>
+            <div className="p-4 text-center space-y-1">
               <p className="text-sm font-medium">Enable Push Notifications</p>
               <p className="text-xs text-muted-foreground">Get instant alerts for your district when outbreaks are detected</p>
               <Button size="sm" variant="outline" className="mt-2">
                 Subscribe to Alerts
               </Button>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </TabsContent>
 
         {/* ─────────── CHAT TAB ─────────── */}
@@ -710,8 +735,8 @@ export default function Community() {
           {loadingExperts ? (
             Array(2).fill(0).map((_, i) => <Skeleton key={i} className="h-36 w-full rounded-xl" />)
           ) : experts?.map(expert => (
-            <Card key={expert.id} className="overflow-hidden">
-              <CardContent className="p-4">
+            <div key={expert.id} className={`${glassCard} overflow-hidden`}>
+              <div className="p-4">
                 <div className="flex gap-3">
                   <div className="relative flex-shrink-0">
                     <Avatar className="w-14 h-14 border-2 border-accent">
@@ -802,8 +827,8 @@ export default function Community() {
                     )}
                   </div>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           ))}
 
           {expertQuestions && expertQuestions.length > 0 && (
@@ -811,8 +836,8 @@ export default function Community() {
               <h3 className="font-bold text-sm mb-3 text-muted-foreground uppercase tracking-wider">{t("community.myQuestions")}</h3>
               <div className="space-y-3">
                 {expertQuestions.map(q => (
-                  <Card key={q.id} className="bg-muted/30 border-dashed">
-                    <CardContent className="p-3">
+                  <div key={q.id} className={`${glassCard} border-dashed`}>
+                    <div className="p-3">
                       <div className="flex justify-between mb-2">
                         <Badge variant={q.status === 'ANSWERED' ? 'default' : 'secondary'} className="text-[10px]">
                           {q.status}
@@ -821,19 +846,20 @@ export default function Community() {
                       </div>
                       <p className="text-sm font-medium mb-2">Q: {q.question}</p>
                       {q.answer && (
-                        <div className="bg-background p-2 rounded text-sm border border-border">
+                        <div className="bg-white/50 p-2 rounded text-sm border border-white/40">
                           <span className="font-bold text-primary text-xs block mb-1">{t("community.answer")}:</span>
                           {q.answer}
                         </div>
                       )}
-                    </CardContent>
-                  </Card>
+                    </div>
+                  </div>
                 ))}
               </div>
             </div>
           )}
         </TabsContent>
       </Tabs>
+      </div>
     </div>
   );
 }
