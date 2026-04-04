@@ -923,12 +923,12 @@ export default function Home() {
           {/* Protocol grid — 3 × 2, compact */}
           <div className="grid grid-cols-3 gap-1.5">
             {[
-              { name: "Flow", sub: "Rewards", avatar: "https://www.google.com/s2/favicons?domain=flow.com&sz=256", href: "https://flow.com" },
-              { name: "Filecoin", sub: "Storage", avatar: "https://www.google.com/s2/favicons?domain=filecoin.io&sz=256", href: "https://filecoin.io" },
-              { name: "Lit Protocol", sub: "Access", avatar: "https://www.google.com/s2/favicons?domain=litprotocol.com&sz=256", href: "https://litprotocol.com" },
-              { name: "Zama", sub: "Privacy", avatar: "https://www.google.com/s2/favicons?domain=zama.ai&sz=256", href: "https://zama.ai" },
-              { name: "Starknet", sub: "Insurance", avatar: "https://www.google.com/s2/favicons?domain=starknet.io&sz=256", href: "https://starknet.io" },
-              { name: "HyperCerts", sub: "Impact", avatar: "https://www.google.com/s2/favicons?domain=hypercerts.org&sz=256", href: "https://hypercerts.org" },
+              { name: "Flow", sub: "Rewards", avatar: "/flow-logo.png", href: "https://flow.com" },
+              { name: "Filecoin", sub: "Storage", avatar: "/filecoin-logo.png", href: "https://filecoin.io" },
+              { name: "Lit Protocol", sub: "Access", avatar: "/lit-logo.png", href: "https://litprotocol.com" },
+              { name: "Zama", sub: "Privacy", avatar: "/zama-logo.webp", href: "https://zama.ai" },
+              { name: "Starknet", sub: "Insurance", avatar: "/starknet-logo.png", href: "https://starknet.io" },
+              { name: "HyperCerts", sub: "Impact", avatar: "/hypercerts-logo.png", href: "https://hypercerts.org" },
             ].map(({ name, sub, avatar, href }) => (
               <a
                 key={name}
