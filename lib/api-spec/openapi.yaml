@@ -1409,6 +1409,10 @@ components:
           type: string
         visibility:
           type: string
+        category:
+          type: string
+        imageUrl:
+          type: ["string", "null"]
         likes:
           type: integer
         filecoinCid:

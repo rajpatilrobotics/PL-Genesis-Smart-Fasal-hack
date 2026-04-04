@@ -276,6 +276,9 @@ export interface CommunityPost {
   walletAddress?: string | null;
   content: string;
   visibility: string;
+  category?: string;
+  /** @nullable */
+  imageUrl?: string | null;
   likes: number;
   /** @nullable */
   filecoinCid?: string | null;
