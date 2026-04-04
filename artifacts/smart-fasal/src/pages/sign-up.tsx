@@ -246,7 +246,7 @@ export default function SignUp() {
               href="https://www.linkedin.com/in/raj-patil-a492a1155/?skipRedirect=true"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-1.5 text-gray-400 text-xs hover:text-emerald-600 transition-colors"
+              className="flex items-center gap-1.5 text-blue-600 text-xs hover:text-blue-800 transition-colors"
             >
               Developed by Raj Patil
               <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
