@@ -1,6 +1,8 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from "react";
-import type { User, Session } from "@supabase/supabase-js";
 import { supabase } from "./supabase";
+
+type User = { id: string; email: string | null; is_anonymous?: boolean; created_at: string; user_metadata: Record<string, unknown> };
+type Session = { access_token: string; user: User };
 
 export interface AuthUser {
   id: string;
