@@ -109,7 +109,9 @@ export default function SignIn() {
 
       <div className="fixed top-6 left-0 right-0 flex flex-col items-center z-10">
         <div className="flex items-center gap-2 mb-1">
-          <img src={`${BASE}/logo.jpeg`} alt="Smart Fasal" className="w-10 h-10 rounded-xl object-cover ring-2 ring-white/30 shadow-lg" />
+          <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center shadow">
+            <Leaf className="w-5 h-5 text-white" />
+          </div>
           <span className="text-2xl font-extrabold text-white tracking-tight drop-shadow">Smart Fasal</span>
         </div>
         <p className="text-emerald-100/70 text-xs font-medium">AI-Powered Precision Agriculture for the Next Billion Farmers</p>
