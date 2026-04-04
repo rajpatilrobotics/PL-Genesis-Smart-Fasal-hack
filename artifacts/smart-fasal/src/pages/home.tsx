@@ -521,126 +521,143 @@ export default function Home() {
         </div>
 
         {/* ── Live Soil Readings ── */}
-        <div className={cn(glassCard, "p-4 space-y-3")}>
-          <div className="flex items-center justify-between">
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse inline-block" />
-                <p className="text-sm font-semibold text-gray-800">{t("home.liveSoilReadings")}</p>
-                <button
-                  onMouseEnter={handleResample}
-                  onClick={handleResample}
-                  disabled={isSampling}
-                  className={cn(
-                    "text-[9px] font-bold px-1.5 py-0.5 rounded tracking-wide text-white transition-all duration-200 select-none bg-red-500",
-                    isSampling ? "opacity-60 cursor-wait" : "hover:bg-red-600 hover:scale-105 cursor-pointer active:scale-95"
-                  )}
-                >
-                  LIVE
-                </button>
-              </div>
-              <div className="flex items-center gap-1.5 mt-0.5">
-                <div className="flex items-end gap-px h-3">
-                  <span className="w-1 bg-emerald-400 rounded-sm" style={{ height: "30%" }} />
-                  <span className="w-1 bg-emerald-500 rounded-sm" style={{ height: "55%" }} />
-                  <span className="w-1 bg-emerald-500 rounded-sm" style={{ height: "80%" }} />
-                  <span className="w-1 bg-emerald-600 rounded-sm" style={{ height: "100%" }} />
-                </div>
-                <p className="text-[10px] text-gray-400 font-mono">ESP32-FARM-001</p>
-                <span className="text-[9px] text-gray-300">·</span>
-                <p className="text-[10px] text-gray-400">
-                  {lastUpdated ? `${Math.round((Date.now() - lastUpdated.getTime() + tick * 0) / 1000)}s ago` : "connecting..."}
-                </p>
-              </div>
-            </div>
-            <span className={cn(
-              "text-[10px] font-bold px-2 py-0.5 rounded-full border shrink-0",
-              riskToDisplay === "Low" ? "border-emerald-300 text-emerald-700 bg-emerald-100" :
-              riskToDisplay === "Medium" ? "border-amber-300 text-amber-700 bg-amber-100" :
-              "border-red-300 text-red-700 bg-red-100"
-            )}>
-              {riskToDisplay} Risk
-            </span>
-          </div>
+        <div className="relative rounded-2xl overflow-hidden shadow-xl transition-all duration-200 hover:-translate-y-1 hover:shadow-2xl hover:shadow-emerald-500/30 active:translate-y-0"
+          style={{ background: "linear-gradient(145deg, #064e3b 0%, #065f46 35%, #047857 65%, #0d9488 100%)", border: "1px solid rgba(255,255,255,0.18)" }}>
+          {/* Decorative glows */}
+          <div className="absolute -top-8 -right-8 w-40 h-40 rounded-full bg-emerald-300/20 blur-3xl pointer-events-none" />
+          <div className="absolute bottom-0 left-0 w-32 h-24 rounded-full bg-teal-300/15 blur-2xl pointer-events-none" />
+          <div className="absolute top-1/2 right-4 w-20 h-20 rounded-full bg-lime-300/10 blur-2xl pointer-events-none" />
+          {/* Subtle dot grid */}
+          <div className="absolute inset-0 opacity-[0.04] pointer-events-none"
+            style={{ backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.9) 1px, transparent 1px)", backgroundSize: "18px 18px" }} />
 
-          {[
-            { labelKey: "home.nitrogen", value: displaySensor.nitrogen, max: 200, gradient: "from-emerald-400 to-green-600", dotColor: "bg-emerald-600", unit: "mg/kg", symbol: "N" },
-            { labelKey: "home.phosphorus", value: displaySensor.phosphorus, max: 100, gradient: "from-orange-400 to-amber-600", dotColor: "bg-orange-500", unit: "mg/kg", symbol: "P" },
-            { labelKey: "home.potassium", value: displaySensor.potassium, max: 300, gradient: "from-amber-400 to-yellow-500", dotColor: "bg-amber-500", unit: "mg/kg", symbol: "K" },
-          ].map(({ labelKey, value, max, gradient, dotColor, unit, symbol }) => (
-            <div key={labelKey} className="space-y-1.5">
-              <div className="flex justify-between items-center text-xs">
+          <div className="relative p-4 space-y-3">
+            {/* Header */}
+            <div className="flex items-center justify-between">
+              <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5">
-                  <span className={cn("w-5 h-5 rounded-md flex items-center justify-center text-[9px] font-black text-white shrink-0 shadow-sm", dotColor)}>
-                    {symbol}
-                  </span>
-                  <span className="text-gray-500 font-medium">{t(labelKey)}</span>
+                  <span className="w-2 h-2 rounded-full bg-emerald-300 animate-pulse inline-block shadow-sm shadow-emerald-300/50" />
+                  <p className="text-sm font-bold text-white">{t("home.liveSoilReadings")}</p>
+                  <button
+                    onMouseEnter={handleResample}
+                    onClick={handleResample}
+                    disabled={isSampling}
+                    className={cn(
+                      "text-[9px] font-bold px-1.5 py-0.5 rounded tracking-wide transition-all duration-200 select-none",
+                      "bg-red-500/90 text-white border border-red-400/50 backdrop-blur-sm",
+                      isSampling ? "opacity-60 cursor-wait" : "hover:bg-red-400 hover:scale-105 cursor-pointer active:scale-95"
+                    )}
+                  >
+                    LIVE
+                  </button>
                 </div>
-                <span className="font-bold text-gray-800">{value} <span className="text-gray-400 font-normal text-[10px]">{unit}</span></span>
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <div className="flex items-end gap-px h-3">
+                    <span className="w-1 bg-emerald-300/70 rounded-sm" style={{ height: "30%" }} />
+                    <span className="w-1 bg-emerald-300/80 rounded-sm" style={{ height: "55%" }} />
+                    <span className="w-1 bg-emerald-300/90 rounded-sm" style={{ height: "80%" }} />
+                    <span className="w-1 bg-emerald-300 rounded-sm" style={{ height: "100%" }} />
+                  </div>
+                  <p className="text-[10px] text-emerald-200/70 font-mono">ESP32-FARM-001</p>
+                  <span className="text-[9px] text-white/30">·</span>
+                  <p className="text-[10px] text-emerald-200/70">
+                    {lastUpdated ? `${Math.round((Date.now() - lastUpdated.getTime() + tick * 0) / 1000)}s ago` : "connecting..."}
+                  </p>
+                </div>
               </div>
-              <div className="h-2.5 bg-black/8 rounded-full overflow-hidden">
+              <span className={cn(
+                "text-[10px] font-bold px-2.5 py-1 rounded-full border shrink-0 backdrop-blur-sm",
+                riskToDisplay === "Low" ? "border-emerald-300/50 text-emerald-200 bg-emerald-400/20" :
+                riskToDisplay === "Medium" ? "border-amber-300/50 text-amber-200 bg-amber-400/20" :
+                "border-red-300/50 text-red-200 bg-red-400/20"
+              )}>
+                {riskToDisplay} Risk
+              </span>
+            </div>
+
+            {/* NPK bars */}
+            {[
+              { labelKey: "home.nitrogen", value: displaySensor.nitrogen, max: 200, gradient: "from-emerald-400 to-green-300", trackColor: "bg-white/10", symbol: "N", unit: "mg/kg", glow: "shadow-emerald-400/40" },
+              { labelKey: "home.phosphorus", value: displaySensor.phosphorus, max: 100, gradient: "from-orange-400 to-amber-300", trackColor: "bg-white/10", symbol: "P", unit: "mg/kg", glow: "shadow-orange-400/40" },
+              { labelKey: "home.potassium", value: displaySensor.potassium, max: 300, gradient: "from-yellow-400 to-lime-300", trackColor: "bg-white/10", symbol: "K", unit: "mg/kg", glow: "shadow-yellow-400/40" },
+            ].map(({ labelKey, value, max, gradient, trackColor, symbol, unit, glow }) => (
+              <div key={labelKey} className="space-y-1.5">
+                <div className="flex justify-between items-center text-xs">
+                  <div className="flex items-center gap-2">
+                    <span className={cn(
+                      "w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-black text-white shrink-0 shadow-md bg-white/15 border border-white/20 backdrop-blur-sm"
+                    )}>
+                      {symbol}
+                    </span>
+                    <span className="text-emerald-100/80 font-medium">{t(labelKey)}</span>
+                  </div>
+                  <span className="font-bold text-white">{value} <span className="text-white/40 font-normal text-[10px]">{unit}</span></span>
+                </div>
+                <div className={cn("h-2.5 rounded-full overflow-hidden", trackColor)}>
+                  <div
+                    className={cn("h-full rounded-full bg-gradient-to-r shadow-md", gradient, glow, isSampling ? "transition-all duration-300" : "transition-all duration-700")}
+                    style={{ width: `${Math.min(100, (value / max) * 100)}%` }}
+                  />
+                </div>
+              </div>
+            ))}
+
+            <div className="border-t border-white/10 pt-1" />
+
+            {/* pH */}
+            <div className="space-y-1">
+              <div className="flex justify-between text-xs">
+                <span className="text-emerald-100/80 flex items-center gap-1.5">
+                  {t("home.soilPh")}
+                  <span className={cn("text-[10px] font-semibold px-1.5 py-0 rounded-full border",
+                    displaySensor.ph >= 6.0 && displaySensor.ph <= 7.5
+                      ? "bg-emerald-400/20 text-emerald-200 border-emerald-400/30"
+                      : "bg-amber-400/20 text-amber-200 border-amber-400/30"
+                  )}>
+                    {displaySensor.ph >= 6.0 && displaySensor.ph <= 7.5 ? t("home.optimal") : displaySensor.ph < 6.0 ? t("home.acidic") : t("home.alkaline")}
+                  </span>
+                </span>
+                <span className="font-bold text-white">{displaySensor.ph} <span className="text-white/40 font-normal">pH</span></span>
+              </div>
+              <div className="relative h-2.5 bg-white/10 rounded-full overflow-hidden">
+                <div className="absolute inset-0 flex">
+                  <div className="bg-white/5 h-full" style={{ width: `${(6.0 / 14) * 100}%` }} />
+                  <div className="bg-emerald-400/40 h-full" style={{ width: `${((7.5 - 6.0) / 14) * 100}%` }} />
+                  <div className="bg-white/5 h-full flex-1" />
+                </div>
                 <div
-                  className={cn("h-full rounded-full bg-gradient-to-r shadow-sm", gradient, isSampling ? "transition-all duration-300" : "transition-all duration-700")}
-                  style={{ width: `${Math.min(100, (value / max) * 100)}%` }}
+                  className={cn("absolute top-0 h-full w-1.5 bg-white rounded-full shadow-md shadow-white/40", isSampling ? "transition-all duration-300" : "transition-all duration-700")}
+                  style={{ left: `calc(${Math.min(100, (displaySensor.ph / 14) * 100)}% - 3px)` }}
                 />
               </div>
-            </div>
-          ))}
-
-          <div className="border-t border-black/8 pt-1" />
-
-          <div className="space-y-1">
-            <div className="flex justify-between text-xs">
-              <span className="text-gray-500">
-                {t("home.soilPh")}
-                <span className={cn("ml-1.5 text-[10px] font-semibold px-1.5 py-0 rounded-full",
-                  displaySensor.ph >= 6.0 && displaySensor.ph <= 7.5
-                    ? "bg-emerald-100 text-emerald-700"
-                    : "bg-amber-100 text-amber-700"
-                )}>
-                  {displaySensor.ph >= 6.0 && displaySensor.ph <= 7.5 ? t("home.optimal") : displaySensor.ph < 6.0 ? t("home.acidic") : t("home.alkaline")}
-                </span>
-              </span>
-              <span className="font-semibold text-gray-800">{displaySensor.ph} <span className="text-gray-400 font-normal">pH</span></span>
-            </div>
-            <div className="relative h-2 bg-black/8 rounded-full overflow-hidden">
-              <div className="absolute inset-0 flex">
-                <div className="bg-black/5 h-full" style={{ width: `${(6.0 / 14) * 100}%` }} />
-                <div className="bg-emerald-200 h-full" style={{ width: `${((7.5 - 6.0) / 14) * 100}%` }} />
-                <div className="bg-black/5 h-full flex-1" />
+              <div className="flex justify-between text-[9px] text-emerald-200/50">
+                <span>0 ({t("home.acid")})</span>
+                <span className="text-emerald-300/70">{t("home.optimal")} 6–7.5</span>
+                <span>14 ({t("home.alkaline")})</span>
               </div>
-              <div
-                className={cn("absolute top-0 h-full w-1 bg-blue-500 rounded-full shadow", isSampling ? "transition-all duration-300" : "transition-all duration-700")}
-                style={{ left: `calc(${Math.min(100, (displaySensor.ph / 14) * 100)}% - 2px)` }}
-              />
             </div>
-            <div className="flex justify-between text-[9px] text-gray-400">
-              <span>0 ({t("home.acid")})</span>
-              <span className="text-emerald-600">{t("home.optimal")} 6–7.5</span>
-              <span>14 ({t("home.alkaline")})</span>
-            </div>
-          </div>
 
-          <div className="space-y-1.5">
-            <div className="flex justify-between items-center text-xs">
-              <div className="flex items-center gap-1.5">
-                <span className={cn(
-                  "w-5 h-5 rounded-md flex items-center justify-center text-[9px] font-black text-white shrink-0 shadow-sm",
-                  displaySensor.moisture < 30 ? "bg-red-500" : displaySensor.moisture > 70 ? "bg-blue-600" : "bg-cyan-500"
-                )}>H₂O</span>
-                <span className="text-gray-500 font-medium">{t("home.soilMoisture")}</span>
+            {/* Moisture */}
+            <div className="space-y-1.5">
+              <div className="flex justify-between items-center text-xs">
+                <div className="flex items-center gap-2">
+                  <span className="w-6 h-6 rounded-lg flex items-center justify-center text-[9px] font-black text-white shrink-0 shadow-md bg-white/15 border border-white/20 backdrop-blur-sm">
+                    H₂O
+                  </span>
+                  <span className="text-emerald-100/80 font-medium">{t("home.soilMoisture")}</span>
+                </div>
+                <span className="font-bold text-white">{displaySensor.moisture}<span className="text-white/40 font-normal text-[10px]">%</span></span>
               </div>
-              <span className="font-bold text-gray-800">{displaySensor.moisture}<span className="text-gray-400 font-normal text-[10px]">%</span></span>
-            </div>
-            <div className="h-2.5 bg-black/8 rounded-full overflow-hidden">
-              <div
-                className={cn(
-                  "h-full rounded-full bg-gradient-to-r shadow-sm",
-                  isSampling ? "transition-all duration-300" : "transition-all duration-700",
-                  displaySensor.moisture < 30 ? "from-red-400 to-rose-600" : displaySensor.moisture > 70 ? "from-blue-400 to-blue-600" : "from-cyan-400 to-sky-600"
-                )}
-                style={{ width: `${Math.min(100, displaySensor.moisture)}%` }}
-              />
+              <div className="h-2.5 bg-white/10 rounded-full overflow-hidden">
+                <div
+                  className={cn(
+                    "h-full rounded-full bg-gradient-to-r shadow-md",
+                    isSampling ? "transition-all duration-300" : "transition-all duration-700",
+                    displaySensor.moisture < 30 ? "from-red-400 to-rose-300" : displaySensor.moisture > 70 ? "from-blue-400 to-cyan-300" : "from-cyan-400 to-sky-300"
+                  )}
+                  style={{ width: `${Math.min(100, displaySensor.moisture)}%` }}
+                />
+              </div>
             </div>
           </div>
         </div>
