@@ -96,14 +96,33 @@ export default function Home() {
   const [displaySensor, setDisplaySensor] = useState(DUMMY_SENSOR_BASE);
   const [isSampling, setIsSampling] = useState(false);
   const [tick, setTick] = useState(0);
+  const [coords, setCoords] = useState<{ lat: number; lon: number } | null>(null);
+  const [locationStatus, setLocationStatus] = useState<"pending" | "granted" | "denied">("pending");
 
   useEffect(() => {
     const id = setInterval(() => setTick(t => t + 1), 1000);
     return () => clearInterval(id);
   }, []);
 
-  const { data: weather, isLoading: loadingWeather } = useGetWeather({}, {
-    query: { queryKey: getGetWeatherQueryKey({}) }
+  useEffect(() => {
+    if (!navigator.geolocation) { setLocationStatus("denied"); return; }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setCoords({ lat: pos.coords.latitude, lon: pos.coords.longitude });
+        setLocationStatus("granted");
+      },
+      () => setLocationStatus("denied"),
+      { timeout: 10000, maximumAge: 5 * 60 * 1000 }
+    );
+  }, []);
+
+  const weatherParams = coords ?? {};
+  const { data: weather, isLoading: loadingWeather } = useGetWeather(weatherParams, {
+    query: {
+      queryKey: getGetWeatherQueryKey(weatherParams),
+      refetchInterval: 10 * 60 * 1000,
+      enabled: locationStatus !== "pending",
+    }
   });
 
   const { data: sensorData, isLoading: loadingSensor } = useGetLatestSensorData({
@@ -449,7 +468,12 @@ export default function Home() {
                 <div>
                   <div className="flex items-center gap-1 mb-1">
                     <CloudRain className="w-3 h-3 text-white/80" />
-                    <span className="text-[9px] font-bold text-white/75 uppercase tracking-wider">{t("home.weather")} · Punjab, India</span>
+                    <span className="text-[9px] font-bold text-white/75 uppercase tracking-wider">
+                      {t("home.weather")} · {
+                        locationStatus === "pending" ? "Detecting location…" :
+                        weather?.location ?? "Your Location"
+                      }
+                    </span>
                   </div>
                   <p className="text-3xl font-extrabold text-white tracking-tight drop-shadow">{weather.temperature}°C</p>
                   <p className="text-xs text-white/70 capitalize mt-0.5">{weather.description}</p>
@@ -577,9 +601,9 @@ export default function Home() {
 
             {/* NPK bars */}
             {[
-              { labelKey: "home.nitrogen", value: displaySensor.nitrogen, max: 200, gradient: "from-emerald-400 to-green-300", trackColor: "bg-white/10", symbol: "N", unit: "mg/kg", glow: "shadow-emerald-400/40" },
-              { labelKey: "home.phosphorus", value: displaySensor.phosphorus, max: 100, gradient: "from-orange-400 to-amber-300", trackColor: "bg-white/10", symbol: "P", unit: "mg/kg", glow: "shadow-orange-400/40" },
-              { labelKey: "home.potassium", value: displaySensor.potassium, max: 300, gradient: "from-yellow-400 to-lime-300", trackColor: "bg-white/10", symbol: "K", unit: "mg/kg", glow: "shadow-yellow-400/40" },
+              { labelKey: "home.nitrogen", value: displaySensor.nitrogen, max: 200, gradient: "from-emerald-400 to-green-300", trackColor: "bg-white/20", symbol: "N", unit: "mg/kg", glow: "shadow-emerald-400/40" },
+              { labelKey: "home.phosphorus", value: displaySensor.phosphorus, max: 100, gradient: "from-orange-400 to-amber-300", trackColor: "bg-white/20", symbol: "P", unit: "mg/kg", glow: "shadow-orange-400/40" },
+              { labelKey: "home.potassium", value: displaySensor.potassium, max: 300, gradient: "from-yellow-400 to-lime-300", trackColor: "bg-white/20", symbol: "K", unit: "mg/kg", glow: "shadow-yellow-400/40" },
             ].map(({ labelKey, value, max, gradient, trackColor, symbol, unit, glow }) => (
               <div key={labelKey} className="space-y-1.5">
                 <div className="flex justify-between items-center text-xs">
@@ -619,7 +643,7 @@ export default function Home() {
                 </span>
                 <span className="font-bold text-white">{displaySensor.ph} <span className="text-white/40 font-normal">pH</span></span>
               </div>
-              <div className="relative h-2.5 bg-white/10 rounded-full overflow-hidden">
+              <div className="relative h-2.5 bg-white/20 rounded-full overflow-hidden">
                 <div className="absolute inset-0 flex">
                   <div className="bg-white/5 h-full" style={{ width: `${(6.0 / 14) * 100}%` }} />
                   <div className="bg-emerald-400/40 h-full" style={{ width: `${((7.5 - 6.0) / 14) * 100}%` }} />
@@ -648,7 +672,7 @@ export default function Home() {
                 </div>
                 <span className="font-bold text-white">{displaySensor.moisture}<span className="text-white/40 font-normal text-[10px]">%</span></span>
               </div>
-              <div className="h-2.5 bg-white/10 rounded-full overflow-hidden">
+              <div className="h-2.5 bg-white/20 rounded-full overflow-hidden">
                 <div
                   className={cn(
                     "h-full rounded-full bg-gradient-to-r shadow-md",

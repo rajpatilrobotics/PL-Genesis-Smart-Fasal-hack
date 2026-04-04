@@ -1,0 +1,125 @@
+Project: Smart Fasal — mobile-first Web3 agriculture platform for Indian farmers.
+Stack: pnpm monorepo, React + Vite frontend (port 5000), Express 5 API (port 8080), 
+PostgreSQL + Drizzle ORM, Clerk auth, Tailwind CSS v4.
+
+── WHAT HAS ALREADY BEEN DONE ──────────────────────────────────────────────
+
+1. DESIGN SYSTEM (established — do NOT change these):
+   - All 8 tabs have a full-page gradient background using `linear-gradient(165deg, ...)`
+   - Each page's outer wrapper div has: `relative -mx-4 -mt-5 min-h-screen animate-in fade-in slide-in-from-bottom-4 duration-500 page-<theme>`
+   - Each page has 4 decorative blur blobs: `pointer-events-none absolute inset-0 overflow-hidden`
+   - Inner content sits in: `relative space-y-4 px-4 pt-5 pb-28`
+   - Hero card on every page uses: inline `style` gradient + `border: 1px solid rgba(255,255,255,0.35)` + `hover:-translate-y-1 hover:shadow-2xl hover:shadow-<color>-500/30 active:translate-y-0 transition-all duration-200` + dot grid texture overlay + two blur blobs inside
+
+2. CARD COMPONENT (src/components/ui/card.tsx) has been upgraded globally:
+   `"rounded-xl border border-white/50 bg-white/85 backdrop-blur-sm text-card-foreground shadow card-hover"`
+   — Every <Card> across all pages now has glass + hover lift automatically.
+
+3. CSS CLASSES in src/index.css:
+   - `.glass-glow` — home tab's green-tinted hover glow on raw divs
+   - `.card-hover` — universal lift effect (translateY -3px on hover, active returns)
+   - `.page-<theme> .card-hover:hover` — scoped colored glow per page:
+     page-green (home), page-violet (AI Hub), page-amber (Market),
+     page-blue (Finance), page-emerald (Profile), page-teal (Community),
+     page-sky (Insurance), page-indigo (Web3 Hub)
+
+4. HOME TAB (home.tsx) — THE REFERENCE/GOLD STANDARD:
+   - Uses `const glassCard = "glass-glow rounded-2xl border border-white/50 bg-white/35 backdrop-blur-2xl hover:bg-white/45"` on all inner section divs
+   - Weather card: blue gradient div with hover lift + sky glow
+   - Risk banner: glassCard with color-conditional border
+   - Live Soil Readings: glassCard + progress bars with gradient fills
+   - AI Pipeline section: glassCard with step indicators
+   - Stat metrics: inner pill badges with `bg-white/25 backdrop-blur-sm rounded-full`
+   - ALL non-hero cards on home use raw divs with glassCard, NOT <Card> component
+
+── WHAT STILL NEEDS TO BE DONE (your task) ────────────────────────────────
+
+The other 7 tabs (AI Hub, Market, Finance, Profile, Community, Insurance, Web3 Hub)
+currently use shadcn <Card> components for their inner sections. While the <Card> 
+component now has `card-hover` globally, the INNER CONTENT of these cards still looks 
+"plain white" and doesn't match the home tab's rich glassmorphism style.
+
+YOUR GOAL: Make every inner section card on every tab look like the home tab's 
+`glassCard` style — frosted glass, semi-transparent, with the hover glow matching 
+each page's theme color.
+
+HOW TO DO IT for each page:
+
+APPROACH 1 (recommended — no component changes):
+Replace <Card> usage throughout with raw <div> using the glassCard pattern, 
+just like home.tsx does. Per-page glassCard const:
+  - AI Hub:      "glass-glow-violet rounded-2xl border border-white/50 bg-white/35 backdrop-blur-2xl hover:bg-white/45"
+  - Market:      "glass-glow-amber ..."
+  - Finance:     "glass-glow-blue ..."
+  - Profile:     "glass-glow-emerald ..."
+  - Community:   "glass-glow-teal ..."
+  - Insurance:   "glass-glow-sky ..."
+  - Web3 Hub:    "glass-glow-indigo ..."
+
+Then add the CSS variants in index.css following the pattern of .glass-glow but 
+with each theme's color (violet, amber, blue, emerald, teal, sky, indigo).
+
+APPROACH 2 (simpler — just add classes to existing <Card>):
+On each <Card> usage, add className prop: 
+  `className="bg-white/35 backdrop-blur-2xl border-white/50"` 
+to override the base card's bg-white/85 and make it more transparent like the home tab.
+
+── DESIGN RULES TO FOLLOW ──────────────────────────────────────────────────
+
+1. HERO CARDS: Already done. Don't change them. Each has an inline gradient style, 
+   dot-grid texture, two inner blobs, and hover lift with colored shadow.
+
+2. SECONDARY ACCENT CARDS (like weather/stat panels): Should use colored gradient 
+   divs similar to home tab's weather card (NOT plain white). E.g. in AI Hub, 
+   the analytics summary card could use a soft violet gradient background.
+
+3. INNER DATA CARDS: All should use glassmorphism:
+   bg-white/35 backdrop-blur-2xl border border-white/50 rounded-2xl
+   with the hover lift + themed glow
+
+4. STAT PILLS / BADGES: Inner pill badges should use `bg-white/25 backdrop-blur-sm 
+   rounded-full px-2.5 py-1` — same as home tab's weather stat pills.
+
+5. PROGRESS BARS: Should use colored gradients like home tab:
+   `from-emerald-400 to-green-600` (or theme-appropriate colors per page)
+
+6. LIST ITEMS (market prices, community posts, etc.): Each list row/item should 
+   have a subtle hover lift. Add `transition-all duration-200 hover:-translate-y-0.5 
+   hover:shadow-md` or apply glassCard to each item.
+
+7. SECTION HEADERS within cards: Use small icon in colored rounded square 
+   (`w-7 h-7 rounded-lg bg-<color>-100 flex items-center justify-center`) 
+   + bold title — matching home tab's section labels.
+
+── KEY FILES ────────────────────────────────────────────────────────────────
+
+artifacts/smart-fasal/src/pages/home.tsx        ← GOLD STANDARD, read this first
+artifacts/smart-fasal/src/index.css             ← all CSS classes
+artifacts/smart-fasal/src/components/ui/card.tsx ← Card component
+artifacts/smart-fasal/src/pages/ai-hub.tsx
+artifacts/smart-fasal/src/pages/market.tsx
+artifacts/smart-fasal/src/pages/finance-trade.tsx
+artifacts/smart-fasal/src/pages/profile.tsx
+artifacts/smart-fasal/src/pages/community.tsx
+artifacts/smart-fasal/src/pages/insurance.tsx
+artifacts/smart-fasal/src/pages/web3-hub.tsx    ← very large file, ~2650 lines
+
+── PAGE THEME MAP ───────────────────────────────────────────────────────────
+
+Home       → green    → #22c55e → #16a34a → #15803d
+AI Hub     → violet   → #7c3aed → #6d28d9 → #5b21b6
+Market     → amber    → #f97316 → #f59e0b → #eab308
+Finance    → blue     → #3b82f6 → #2563eb → #1d4ed8
+Profile    → emerald  → #10b981 → #059669 → #047857
+Community  → teal     → #14b8a6 → #0d9488 → #0f766e
+Insurance  → sky      → #0ea5e9 → #0284c7 → #0369a1
+Web3 Hub   → indigo   → #4338ca → #6366f1 → #7c3aed
+
+── WORKFLOW ────────────────────────────────────────────────────────────────
+
+Start the app: the workflow "artifacts/smart-fasal: web" should auto-start.
+API server: "artifacts/api-server: API Server" must also be running.
+Both use pnpm monorepo. Frontend is at port 5000 (proxied).
+
+Always read home.tsx first to understand the exact design patterns before 
+modifying any other page. 
