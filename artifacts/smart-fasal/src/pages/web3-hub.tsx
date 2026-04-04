@@ -2552,12 +2552,12 @@ const TABS = [
   },
   {
     value: "zama", label: "Zama", icon: FlaskConical, color: "text-violet-600",
-    logo: "/zama-logo.png",
+    logo: "/zama-logo.webp",
     bg: "bg-violet-50", ring: "ring-violet-200",
   },
   {
     value: "starknet", label: "Starknet", icon: Shield, color: "text-rose-600",
-    logo: "/starknet-logo.svg",
+    logo: "/starknet-logo.png",
     bg: "bg-rose-50", ring: "ring-rose-200",
   },
   {
