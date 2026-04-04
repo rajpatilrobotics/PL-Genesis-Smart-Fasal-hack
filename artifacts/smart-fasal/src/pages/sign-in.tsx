@@ -107,16 +107,7 @@ export default function SignIn() {
         backgroundSize: "28px 28px"
       }} />
 
-      <div className="fixed top-6 left-0 right-0 flex flex-col items-center z-10">
-        <div className="flex items-center gap-2 mb-1">
-          <img src={`${BASE}/logo.jpeg`} alt="Smart Fasal" className="w-10 h-10 rounded-xl object-cover ring-2 ring-white/30 shadow-lg" />
-          <span className="text-2xl font-extrabold text-white tracking-tight drop-shadow">Smart Fasal</span>
-        </div>
-        <p className="text-emerald-100/70 text-xs font-medium">AI-Powered Precision Agriculture for the Next Billion Farmers</p>
-        <StackBadges />
-      </div>
-
-      <div className="relative z-10 w-full max-w-sm mt-32">
+      <div className="relative z-10 w-full max-w-sm">
         <div className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl shadow-black/20 p-8 border border-white/40">
           <div className="flex flex-col items-center mb-6">
             <div className="flex items-center gap-2.5 mb-1">
