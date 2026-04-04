@@ -96,14 +96,33 @@ export default function Home() {
   const [displaySensor, setDisplaySensor] = useState(DUMMY_SENSOR_BASE);
   const [isSampling, setIsSampling] = useState(false);
   const [tick, setTick] = useState(0);
+  const [coords, setCoords] = useState<{ lat: number; lon: number } | null>(null);
+  const [locationStatus, setLocationStatus] = useState<"pending" | "granted" | "denied">("pending");
 
   useEffect(() => {
     const id = setInterval(() => setTick(t => t + 1), 1000);
     return () => clearInterval(id);
   }, []);
 
-  const { data: weather, isLoading: loadingWeather } = useGetWeather({}, {
-    query: { queryKey: getGetWeatherQueryKey({}) }
+  useEffect(() => {
+    if (!navigator.geolocation) { setLocationStatus("denied"); return; }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setCoords({ lat: pos.coords.latitude, lon: pos.coords.longitude });
+        setLocationStatus("granted");
+      },
+      () => setLocationStatus("denied"),
+      { timeout: 10000, maximumAge: 5 * 60 * 1000 }
+    );
+  }, []);
+
+  const weatherParams = coords ?? {};
+  const { data: weather, isLoading: loadingWeather } = useGetWeather(weatherParams, {
+    query: {
+      queryKey: getGetWeatherQueryKey(weatherParams),
+      refetchInterval: 10 * 60 * 1000,
+      enabled: locationStatus !== "pending",
+    }
   });
 
   const { data: sensorData, isLoading: loadingSensor } = useGetLatestSensorData({
@@ -449,7 +468,12 @@ export default function Home() {
                 <div>
                   <div className="flex items-center gap-1 mb-1">
                     <CloudRain className="w-3 h-3 text-white/80" />
-                    <span className="text-[9px] font-bold text-white/75 uppercase tracking-wider">{t("home.weather")} · Punjab, India</span>
+                    <span className="text-[9px] font-bold text-white/75 uppercase tracking-wider">
+                      {t("home.weather")} · {
+                        locationStatus === "pending" ? "Detecting location…" :
+                        weather?.location ?? "Your Location"
+                      }
+                    </span>
                   </div>
                   <p className="text-3xl font-extrabold text-white tracking-tight drop-shadow">{weather.temperature}°C</p>
                   <p className="text-xs text-white/70 capitalize mt-0.5">{weather.description}</p>
