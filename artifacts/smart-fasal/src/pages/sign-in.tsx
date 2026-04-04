@@ -119,8 +119,8 @@ export default function SignIn() {
       <div className="relative z-10 w-full max-w-sm mt-32">
         <div className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl shadow-black/20 p-8 border border-white/40">
           <div className="flex flex-col items-center mb-6">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center mb-3 shadow-lg shadow-emerald-200">
-              <Leaf className="w-7 h-7 text-white" />
+            <div className="w-16 h-16 rounded-2xl overflow-hidden mb-3 shadow-lg shadow-emerald-200 ring-2 ring-emerald-100">
+              <img src={`${BASE}/logo.jpeg`} alt="Smart Fasal" className="w-full h-full object-cover" />
             </div>
             <h1 className="text-2xl font-bold text-gray-900">Welcome back</h1>
             <p className="text-sm text-gray-500 mt-1">Sign in to your farm account</p>
