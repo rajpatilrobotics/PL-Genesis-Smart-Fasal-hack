@@ -95,15 +95,30 @@ export default function Home() {
   const [steps, setSteps] = useState<PipelineStep[]>([]);
   const [displaySensor, setDisplaySensor] = useState(DUMMY_SENSOR_BASE);
   const [isSampling, setIsSampling] = useState(false);
-  const [tick, setTick] = useState(0);
+  const [now, setNow] = useState(new Date());
+  const [gpsCoords, setGpsCoords] = useState<{ lat: number; lon: number } | null>(null);
+  const [locationStatus, setLocationStatus] = useState<"pending" | "granted" | "denied">("pending");
 
   useEffect(() => {
-    const id = setInterval(() => setTick(t => t + 1), 1000);
+    const id = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(id);
   }, []);
 
-  const { data: weather, isLoading: loadingWeather } = useGetWeather({}, {
-    query: { queryKey: getGetWeatherQueryKey({}) }
+  useEffect(() => {
+    if (!navigator.geolocation) { setLocationStatus("denied"); return; }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setGpsCoords({ lat: pos.coords.latitude, lon: pos.coords.longitude });
+        setLocationStatus("granted");
+      },
+      () => setLocationStatus("denied"),
+      { timeout: 10000, enableHighAccuracy: false }
+    );
+  }, []);
+
+  const weatherParams = gpsCoords ?? {};
+  const { data: weather, isLoading: loadingWeather } = useGetWeather(weatherParams, {
+    query: { queryKey: getGetWeatherQueryKey(weatherParams), enabled: locationStatus !== "pending" }
   });
 
   const { data: sensorData, isLoading: loadingSensor } = useGetLatestSensorData({
@@ -424,13 +439,18 @@ export default function Home() {
               <h2 className="text-xl font-extrabold text-white tracking-tight drop-shadow-sm">{t("home.farmDashboard")}</h2>
               <p className="text-green-100/90 text-xs mt-0.5 font-medium">🌾 AI · IoT · Web3 Powered</p>
             </div>
-            <button
-              onClick={handleSimulateSensor}
-              className="flex items-center gap-1.5 text-xs font-bold text-green-900 bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-full hover:bg-white transition-all border border-white/70 shadow-md"
-            >
-              <RefreshCw className={cn("w-3 h-3", submitSensor.isPending && "animate-spin")} />
-              <span>{lastUpdated.toLocaleTimeString()}</span>
-            </button>
+            <div className="flex flex-col items-end gap-1">
+              <button
+                onClick={handleSimulateSensor}
+                className="flex items-center gap-1.5 text-xs font-bold text-green-900 bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-full hover:bg-white transition-all border border-white/70 shadow-md"
+              >
+                <RefreshCw className={cn("w-3 h-3", submitSensor.isPending && "animate-spin")} />
+                <span>{now.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true })}</span>
+              </button>
+              <span className="text-[9px] text-green-100/80 font-medium pr-1">
+                {now.toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short" })}
+              </span>
+            </div>
           </div>
         </div>
 
@@ -439,7 +459,12 @@ export default function Home() {
           style={{ background: "linear-gradient(135deg, #0ea5e9 0%, #38bdf8 50%, #7dd3fc 100%)", border: "1px solid rgba(255,255,255,0.35)" }}>
           <div className="absolute -top-4 -right-4 w-24 h-24 rounded-full bg-white/20 blur-2xl" />
           <div className="relative p-3.5">
-            {loadingWeather ? (
+            {locationStatus === "pending" ? (
+              <div className="flex items-center gap-2 py-1">
+                <Loader2 className="w-4 h-4 text-white animate-spin" />
+                <span className="text-xs text-white/80 font-medium">Getting your location…</span>
+              </div>
+            ) : loadingWeather ? (
               <div className="space-y-1.5">
                 <Skeleton className="h-3 w-16 bg-white/30" />
                 <Skeleton className="h-7 w-24 bg-white/30" />
@@ -449,7 +474,10 @@ export default function Home() {
                 <div>
                   <div className="flex items-center gap-1 mb-1">
                     <CloudRain className="w-3 h-3 text-white/80" />
-                    <span className="text-[9px] font-bold text-white/75 uppercase tracking-wider">{t("home.weather")} · Punjab, India</span>
+                    <span className="text-[9px] font-bold text-white/75 uppercase tracking-wider">
+                      {t("home.weather")} · {weather.location}
+                      {locationStatus === "granted" && " 📍"}
+                    </span>
                   </div>
                   <p className="text-3xl font-extrabold text-white tracking-tight drop-shadow">{weather.temperature}°C</p>
                   <p className="text-xs text-white/70 capitalize mt-0.5">{weather.description}</p>
@@ -549,7 +577,7 @@ export default function Home() {
                 <p className="text-[10px] text-gray-400 font-mono">ESP32-FARM-001</p>
                 <span className="text-[9px] text-gray-300">·</span>
                 <p className="text-[10px] text-gray-400">
-                  {lastUpdated ? `${Math.round((Date.now() - lastUpdated.getTime() + tick * 0) / 1000)}s ago` : "connecting..."}
+                  {lastUpdated ? `${Math.round((now.getTime() - lastUpdated.getTime()) / 1000)}s ago` : "connecting..."}
                 </p>
               </div>
             </div>
