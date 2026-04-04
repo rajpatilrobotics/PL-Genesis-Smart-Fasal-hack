@@ -319,40 +319,42 @@ function FlowTab() {
   return (
     <div className="space-y-4">
       {/* ── Wallet Overview ── */}
-      <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-green-200">
-        <CardContent className="p-4">
+      <div className="relative rounded-2xl overflow-hidden shadow-lg transition-all duration-200 hover:-translate-y-1 hover:shadow-2xl hover:shadow-emerald-500/25 active:translate-y-0"
+        style={{ background: "linear-gradient(135deg, #059669 0%, #10b981 50%, #34d399 100%)", border: "1px solid rgba(255,255,255,0.25)" }}>
+        <div className="absolute -top-3 -right-3 w-20 h-20 rounded-full bg-white/10 blur-2xl" />
+        <div className="relative p-4">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
-              <Coins className="w-5 h-5 text-green-600" />
-              <span className="font-bold text-green-800">Flow Wallet</span>
+              <Coins className="w-5 h-5 text-white" />
+              <span className="font-bold text-white">Flow Wallet</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <Badge className="bg-green-600 text-[10px]">Testnet</Badge>
-              <a href="https://testnet.flowscan.io" target="_blank" rel="noopener noreferrer" className="text-[10px] text-green-700 flex items-center gap-0.5 underline underline-offset-2">
+              <Badge className="bg-white/20 text-white border-white/30 text-[10px]">Testnet</Badge>
+              <a href="https://testnet.flowscan.io" target="_blank" rel="noopener noreferrer" className="text-[10px] text-emerald-100 flex items-center gap-0.5 hover:text-white">
                 Flowscan <ExternalLink className="w-2.5 h-2.5" />
               </a>
             </div>
           </div>
           <div className="grid grid-cols-4 gap-2 text-center">
-            <div className="bg-white/70 rounded-xl p-2">
-              <p className="text-xl font-black text-green-700">{flowRewards}</p>
-              <p className="text-[9px] text-muted-foreground uppercase">FLOW</p>
+            <div className="bg-white/20 backdrop-blur-sm rounded-xl p-2">
+              <p className="text-xl font-black text-white">{flowRewards}</p>
+              <p className="text-[9px] text-emerald-100/80 uppercase">FLOW</p>
             </div>
-            <div className="bg-white/70 rounded-xl p-2">
-              <p className="text-xl font-black text-amber-600">{nfts.length}</p>
-              <p className="text-[9px] text-muted-foreground uppercase">NFTs</p>
+            <div className="bg-white/20 backdrop-blur-sm rounded-xl p-2">
+              <p className="text-xl font-black text-white">{nfts.length}</p>
+              <p className="text-[9px] text-emerald-100/80 uppercase">NFTs</p>
             </div>
-            <div className="bg-white/70 rounded-xl p-2">
-              <p className="text-xl font-black text-blue-600">{insuranceClaims.length}</p>
-              <p className="text-[9px] text-muted-foreground uppercase">Claims</p>
+            <div className="bg-white/20 backdrop-blur-sm rounded-xl p-2">
+              <p className="text-xl font-black text-white">{insuranceClaims.length}</p>
+              <p className="text-[9px] text-emerald-100/80 uppercase">Claims</p>
             </div>
-            <div className="bg-white/70 rounded-xl p-2">
-              <p className="text-xl font-black text-violet-600">{oracleReadings.length}</p>
-              <p className="text-[9px] text-muted-foreground uppercase">Oracle</p>
+            <div className="bg-white/20 backdrop-blur-sm rounded-xl p-2">
+              <p className="text-xl font-black text-white">{oracleReadings.length}</p>
+              <p className="text-[9px] text-emerald-100/80 uppercase">Oracle</p>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* ── Section Tabs ── */}
       <div className="flex gap-1.5 overflow-x-auto pb-0.5">
@@ -782,28 +784,30 @@ function FilecoinTab() {
   return (
     <div className="space-y-4">
       {/* Stats */}
-      <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200">
-        <CardContent className="p-4">
+      <div className="relative rounded-2xl overflow-hidden shadow-lg transition-all duration-200 hover:-translate-y-1 hover:shadow-2xl hover:shadow-blue-500/25 active:translate-y-0"
+        style={{ background: "linear-gradient(135deg, #1d4ed8 0%, #2563eb 50%, #3b82f6 100%)", border: "1px solid rgba(255,255,255,0.25)" }}>
+        <div className="absolute -top-3 -right-3 w-20 h-20 rounded-full bg-white/10 blur-2xl" />
+        <div className="relative p-4">
           <div className="flex items-center gap-2 mb-3">
-            <Database className="w-5 h-5 text-blue-600" />
-            <span className="font-bold text-blue-800">Filecoin Data Marketplace</span>
+            <Database className="w-5 h-5 text-white" />
+            <span className="font-bold text-white">Filecoin Data Marketplace</span>
           </div>
           <div className="grid grid-cols-3 gap-3 text-center">
-            <div className="bg-white/70 rounded-xl p-2">
-              <p className="text-2xl font-black text-blue-700">{dataListings.length}</p>
-              <p className="text-[10px] text-muted-foreground uppercase">Datasets</p>
+            <div className="bg-white/20 backdrop-blur-sm rounded-xl p-2">
+              <p className="text-2xl font-black text-white">{dataListings.length}</p>
+              <p className="text-[10px] text-blue-100/80 uppercase">Datasets</p>
             </div>
-            <div className="bg-white/70 rounded-xl p-2">
-              <p className="text-2xl font-black text-blue-700">{totalEarnings}</p>
-              <p className="text-[10px] text-muted-foreground uppercase">FLOW Earned</p>
+            <div className="bg-white/20 backdrop-blur-sm rounded-xl p-2">
+              <p className="text-2xl font-black text-white">{totalEarnings}</p>
+              <p className="text-[10px] text-blue-100/80 uppercase">FLOW Earned</p>
             </div>
-            <div className="bg-white/70 rounded-xl p-2">
-              <p className="text-2xl font-black text-blue-700">{dataHistory.length}</p>
-              <p className="text-[10px] text-muted-foreground uppercase">Records</p>
+            <div className="bg-white/20 backdrop-blur-sm rounded-xl p-2">
+              <p className="text-2xl font-black text-white">{dataHistory.length}</p>
+              <p className="text-[10px] text-blue-100/80 uppercase">Records</p>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* Publish */}
       <Card>
@@ -980,42 +984,40 @@ function LitTab() {
   return (
     <div className="space-y-4">
       {/* Header */}
-      <Card className="bg-gradient-to-br from-orange-50 to-amber-50 border-orange-200">
-        <CardContent className="p-4 space-y-2">
+      <div className="relative rounded-2xl overflow-hidden shadow-lg transition-all duration-200 hover:-translate-y-1 hover:shadow-2xl hover:shadow-orange-500/25 active:translate-y-0"
+        style={{ background: "linear-gradient(135deg, #c2410c 0%, #ea580c 50%, #f97316 100%)", border: "1px solid rgba(255,255,255,0.25)" }}>
+        <div className="absolute -top-3 -right-3 w-20 h-20 rounded-full bg-white/10 blur-2xl" />
+        <div className="relative p-4 space-y-2">
           <div className="flex items-center gap-2">
-            <Lock className="w-5 h-5 text-orange-600" />
-            <span className="font-bold text-orange-800">Lit Protocol — Private Farm Vault</span>
-            <Badge className="bg-orange-600 text-[10px] ml-auto">AES-256-GCM</Badge>
+            <Lock className="w-5 h-5 text-white" />
+            <span className="font-bold text-white">Lit Protocol — Private Farm Vault</span>
+            <Badge className="bg-white/20 text-white border-white/30 text-[10px] ml-auto">AES-256-GCM</Badge>
           </div>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-orange-100/80">
             Encrypt your disease scan & soil reports. Only wallets you explicitly approve can decrypt.
-            Encrypted blobs are stored on <strong>Filecoin</strong> — decryption requires a wallet signature verified by the server.
+            Encrypted blobs are stored on <strong className="text-white">Filecoin</strong> — decryption requires a wallet signature.
           </p>
           {ephemeralAddr && (
-            <div className="text-[10px] font-mono bg-white/60 rounded px-2 py-1 break-all text-muted-foreground">
+            <div className="text-[10px] font-mono bg-white/20 backdrop-blur-sm rounded px-2 py-1 break-all text-orange-100">
               Your vault key: {ephemeralAddr.slice(0, 12)}…{ephemeralAddr.slice(-8)}
             </div>
           )}
           <div className="grid grid-cols-3 gap-2 text-center pt-1">
-            <div className="bg-white/70 rounded-xl p-2">
-              <p className="text-xl font-black text-orange-700">{records.length}</p>
-              <p className="text-[10px] text-muted-foreground uppercase">Encrypted</p>
+            <div className="bg-white/20 backdrop-blur-sm rounded-xl p-2">
+              <p className="text-xl font-black text-white">{records.length}</p>
+              <p className="text-[10px] text-orange-100/80 uppercase">Encrypted</p>
             </div>
-            <div className="bg-white/70 rounded-xl p-2">
-              <p className="text-xl font-black text-orange-700">
-                {records.filter(r => r.filecoinCid).length}
-              </p>
-              <p className="text-[10px] text-muted-foreground uppercase">On Filecoin</p>
+            <div className="bg-white/20 backdrop-blur-sm rounded-xl p-2">
+              <p className="text-xl font-black text-white">{records.filter(r => r.filecoinCid).length}</p>
+              <p className="text-[10px] text-orange-100/80 uppercase">On Filecoin</p>
             </div>
-            <div className="bg-white/70 rounded-xl p-2">
-              <p className="text-xl font-black text-orange-700">
-                {records.reduce((s, r) => s + Math.max(0, r.allowedWallets.length - 1), 0)}
-              </p>
-              <p className="text-[10px] text-muted-foreground uppercase">Access Given</p>
+            <div className="bg-white/20 backdrop-blur-sm rounded-xl p-2">
+              <p className="text-xl font-black text-white">{records.reduce((s, r) => s + Math.max(0, r.allowedWallets.length - 1), 0)}</p>
+              <p className="text-[10px] text-orange-100/80 uppercase">Access Given</p>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* Encrypt new record */}
       <Card>
@@ -1394,21 +1396,23 @@ function ZamaTab() {
   return (
     <div className="space-y-4">
       {/* Header */}
-      <Card className="bg-gradient-to-br from-violet-50 to-purple-50 border-violet-200">
-        <CardContent className="p-4">
+      <div className="relative rounded-2xl overflow-hidden shadow-lg transition-all duration-200 hover:-translate-y-1 hover:shadow-2xl hover:shadow-violet-500/25 active:translate-y-0"
+        style={{ background: "linear-gradient(135deg, #7c3aed 0%, #8b5cf6 50%, #a78bfa 100%)", border: "1px solid rgba(255,255,255,0.25)" }}>
+        <div className="absolute -top-3 -right-3 w-20 h-20 rounded-full bg-white/10 blur-2xl" />
+        <div className="relative p-4">
           <div className="flex items-center gap-2 mb-1">
-            <FlaskConical className="w-5 h-5 text-violet-600" />
-            <span className="font-bold text-violet-800">Disease Shield — Private FHE Intelligence</span>
-            <Badge className="bg-violet-100 text-violet-700 border-violet-300 text-[10px] ml-auto">Zama Sepolia Testnet</Badge>
+            <FlaskConical className="w-5 h-5 text-white" />
+            <span className="font-bold text-white">Disease Shield — Private FHE Intelligence</span>
+            <Badge className="bg-white/20 text-white border-white/30 text-[10px] ml-auto">Zama Sepolia Testnet</Badge>
           </div>
-          <p className="text-xs text-muted-foreground">Farmers encrypt disease scan results using Fully Homomorphic Encryption. The government sees district-level outbreak maps — zero individual farms are ever identified.</p>
-          <div className="flex gap-1 mt-2 text-[10px] font-mono text-violet-600/80">
+          <p className="text-xs text-violet-100/80">Farmers encrypt disease scan results using Fully Homomorphic Encryption. The government sees district-level outbreak maps — zero individual farms are ever identified.</p>
+          <div className="flex gap-1 mt-2 text-[10px] font-mono text-violet-100/70">
             <span>ACL: {ZAMA_ACL.slice(0, 10)}…</span>
             <span className="mx-1">·</span>
             <span>Chain: 11155111 (Sepolia)</span>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* View Toggle */}
       <div className="flex rounded-xl overflow-hidden border border-violet-200 text-sm font-medium">
@@ -1931,34 +1935,36 @@ function StarknetTab() {
     <div className="space-y-4">
 
       {/* Header + Network Status */}
-      <Card className="bg-gradient-to-br from-rose-50 to-pink-50 border-rose-200">
-        <CardContent className="p-4">
+      <div className="relative rounded-2xl overflow-hidden shadow-lg transition-all duration-200 hover:-translate-y-1 hover:shadow-2xl hover:shadow-rose-500/25 active:translate-y-0"
+        style={{ background: "linear-gradient(135deg, #be123c 0%, #e11d48 50%, #fb7185 100%)", border: "1px solid rgba(255,255,255,0.25)" }}>
+        <div className="absolute -top-3 -right-3 w-20 h-20 rounded-full bg-white/10 blur-2xl" />
+        <div className="relative p-4">
           <div className="flex items-center gap-2 mb-1">
-            <Shield className="w-5 h-5 text-rose-600" />
-            <span className="font-bold text-rose-800">Starknet — Parametric Crop Insurance</span>
-            <button onClick={refreshStatus} className="ml-auto text-muted-foreground hover:text-primary transition-colors">
+            <Shield className="w-5 h-5 text-white" />
+            <span className="font-bold text-white">Starknet — Parametric Crop Insurance</span>
+            <button onClick={refreshStatus} className="ml-auto text-rose-100 hover:text-white transition-colors">
               <RefreshCw className="w-3.5 h-3.5" />
             </button>
           </div>
-          <p className="text-xs text-muted-foreground mb-3">
+          <p className="text-xs text-rose-100/80 mb-3">
             Real Cairo smart contract on Starknet Sepolia. IoT sensor data triggers automatic on-chain insurance payouts — no middlemen, no paperwork.
           </p>
           <div className="flex items-center gap-2 flex-wrap">
             {loadingStatus ? (
-              <Badge className="text-[10px] bg-gray-400"><Loader2 className="w-2.5 h-2.5 animate-spin mr-1" />Checking…</Badge>
+              <Badge className="text-[10px] bg-white/20 text-white border-white/30"><Loader2 className="w-2.5 h-2.5 animate-spin mr-1" />Checking…</Badge>
             ) : networkStatus?.live ? (
-              <Badge className="text-[10px] bg-green-600"><Wifi className="w-2.5 h-2.5 mr-1" />Live · Block #{networkStatus.blockNumber}</Badge>
+              <Badge className="text-[10px] bg-emerald-500 text-white"><Wifi className="w-2.5 h-2.5 mr-1" />Live · Block #{networkStatus.blockNumber}</Badge>
             ) : (
-              <Badge className="text-[10px] bg-red-500"><WifiOff className="w-2.5 h-2.5 mr-1" />Offline</Badge>
+              <Badge className="text-[10px] bg-red-500 text-white"><WifiOff className="w-2.5 h-2.5 mr-1" />Offline</Badge>
             )}
             {networkStatus?.contractDeployed ? (
-              <Badge className="text-[10px] bg-rose-600"><CheckCircle2 className="w-2.5 h-2.5 mr-1" />Contract Deployed</Badge>
+              <Badge className="text-[10px] bg-white/20 text-white border-white/30"><CheckCircle2 className="w-2.5 h-2.5 mr-1" />Contract Deployed</Badge>
             ) : (
-              <Badge variant="outline" className="text-[10px] border-rose-300 text-rose-700">Contract Not Deployed</Badge>
+              <Badge className="text-[10px] bg-white/10 text-rose-100 border-white/20" variant="outline">Contract Not Deployed</Badge>
             )}
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* Step 1 — Deploy Account */}
       <Card className={cn("border-2 transition-all", networkStatus?.accountDeployed ? "border-green-300 bg-green-50/30" : "border-rose-200")}>
@@ -2564,69 +2570,86 @@ const TABS = [
 export default function Web3Hub() {
   const { t } = useTranslation();
   return (
-    <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      {/* Hero Header */}
-      <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-blue-600 via-indigo-600 to-violet-700 p-4 shadow-lg">
-        <div className="absolute -top-6 -right-6 w-28 h-28 rounded-full bg-white/10 blur-xl" />
-        <div className="absolute bottom-0 left-0 w-20 h-20 rounded-full bg-violet-400/20 blur-lg" />
-        <div className="relative">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2.5">
-              <div className="w-7 h-7 rounded-lg bg-white/20 flex items-center justify-center shrink-0">
-                <Sparkles className="w-4 h-4 text-white" />
-              </div>
-              <h2 className="text-xl font-extrabold text-white tracking-tight">Web3 Hub</h2>
-            </div>
-            <span className="text-[10px] font-bold text-green-900 bg-green-300/90 rounded-full px-2.5 py-1">
-              🟢 All Protocols Live
-            </span>
-          </div>
-          <p className="text-blue-100/70 text-xs mt-0.5">{t("web3.subtitle")}</p>
-          {/* Protocol pills */}
-          <div className="flex gap-1.5 flex-wrap mt-3">
-            {TABS.map(tab => (
-              <div key={tab.value} className="flex items-center gap-1.5 text-[10px] font-semibold bg-white/15 backdrop-blur-sm rounded-full px-2 py-1 border border-white/20">
-                <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse shrink-0" />
-                <img src={tab.logo} alt={tab.label} className="w-3.5 h-3.5 rounded-full object-contain bg-white shrink-0 p-px" />
-                <span className="text-white">{tab.label}</span>
-              </div>
-            ))}
-          </div>
-        </div>
+    <div className="relative -mx-4 -mt-5 min-h-screen animate-in fade-in slide-in-from-bottom-4 duration-500"
+      style={{ background: "linear-gradient(165deg, #eef2ff 0%, #e0e7ff 28%, #f5f3ff 60%, #eff6ff 100%)" }}>
+
+      {/* Indigo blobs */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute -top-20 -right-20 w-72 h-72 rounded-full bg-indigo-300/40 blur-3xl" />
+        <div className="absolute top-1/4 -left-16 w-60 h-60 rounded-full bg-blue-200/35 blur-3xl" />
+        <div className="absolute top-2/3 right-0 w-56 h-56 rounded-full bg-violet-200/40 blur-3xl" />
+        <div className="absolute bottom-0 left-1/3 w-40 h-40 rounded-full bg-indigo-200/25 blur-2xl" />
       </div>
 
-      <Tabs defaultValue="flow">
-        <TabsList className="grid grid-cols-6 h-auto p-1.5 w-full gap-1 bg-muted/60">
-          {TABS.map(tab => (
-            <TabsTrigger
-              key={tab.value}
-              value={tab.value}
-              className="flex flex-col items-center gap-1 py-2 px-0.5 text-[9px] rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:shadow-black/10 transition-all duration-200"
-            >
-              <div className={cn(
-                "w-7 h-7 rounded-lg overflow-hidden ring-1 transition-all",
-                "data-[state=active]:ring-2",
-                tab.ring,
-              )}>
-                <img
-                  src={tab.logo}
-                  alt={tab.label}
-                  className="w-full h-full object-contain bg-white p-0.5"
-                  onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
-                />
-              </div>
-              <span className="font-semibold leading-none">{tab.label}</span>
-            </TabsTrigger>
-          ))}
-        </TabsList>
+      <div className="relative space-y-4 px-4 pt-5 pb-28">
 
-        <TabsContent value="flow" className="mt-4"><FlowTab /></TabsContent>
-        <TabsContent value="filecoin" className="mt-4"><FilecoinTab /></TabsContent>
-        <TabsContent value="lit" className="mt-4"><LitTab /></TabsContent>
-        <TabsContent value="zama" className="mt-4"><ZamaTab /></TabsContent>
-        <TabsContent value="starknet" className="mt-4"><StarknetTab /></TabsContent>
-        <TabsContent value="hyper" className="mt-4"><HypercertsTab /></TabsContent>
-      </Tabs>
+        {/* Hero Header */}
+        <div className="relative rounded-2xl overflow-hidden p-4 shadow-xl transition-all duration-200 hover:-translate-y-1 hover:shadow-2xl hover:shadow-indigo-500/30 active:translate-y-0"
+          style={{ background: "linear-gradient(135deg, #3730a3 0%, #4338ca 40%, #4f46e5 100%)", border: "1px solid rgba(255,255,255,0.35)" }}>
+          <div className="absolute -top-4 -right-4 w-36 h-36 rounded-full bg-violet-300/20 blur-2xl" />
+          <div className="absolute bottom-0 left-0 w-28 h-16 rounded-full bg-blue-300/20 blur-xl" />
+          <div className="absolute inset-0 opacity-5"
+            style={{ backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.8) 1px, transparent 1px)", backgroundSize: "20px 20px" }} />
+          <div className="relative">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2.5">
+                <div className="w-7 h-7 rounded-lg bg-white/20 flex items-center justify-center shrink-0">
+                  <Sparkles className="w-4 h-4 text-white" />
+                </div>
+                <h2 className="text-xl font-extrabold text-white tracking-tight drop-shadow-sm">Web3 Hub</h2>
+              </div>
+              <span className="text-[10px] font-bold text-green-900 bg-green-300/90 backdrop-blur-sm rounded-full px-2.5 py-1 shadow-sm">
+                🟢 All Protocols Live
+              </span>
+            </div>
+            <p className="text-indigo-100/80 text-xs mt-0.5 font-medium">{t("web3.subtitle")}</p>
+            {/* Protocol pills */}
+            <div className="flex gap-1.5 flex-wrap mt-3">
+              {TABS.map(tab => (
+                <div key={tab.value} className="flex items-center gap-1.5 text-[10px] font-semibold bg-white/15 backdrop-blur-sm rounded-full px-2 py-1 border border-white/20">
+                  <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse shrink-0" />
+                  <img src={tab.logo} alt={tab.label} className="w-3.5 h-3.5 rounded-full object-contain bg-white shrink-0 p-px" />
+                  <span className="text-white">{tab.label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <Tabs defaultValue="flow">
+          <TabsList className="grid grid-cols-6 h-auto p-1.5 w-full gap-1 bg-white/50 backdrop-blur-sm border border-white/60">
+            {TABS.map(tab => (
+              <TabsTrigger
+                key={tab.value}
+                value={tab.value}
+                className="flex flex-col items-center gap-1 py-2 px-0.5 text-[9px] rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:shadow-indigo-200/60 transition-all duration-200"
+              >
+                <div className={cn(
+                  "w-7 h-7 rounded-lg overflow-hidden ring-1 transition-all",
+                  "data-[state=active]:ring-2",
+                  tab.ring,
+                )}>
+                  <img
+                    src={tab.logo}
+                    alt={tab.label}
+                    className="w-full h-full object-contain bg-white p-0.5"
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                  />
+                </div>
+                <span className="font-semibold leading-none">{tab.label}</span>
+              </TabsTrigger>
+            ))}
+          </TabsList>
+
+          <TabsContent value="flow" className="mt-4"><FlowTab /></TabsContent>
+          <TabsContent value="filecoin" className="mt-4"><FilecoinTab /></TabsContent>
+          <TabsContent value="lit" className="mt-4"><LitTab /></TabsContent>
+          <TabsContent value="zama" className="mt-4"><ZamaTab /></TabsContent>
+          <TabsContent value="starknet" className="mt-4"><StarknetTab /></TabsContent>
+          <TabsContent value="hyper" className="mt-4"><HypercertsTab /></TabsContent>
+        </Tabs>
+
+      </div>
     </div>
   );
 }

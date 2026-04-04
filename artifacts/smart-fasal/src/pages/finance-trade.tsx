@@ -1212,38 +1212,55 @@ export default function FinanceTrade() {
   });
 
   return (
-    <div className="space-y-5 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      {/* Hero Header */}
-      <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-blue-600 via-cyan-600 to-teal-600 p-4 shadow-lg">
-        <div className="absolute -top-6 -right-6 w-28 h-28 rounded-full bg-white/10 blur-xl" />
-        <div className="absolute bottom-0 left-0 w-20 h-20 rounded-full bg-teal-300/20 blur-lg" />
-        <div className="relative flex items-center justify-between">
-          <div>
-            <div className="flex items-center gap-2.5 mb-1">
-              <div className="w-7 h-7 rounded-lg bg-white/20 flex items-center justify-center shrink-0">
-                <Landmark className="w-4 h-4 text-white" />
-              </div>
-              <h2 className="text-xl font-extrabold text-white tracking-tight">{t("finance.title")}</h2>
-            </div>
-            <p className="text-cyan-100/70 text-xs mt-0.5">Credit Score · Loan Offers · Insurance</p>
-          </div>
-          <div className="flex items-center gap-1.5 text-xs font-bold text-blue-900 bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-md">
-            <span>⬡</span> Protocol Labs
-          </div>
-        </div>
+    <div className="relative -mx-4 -mt-5 min-h-screen animate-in fade-in slide-in-from-bottom-4 duration-500"
+      style={{ background: "linear-gradient(165deg, #ecfeff 0%, #cffafe 28%, #e0f2fe 60%, #f0fdfa 100%)" }}>
+
+      {/* Teal blobs */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute -top-20 -right-20 w-72 h-72 rounded-full bg-cyan-300/35 blur-3xl" />
+        <div className="absolute top-1/4 -left-16 w-60 h-60 rounded-full bg-teal-200/30 blur-3xl" />
+        <div className="absolute top-2/3 right-0 w-56 h-56 rounded-full bg-sky-200/35 blur-3xl" />
+        <div className="absolute bottom-0 left-1/3 w-40 h-40 rounded-full bg-cyan-100/25 blur-2xl" />
       </div>
 
-      <Tabs defaultValue="credit" className="w-full">
-        <TabsList className="grid w-full grid-cols-3 mb-5 h-auto p-1">
-          <TabsTrigger value="credit" className="py-1.5 text-xs">{t("finance.creditScore")}</TabsTrigger>
-          <TabsTrigger value="loans" className="py-1.5 text-xs">{t("finance.loanOffers")}</TabsTrigger>
-          <TabsTrigger value="insurance" className="py-1.5 text-xs">{t("finance.insurance")}</TabsTrigger>
-        </TabsList>
+      <div className="relative space-y-5 px-4 pt-5 pb-28">
 
-        <TabsContent value="credit"><CreditTab /></TabsContent>
-        <TabsContent value="loans"><LoansTab creditScore={profile?.overallScore ?? 0} /></TabsContent>
-        <TabsContent value="insurance"><InsuranceTab /></TabsContent>
-      </Tabs>
+        {/* Hero Header */}
+        <div className="relative rounded-2xl overflow-hidden p-4 shadow-xl transition-all duration-200 hover:-translate-y-1 hover:shadow-2xl hover:shadow-teal-500/30 active:translate-y-0"
+          style={{ background: "linear-gradient(135deg, #0f766e 0%, #0891b2 45%, #06b6d4 100%)", border: "1px solid rgba(255,255,255,0.35)" }}>
+          <div className="absolute -top-4 -right-4 w-36 h-36 rounded-full bg-cyan-300/20 blur-2xl" />
+          <div className="absolute bottom-0 left-0 w-28 h-16 rounded-full bg-teal-300/20 blur-xl" />
+          <div className="absolute inset-0 opacity-5"
+            style={{ backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.8) 1px, transparent 1px)", backgroundSize: "20px 20px" }} />
+          <div className="relative flex items-center justify-between">
+            <div>
+              <div className="flex items-center gap-2.5 mb-1">
+                <div className="w-7 h-7 rounded-lg bg-white/20 flex items-center justify-center shrink-0">
+                  <Landmark className="w-4 h-4 text-white" />
+                </div>
+                <h2 className="text-xl font-extrabold text-white tracking-tight drop-shadow-sm">{t("finance.title")}</h2>
+              </div>
+              <p className="text-cyan-100/80 text-xs mt-0.5 font-medium">Credit Score · Loan Offers · Insurance</p>
+            </div>
+            <div className="flex items-center gap-1.5 text-xs font-bold text-teal-900 bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-md">
+              <span>⬡</span> Protocol Labs
+            </div>
+          </div>
+        </div>
+
+        <Tabs defaultValue="credit" className="w-full">
+          <TabsList className="grid w-full grid-cols-3 mb-5 h-auto p-1 bg-white/50 backdrop-blur-sm border border-white/60">
+            <TabsTrigger value="credit" className="py-1.5 text-xs data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:shadow-teal-200/60">{t("finance.creditScore")}</TabsTrigger>
+            <TabsTrigger value="loans" className="py-1.5 text-xs data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:shadow-teal-200/60">{t("finance.loanOffers")}</TabsTrigger>
+            <TabsTrigger value="insurance" className="py-1.5 text-xs data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:shadow-teal-200/60">{t("finance.insurance")}</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="credit"><CreditTab /></TabsContent>
+          <TabsContent value="loans"><LoansTab creditScore={profile?.overallScore ?? 0} /></TabsContent>
+          <TabsContent value="insurance"><InsuranceTab /></TabsContent>
+        </Tabs>
+
+      </div>
     </div>
   );
 }

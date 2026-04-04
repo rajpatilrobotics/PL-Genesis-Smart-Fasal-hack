@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -40,8 +39,6 @@ import { useWallet } from "@/lib/wallet-context";
 import { lighthouseUpload, lighthouseUploadFile } from "@/lib/lighthouse";
 import { getEphemeralWallet } from "@/lib/lit";
 import { cn } from "@/lib/utils";
-
-// ─── Shared Types ─────────────────────────────────────────────────────────────
 
 type EvidenceRecord = {
   imageCid: string;
@@ -87,8 +84,6 @@ type CatalogEntry = {
   createdAt: string;
 };
 
-// ─── Main Component ───────────────────────────────────────────────────────────
-
 export default function AiHub() {
   const { t } = useTranslation();
   const { toast } = useToast();
@@ -96,17 +91,12 @@ export default function AiHub() {
   const { walletAddress, addFlowReward } = useWallet();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // ── AI Recommendations state ──
   const [recForm, setRecForm] = useState({
     nitrogen: "120", phosphorus: "45", potassium: "180", ph: "6.5", moisture: "40"
   });
   const [litVaultSoilRecord, setLitVaultSoilRecord] = useState<LitVaultRecord | null>(null);
-
-  // ── Crop AI (sensor-based) state ──
   const [cropPredicting, setCropPredicting] = useState(false);
   const [cropResult, setCropResult] = useState<CropPredictResult | null>(null);
-
-  // ── Disease state ──
   const [diseaseForm, setDiseaseForm] = useState({ cropName: "", imageDescription: "" });
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -114,14 +104,11 @@ export default function AiHub() {
   const [evidence, setEvidence] = useState<EvidenceRecord | null>(null);
   const [copiedCid, setCopiedCid] = useState<string | null>(null);
   const [litVaultRecord, setLitVaultRecord] = useState<LitVaultRecord | null>(null);
-
-  // ── Data Commons state ──
   const [publishing, setPublishing] = useState(false);
   const [myPublished, setMyPublished] = useState<CatalogEntry[]>([]);
   const [catalog, setCatalog] = useState<CatalogEntry[]>([]);
   const [catalogLoading, setCatalogLoading] = useState(false);
 
-  // ── API hooks ──
   const getAiRec = useGetAiRecommendation();
   const detectDisease = useDetectDisease();
   const litEncryptMutation = useLitEncryptFarmData();
@@ -160,8 +147,6 @@ export default function AiHub() {
 
   const sensorAvg = (key: "nitrogen" | "phosphorus" | "potassium" | "ph" | "moisture") =>
     hasData ? history!.reduce((s, r) => s + r[key], 0) / history!.length : 0;
-
-  // ── Handlers ──
 
   const handleRecSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -408,126 +393,147 @@ export default function AiHub() {
 
   const getLogColor = (type: string) => {
     switch (type.toLowerCase()) {
-      case "sensor": return "border-l-blue-500 bg-blue-500/5";
-      case "ai": return "border-l-green-500 bg-green-500/5";
-      case "insurance": return "border-l-yellow-500 bg-yellow-500/5";
-      case "error": return "border-l-red-500 bg-red-500/5";
-      default: return "border-l-gray-500 bg-gray-500/5";
+      case "sensor": return "border-l-blue-400 bg-blue-400/10";
+      case "ai": return "border-l-violet-400 bg-violet-400/10";
+      case "insurance": return "border-l-amber-400 bg-amber-400/10";
+      case "error": return "border-l-red-400 bg-red-400/10";
+      default: return "border-l-gray-400 bg-gray-400/10";
     }
   };
-
 
   const diagnosisData = detectDisease.data;
   const isRunning = detectDisease.isPending || archiving;
 
+  const glassCard = "glass-glow-violet rounded-2xl border border-white/50 bg-white/35 backdrop-blur-2xl hover:bg-white/45";
+
   return (
-    <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      {/* Hero Header */}
-      <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-violet-600 via-purple-600 to-indigo-700 p-4 shadow-lg">
-        <div className="absolute -top-6 -right-6 w-28 h-28 rounded-full bg-white/10 blur-xl" />
-        <div className="absolute bottom-0 left-0 w-20 h-20 rounded-full bg-indigo-400/20 blur-lg" />
-        <div className="relative flex items-center justify-between">
-          <div>
-            <div className="flex items-center gap-2.5 mb-1">
-              <div className="w-7 h-7 rounded-lg bg-white/20 flex items-center justify-center shrink-0">
-                <Brain className="w-4 h-4 text-white" />
-              </div>
-              <h2 className="text-xl font-extrabold text-white tracking-tight">{t("ai.title")}</h2>
-            </div>
-            <p className="text-violet-100/70 text-xs mt-0.5">AI Insights · Sensor Analytics · Data Marketplace</p>
-          </div>
-          {walletAddress && (
-            <div className="flex items-center gap-1.5 text-xs font-bold text-amber-900 bg-amber-300/90 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-md">
-              <Zap className="w-3.5 h-3.5" />
-              +10 FLOW / analysis
-            </div>
-          )}
-        </div>
+    <div className="relative -mx-4 -mt-5 min-h-screen animate-in fade-in slide-in-from-bottom-4 duration-500"
+      style={{ background: "linear-gradient(165deg, #f5f3ff 0%, #ede9fe 28%, #faf5ff 60%, #f0f9ff 100%)" }}>
+
+      {/* Violet blobs */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute -top-20 -right-20 w-72 h-72 rounded-full bg-violet-300/40 blur-3xl" />
+        <div className="absolute top-1/4 -left-16 w-60 h-60 rounded-full bg-purple-200/35 blur-3xl" />
+        <div className="absolute top-2/3 right-0 w-56 h-56 rounded-full bg-indigo-200/40 blur-3xl" />
+        <div className="absolute bottom-0 left-1/3 w-40 h-40 rounded-full bg-fuchsia-200/25 blur-2xl" />
       </div>
 
-      <Tabs defaultValue="crop-ai" className="w-full">
-        <TabsList className="grid w-full grid-cols-4 mb-2">
-          <TabsTrigger value="crop-ai" className="text-[11px] px-1">
-            <Brain className="w-3.5 h-3.5 mr-1 shrink-0" />Crop AI
-          </TabsTrigger>
-          <TabsTrigger value="disease" className="text-[11px] px-1">
-            <Camera className="w-3.5 h-3.5 mr-1 shrink-0" />Disease
-          </TabsTrigger>
-          <TabsTrigger value="charts" className="text-[11px] px-1">
-            <BarChart3 className="w-3.5 h-3.5 mr-1 shrink-0" />Charts
-          </TabsTrigger>
-          <TabsTrigger value="market" className="text-[11px] px-1">
-            <ShoppingCart className="w-3.5 h-3.5 mr-1 shrink-0" />Market
-          </TabsTrigger>
-        </TabsList>
+      <div className="relative space-y-4 px-4 pt-5 pb-28">
 
-        {/* ══════════════════════════════════════════════════════════
-            TAB 1 — CROP AI
-            (Manual soil input + Sensor-auto prediction)
-        ══════════════════════════════════════════════════════════ */}
-        <TabsContent value="crop-ai" className="space-y-4 mt-3">
-
-          {/* ── Sensor-auto prediction ── */}
-          <Card className="bg-gradient-to-br from-emerald-50 to-teal-50 border-emerald-100">
-            <CardContent className="p-4">
-              <div className="flex items-start gap-3 mb-3">
-                <div className="w-9 h-9 rounded-xl bg-emerald-500 flex items-center justify-center shrink-0">
-                  <Sprout className="w-4.5 h-4.5 text-white" />
+        {/* ── Hero Header ── */}
+        <div className="relative rounded-2xl overflow-hidden p-4 shadow-xl transition-all duration-200 hover:-translate-y-1 hover:shadow-2xl hover:shadow-violet-500/30 active:translate-y-0"
+          style={{ background: "linear-gradient(135deg, #7c3aed 0%, #6d28d9 45%, #5b21b6 100%)", border: "1px solid rgba(255,255,255,0.35)" }}>
+          <div className="absolute -top-4 -right-4 w-36 h-36 rounded-full bg-fuchsia-300/20 blur-2xl" />
+          <div className="absolute bottom-0 left-0 w-28 h-16 rounded-full bg-indigo-300/20 blur-xl" />
+          <div className="absolute inset-0 opacity-5"
+            style={{ backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.8) 1px, transparent 1px)", backgroundSize: "20px 20px" }} />
+          <div className="relative flex items-center justify-between">
+            <div>
+              <div className="flex items-center gap-2.5 mb-1">
+                <div className="w-7 h-7 rounded-lg bg-white/20 flex items-center justify-center shrink-0">
+                  <Brain className="w-4 h-4 text-white" />
                 </div>
-                <div>
-                  <p className="font-semibold text-sm">Predict from Live Sensors</p>
-                  <p className="text-xs text-muted-foreground">Auto-uses {recordCount} IoT readings from ESP32-FARM-001</p>
-                </div>
+                <h2 className="text-xl font-extrabold text-white tracking-tight drop-shadow-sm">{t("ai.title")}</h2>
               </div>
-
-              {hasData && (
-                <div className="grid grid-cols-5 gap-1 mb-3">
-                  {[
-                    { label: "N", value: sensorAvg("nitrogen").toFixed(0), color: "text-green-700 bg-green-100" },
-                    { label: "P", value: sensorAvg("phosphorus").toFixed(0), color: "text-orange-700 bg-orange-100" },
-                    { label: "K", value: sensorAvg("potassium").toFixed(0), color: "text-purple-700 bg-purple-100" },
-                    { label: "pH", value: sensorAvg("ph").toFixed(1), color: "text-blue-700 bg-blue-100" },
-                    { label: "H₂O", value: sensorAvg("moisture").toFixed(0) + "%", color: "text-cyan-700 bg-cyan-100" },
-                  ].map(({ label, value, color }) => (
-                    <div key={label} className={cn("rounded-lg p-1.5 text-center", color)}>
-                      <p className="text-[10px] font-semibold">{label}</p>
-                      <p className="text-xs font-bold leading-tight">{value}</p>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              <Button onClick={runCropPrediction} disabled={cropPredicting || !hasData} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white" size="sm">
-                {cropPredicting ? <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />Analysing soil...</> : <><Sprout className="w-3.5 h-3.5 mr-1.5" />Predict Best Crops {walletAddress && <span className="ml-1 text-[9px] bg-white/20 px-1.5 py-0.5 rounded-full">+8 FLOW</span>}</>}
-              </Button>
-              {!hasData && <p className="text-[10px] text-center text-muted-foreground mt-1.5">Go to Home → hover LIVE badge to generate sensor data first</p>}
-            </CardContent>
-          </Card>
-
-          {/* Crop prediction results */}
-          {cropResult && (
-            <div className="space-y-3">
-              <div className="p-3 rounded-xl bg-amber-50 border border-amber-100">
-                <p className="text-[11px] text-amber-900 leading-relaxed">{cropResult.insight}</p>
+              <p className="text-violet-100/80 text-xs mt-0.5 font-medium">AI Insights · Sensor Analytics · Data Marketplace</p>
+            </div>
+            {walletAddress && (
+              <div className="flex items-center gap-1.5 text-xs font-bold text-amber-900 bg-amber-300/90 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-md">
+                <Zap className="w-3.5 h-3.5" />
+                +10 FLOW / analysis
               </div>
-              {cropResult.crops.map((crop, idx) => (
-                <Card key={crop.name} className={cn("border", idx === 0 ? "border-emerald-200 bg-emerald-50/30" : "")}>
-                  <CardContent className="p-3">
+            )}
+          </div>
+        </div>
+
+        <Tabs defaultValue="crop-ai" className="w-full">
+          <TabsList className="grid w-full grid-cols-4 mb-2 bg-white/50 backdrop-blur-sm border border-white/60">
+            <TabsTrigger value="crop-ai" className="text-[11px] px-1">
+              <Brain className="w-3.5 h-3.5 mr-1 shrink-0" />Crop AI
+            </TabsTrigger>
+            <TabsTrigger value="disease" className="text-[11px] px-1">
+              <Camera className="w-3.5 h-3.5 mr-1 shrink-0" />Disease
+            </TabsTrigger>
+            <TabsTrigger value="charts" className="text-[11px] px-1">
+              <BarChart3 className="w-3.5 h-3.5 mr-1 shrink-0" />Charts
+            </TabsTrigger>
+            <TabsTrigger value="market" className="text-[11px] px-1">
+              <ShoppingCart className="w-3.5 h-3.5 mr-1 shrink-0" />Market
+            </TabsTrigger>
+          </TabsList>
+
+          {/* ══ TAB 1 — CROP AI ══ */}
+          <TabsContent value="crop-ai" className="space-y-4 mt-3">
+
+            {/* Sensor-auto prediction — emerald accent card */}
+            <div className="relative rounded-2xl overflow-hidden shadow-lg transition-all duration-200 hover:-translate-y-1 hover:shadow-2xl hover:shadow-emerald-500/25 active:translate-y-0"
+              style={{ background: "linear-gradient(135deg, #059669 0%, #10b981 50%, #34d399 100%)", border: "1px solid rgba(255,255,255,0.30)" }}>
+              <div className="absolute -top-3 -right-3 w-20 h-20 rounded-full bg-white/15 blur-2xl" />
+              <div className="absolute inset-0 opacity-[0.04]"
+                style={{ backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.9) 1px, transparent 1px)", backgroundSize: "16px 16px" }} />
+              <div className="relative p-4">
+                <div className="flex items-start gap-3 mb-3">
+                  <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
+                    <Sprout className="w-4.5 h-4.5 text-white" />
+                  </div>
+                  <div>
+                    <p className="font-bold text-sm text-white">Predict from Live Sensors</p>
+                    <p className="text-xs text-emerald-100/80">Auto-uses {recordCount} IoT readings from ESP32-FARM-001</p>
+                  </div>
+                </div>
+
+                {hasData && (
+                  <div className="grid grid-cols-5 gap-1 mb-3">
+                    {[
+                      { label: "N", value: sensorAvg("nitrogen").toFixed(0) },
+                      { label: "P", value: sensorAvg("phosphorus").toFixed(0) },
+                      { label: "K", value: sensorAvg("potassium").toFixed(0) },
+                      { label: "pH", value: sensorAvg("ph").toFixed(1) },
+                      { label: "H₂O", value: sensorAvg("moisture").toFixed(0) + "%" },
+                    ].map(({ label, value }) => (
+                      <div key={label} className="bg-white/20 backdrop-blur-sm rounded-lg p-1.5 text-center">
+                        <p className="text-[10px] font-semibold text-emerald-100">{label}</p>
+                        <p className="text-xs font-bold text-white leading-tight">{value}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <Button onClick={runCropPrediction} disabled={cropPredicting || !hasData}
+                  className="w-full bg-white/20 hover:bg-white/30 text-white border border-white/30 backdrop-blur-sm" size="sm">
+                  {cropPredicting
+                    ? <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />Analysing soil...</>
+                    : <><Sprout className="w-3.5 h-3.5 mr-1.5" />Predict Best Crops {walletAddress && <span className="ml-1 text-[9px] bg-white/20 px-1.5 py-0.5 rounded-full">+8 FLOW</span>}</>
+                  }
+                </Button>
+                {!hasData && <p className="text-[10px] text-center text-emerald-100/70 mt-1.5">Go to Home → hover LIVE badge to generate sensor data first</p>}
+              </div>
+            </div>
+
+            {/* Crop prediction results */}
+            {cropResult && (
+              <div className="space-y-3">
+                <div className={cn(glassCard, "p-3 border-amber-200/50 bg-amber-50/35")}>
+                  <p className="text-[11px] text-amber-900 leading-relaxed">{cropResult.insight}</p>
+                </div>
+                {cropResult.crops.map((crop, idx) => (
+                  <div key={crop.name} className={cn(glassCard, "p-3", idx === 0 ? "border-emerald-300/60 bg-emerald-50/35" : "")}>
                     <div className="flex items-center justify-between mb-1.5">
                       <div className="flex items-center gap-2">
                         <span className="text-xl">{crop.emoji}</span>
                         <div>
                           <div className="flex items-center gap-1.5">
-                            <p className="text-sm font-bold">{crop.name}</p>
+                            <p className="text-sm font-bold text-gray-800">{crop.name}</p>
                             {idx === 0 && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-emerald-500 text-white">TOP PICK</span>}
                           </div>
-                          <p className="text-[10px] text-muted-foreground">{crop.season}</p>
+                          <p className="text-[10px] text-gray-500">{crop.season}</p>
                         </div>
                       </div>
                       <p className="text-sm font-bold text-emerald-700">{crop.confidence}%</p>
                     </div>
-                    <div className="h-1.5 bg-muted rounded-full overflow-hidden mb-2">
-                      <div className={cn("h-full rounded-full", idx === 0 ? "bg-emerald-500" : "bg-primary/70")} style={{ width: `${crop.confidence}%` }} />
+                    <div className="h-1.5 bg-white/60 rounded-full overflow-hidden mb-2">
+                      <div className={cn("h-full rounded-full", idx === 0 ? "bg-gradient-to-r from-emerald-400 to-green-600" : "bg-gradient-to-r from-violet-400 to-purple-600")}
+                        style={{ width: `${crop.confidence}%` }} />
                     </div>
                     <div className="grid grid-cols-3 gap-1.5 mb-2">
                       {[
@@ -535,36 +541,36 @@ export default function AiHub() {
                         { label: "Water", val: crop.waterRequirement },
                         { label: "Days", val: `${crop.growthDays}d` },
                       ].map(({ label, val }) => (
-                        <div key={label} className="text-center bg-muted/50 rounded p-1">
-                          <p className="text-[9px] text-muted-foreground">{label}</p>
-                          <p className="text-[11px] font-semibold">{val}</p>
+                        <div key={label} className="text-center bg-white/25 backdrop-blur-sm rounded-lg p-1">
+                          <p className="text-[9px] text-gray-500">{label}</p>
+                          <p className="text-[11px] font-semibold text-gray-800">{val}</p>
                         </div>
                       ))}
                     </div>
-                    <p className="text-[11px] text-muted-foreground leading-relaxed">{crop.reasoning}</p>
-                  </CardContent>
-                </Card>
-              ))}
+                    <p className="text-[11px] text-gray-600 leading-relaxed">{crop.reasoning}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Divider */}
+            <div className="flex items-center gap-2 py-1">
+              <div className="flex-1 h-px bg-white/40" />
+              <span className="text-[10px] text-gray-500 font-medium uppercase tracking-wider">or manual input</span>
+              <div className="flex-1 h-px bg-white/40" />
             </div>
-          )}
 
-          {/* ── Divider ── */}
-          <div className="flex items-center gap-2 py-1">
-            <div className="flex-1 h-px bg-border" />
-            <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">or manual input</span>
-            <div className="flex-1 h-px bg-border" />
-          </div>
-
-          {/* ── Manual soil input ── */}
-          <Card>
-            <CardHeader className="pb-3 pt-4">
-              <CardTitle className="text-sm flex items-center gap-1.5">
-                <Sparkles className="w-4 h-4 text-primary" />
-                Manual Soil Analysis
-              </CardTitle>
-              <CardDescription className="text-xs">Enter custom NPK values for targeted advice</CardDescription>
-            </CardHeader>
-            <CardContent>
+            {/* Manual soil input */}
+            <div className={cn(glassCard, "p-4")}>
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-7 h-7 rounded-lg bg-violet-100 flex items-center justify-center">
+                  <Sparkles className="w-3.5 h-3.5 text-violet-600" />
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-gray-800">Manual Soil Analysis</p>
+                  <p className="text-[11px] text-gray-500">Enter custom NPK values for targeted advice</p>
+                </div>
+              </div>
               <form onSubmit={handleRecSubmit} className="space-y-3">
                 <div className="grid grid-cols-3 gap-2">
                   {[
@@ -573,76 +579,76 @@ export default function AiHub() {
                     { id: "k", label: "K (mg/kg)", key: "potassium" },
                   ].map(f => (
                     <div key={f.id} className="space-y-1">
-                      <Label htmlFor={f.id} className="text-xs">{f.label}</Label>
+                      <Label htmlFor={f.id} className="text-xs text-gray-600">{f.label}</Label>
                       <Input id={f.id} value={recForm[f.key as keyof typeof recForm]}
-                        onChange={e => setRecForm({ ...recForm, [f.key]: e.target.value })} type="number" required className="h-8 text-sm" />
+                        onChange={e => setRecForm({ ...recForm, [f.key]: e.target.value })}
+                        type="number" required className="h-8 text-sm bg-white/60 border-white/60" />
                     </div>
                   ))}
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <div className="space-y-1">
-                    <Label htmlFor="ph" className="text-xs">pH Level</Label>
-                    <Input id="ph" value={recForm.ph} onChange={e => setRecForm({ ...recForm, ph: e.target.value })} type="number" step="0.1" required className="h-8 text-sm" />
+                    <Label htmlFor="ph" className="text-xs text-gray-600">pH Level</Label>
+                    <Input id="ph" value={recForm.ph} onChange={e => setRecForm({ ...recForm, ph: e.target.value })} type="number" step="0.1" required className="h-8 text-sm bg-white/60 border-white/60" />
                   </div>
                   <div className="space-y-1">
-                    <Label htmlFor="moisture" className="text-xs">Moisture %</Label>
-                    <Input id="moisture" value={recForm.moisture} onChange={e => setRecForm({ ...recForm, moisture: e.target.value })} type="number" required className="h-8 text-sm" />
+                    <Label htmlFor="moisture" className="text-xs text-gray-600">Moisture %</Label>
+                    <Input id="moisture" value={recForm.moisture} onChange={e => setRecForm({ ...recForm, moisture: e.target.value })} type="number" required className="h-8 text-sm bg-white/60 border-white/60" />
                   </div>
                 </div>
-                <Button type="submit" className="w-full relative" size="sm" disabled={getAiRec.isPending}>
+                <Button type="submit" className="w-full relative bg-violet-600 hover:bg-violet-700 text-white" size="sm" disabled={getAiRec.isPending}>
                   <Sparkles className="w-3.5 h-3.5 mr-1.5" />
                   {getAiRec.isPending ? t("ai.analyzing") : t("ai.generateInsights")}
                   {walletAddress && <span className="absolute right-3 text-[9px] bg-white/20 px-1.5 py-0.5 rounded-full">+10 FLOW</span>}
                 </Button>
               </form>
-            </CardContent>
-          </Card>
+            </div>
 
-          {/* Manual AI results */}
-          {getAiRec.data && (
-            <Card className="border-primary bg-primary/5">
-              <CardHeader className="pb-2 pt-3">
-                <CardTitle className="text-sm text-primary flex items-center gap-1.5">
-                  <Brain className="w-4 h-4" /> {t("ai.aiRecommendationTitle")}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="grid grid-cols-3 gap-2">
+            {/* Manual AI results */}
+            {getAiRec.data && (
+              <div className={cn(glassCard, "p-4 border-violet-300/50 bg-violet-50/35")}>
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-7 h-7 rounded-lg bg-violet-100 flex items-center justify-center">
+                    <Brain className="w-3.5 h-3.5 text-violet-600" />
+                  </div>
+                  <p className="text-sm font-bold text-violet-800">{t("ai.aiRecommendationTitle")}</p>
+                </div>
+                <div className="grid grid-cols-3 gap-2 mb-3">
                   {[
-                    { label: "Health", value: `${getAiRec.data.cropHealthPercent}%` },
-                    { label: "Risk", value: getAiRec.data.riskLevel, color: getAiRec.data.riskLevel === "LOW" ? "text-green-600" : getAiRec.data.riskLevel === "MEDIUM" ? "text-yellow-600" : "text-red-600" },
-                    { label: "Yield", value: `${getAiRec.data.yieldPercent}%` },
+                    { label: "Health", value: `${getAiRec.data.cropHealthPercent}%`, color: "text-emerald-700" },
+                    { label: "Risk", value: getAiRec.data.riskLevel, color: getAiRec.data.riskLevel === "LOW" ? "text-emerald-600" : getAiRec.data.riskLevel === "MEDIUM" ? "text-amber-600" : "text-red-600" },
+                    { label: "Yield", value: `${getAiRec.data.yieldPercent}%`, color: "text-violet-700" },
                   ].map(item => (
-                    <div key={item.label} className="bg-background p-2 rounded-lg text-center shadow-sm">
-                      <p className="text-[10px] uppercase text-muted-foreground font-bold">{item.label}</p>
+                    <div key={item.label} className="bg-white/50 backdrop-blur-sm p-2 rounded-xl text-center">
+                      <p className="text-[10px] uppercase text-gray-400 font-bold">{item.label}</p>
                       <p className={cn("font-bold text-base", item.color)}>{item.value}</p>
                     </div>
                   ))}
                 </div>
                 <div className="space-y-2 text-xs">
                   {[
-                    { label: t("ai.fertilizerLabel"), color: "text-primary", value: getAiRec.data.fertilizerAdvice },
+                    { label: t("ai.fertilizerLabel"), color: "text-violet-700", value: getAiRec.data.fertilizerAdvice },
                     { label: t("ai.irrigationLabel"), color: "text-blue-600", value: getAiRec.data.irrigationSuggestion },
-                    { label: t("ai.riskAnalysisLabel"), color: "text-orange-600", value: getAiRec.data.riskAnalysis },
+                    { label: t("ai.riskAnalysisLabel"), color: "text-amber-600", value: getAiRec.data.riskAnalysis },
                   ].map(item => (
-                    <div key={item.label} className="p-2.5 bg-background rounded-lg shadow-sm border border-border">
+                    <div key={item.label} className="p-2.5 bg-white/50 backdrop-blur-sm rounded-xl border border-white/60">
                       <p className={cn("font-semibold mb-0.5 text-xs", item.color)}>{item.label}</p>
-                      <p className="text-muted-foreground leading-relaxed">{item.value}</p>
+                      <p className="text-gray-600 leading-relaxed">{item.value}</p>
                     </div>
                   ))}
                 </div>
                 {/* Lit Vault */}
-                <div className="border border-orange-300 bg-orange-50/40 rounded-lg p-2.5 space-y-2">
+                <div className="mt-3 border border-orange-300/60 bg-orange-50/50 rounded-xl p-2.5 space-y-2">
                   <div className="flex items-center gap-1.5">
                     <Lock className="w-3.5 h-3.5 text-orange-600" />
                     <p className="text-xs font-bold text-orange-800">{t("ai.storePrivateVault")}</p>
                   </div>
                   {litVaultSoilRecord ? (
-                    <div className="bg-green-50 border border-green-200 rounded-lg p-2 space-y-1">
-                      <div className="flex items-center gap-1 text-green-700 text-[11px] font-semibold">
+                    <div className="bg-emerald-50/80 border border-emerald-200 rounded-lg p-2 space-y-1">
+                      <div className="flex items-center gap-1 text-emerald-700 text-[11px] font-semibold">
                         <ShieldCheck className="w-3 h-3" />{t("ai.soilDataEncrypted")}
                       </div>
-                      <code className="text-[10px] font-mono text-green-800 block truncate">{litVaultSoilRecord.filecoinCid}</code>
+                      <code className="text-[10px] font-mono text-emerald-800 block truncate">{litVaultSoilRecord.filecoinCid}</code>
                     </div>
                   ) : (
                     <Button size="sm" variant="outline" className="w-full border-orange-400 text-orange-700 hover:bg-orange-100 h-7 text-[11px]" onClick={handleEncryptSoilToVault} disabled={litEncryptMutation.isPending}>
@@ -650,66 +656,66 @@ export default function AiHub() {
                     </Button>
                   )}
                 </div>
-              </CardContent>
-            </Card>
-          )}
+              </div>
+            )}
 
-          {/* Rec history */}
-          {recHistory && recHistory.length > 0 && (
-            <div className="space-y-2">
-              <p className="font-semibold text-sm px-1 flex items-center gap-1.5"><History className="w-3.5 h-3.5" />{t("ai.pastRecommendations")}</p>
-              {recHistory.slice(0, 3).map((rec: any) => (
-                <Card key={rec.id} className="cursor-pointer hover:border-primary transition-colors">
-                  <CardContent className="p-3 flex items-center justify-between">
+            {/* Rec history */}
+            {recHistory && recHistory.length > 0 && (
+              <div className="space-y-2">
+                <p className="font-semibold text-sm px-1 flex items-center gap-1.5 text-gray-700">
+                  <History className="w-3.5 h-3.5 text-violet-500" />{t("ai.pastRecommendations")}
+                </p>
+                {recHistory.slice(0, 3).map((rec: any) => (
+                  <div key={rec.id} className={cn(glassCard, "p-3 flex items-center justify-between cursor-pointer")}>
                     <div>
-                      <p className="text-sm font-medium">Health: {rec.cropHealthPercent}%</p>
-                      <p className="text-xs text-muted-foreground">{new Date(rec.createdAt).toLocaleDateString()}</p>
+                      <p className="text-sm font-medium text-gray-800">Health: {rec.cropHealthPercent}%</p>
+                      <p className="text-xs text-gray-500">{new Date(rec.createdAt).toLocaleDateString()}</p>
                     </div>
-                    <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                  </CardContent>
-                </Card>
-              ))}
+                    <ChevronRight className="w-4 h-4 text-violet-400" />
+                  </div>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          {/* ══ TAB 2 — DISEASE SCANNER ══ */}
+          <TabsContent value="disease" className="space-y-4 mt-3">
+            <div className={cn(glassCard, "flex items-center gap-2 p-3 border-blue-200/50 bg-blue-50/35")}>
+              <Shield className="w-4 h-4 text-blue-600 shrink-0" />
+              <span className="text-xs text-blue-800">Photos & diagnosis auto-archived to <strong>Filecoin/IPFS</strong> as tamper-proof insurance evidence</span>
             </div>
-          )}
-        </TabsContent>
 
-        {/* ══════════════════════════════════════════════════════════
-            TAB 2 — DISEASE SCANNER
-        ══════════════════════════════════════════════════════════ */}
-        <TabsContent value="disease" className="space-y-4 mt-3">
-          <div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-xl text-xs text-blue-800">
-            <Shield className="w-4 h-4 text-blue-600 shrink-0" />
-            <span>Photos & diagnosis auto-archived to <strong>Filecoin/IPFS</strong> as tamper-proof insurance evidence</span>
-          </div>
-
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base flex items-center gap-2">
-                <Camera className="w-4 h-4 text-primary" />Crop Disease Scanner
-              </CardTitle>
-              <CardDescription className="text-xs">Upload a photo — AI diagnoses & archives as evidence</CardDescription>
-            </CardHeader>
-            <CardContent>
+            {/* Disease scanner form */}
+            <div className={cn(glassCard, "p-4")}>
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-7 h-7 rounded-lg bg-violet-100 flex items-center justify-center">
+                  <Camera className="w-3.5 h-3.5 text-violet-600" />
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-gray-800">Crop Disease Scanner</p>
+                  <p className="text-[11px] text-gray-500">Upload a photo — AI diagnoses & archives as evidence</p>
+                </div>
+              </div>
               <form onSubmit={handleDiseaseSubmit} className="space-y-3">
                 <div className="space-y-2">
-                  <Label className="text-xs">Crop Photo (Evidence)</Label>
+                  <Label className="text-xs text-gray-600">Crop Photo (Evidence)</Label>
                   <input ref={fileInputRef} type="file" accept="image/*" capture="environment" onChange={handleFileChange} className="hidden" />
                   {!imagePreview ? (
                     <button type="button" onClick={() => fileInputRef.current?.click()}
-                      className="w-full border-2 border-dashed border-muted-foreground/30 rounded-xl p-6 flex flex-col items-center gap-2 hover:border-primary hover:bg-primary/5 transition-all text-muted-foreground">
-                      <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
-                        <FileImage className="w-5 h-5" />
+                      className="w-full border-2 border-dashed border-violet-200/70 rounded-xl p-6 flex flex-col items-center gap-2 hover:border-violet-400 hover:bg-violet-50/50 transition-all text-gray-500">
+                      <div className="w-10 h-10 rounded-full bg-violet-100 flex items-center justify-center">
+                        <FileImage className="w-5 h-5 text-violet-500" />
                       </div>
                       <div className="text-center">
-                        <p className="font-medium text-sm">Upload crop photo</p>
-                        <p className="text-xs">Tap to open camera or gallery</p>
+                        <p className="font-medium text-sm text-gray-700">Upload crop photo</p>
+                        <p className="text-xs text-gray-400">Tap to open camera or gallery</p>
                       </div>
                       <div className="flex items-center gap-1 text-[11px] text-blue-600 font-medium">
                         <Database className="w-3 h-3" />Will archive to IPFS as evidence
                       </div>
                     </button>
                   ) : (
-                    <div className="relative rounded-xl overflow-hidden border border-border">
+                    <div className="relative rounded-xl overflow-hidden border border-white/60">
                       <img src={imagePreview} alt="Crop" className="w-full h-44 object-cover" />
                       <div className="absolute top-2 right-2 flex gap-2">
                         <button type="button" onClick={() => fileInputRef.current?.click()} className="bg-black/60 text-white rounded-full p-1.5"><Upload className="w-3 h-3" /></button>
@@ -719,37 +725,39 @@ export default function AiHub() {
                   )}
                 </div>
                 <div className="space-y-1">
-                  <Label htmlFor="crop" className="text-xs">Crop Name (Optional)</Label>
-                  <Input id="crop" placeholder="e.g. Wheat, Tomato, Rice" value={diseaseForm.cropName} onChange={e => setDiseaseForm({ ...diseaseForm, cropName: e.target.value })} className="h-8 text-sm" />
+                  <Label htmlFor="crop" className="text-xs text-gray-600">Crop Name (Optional)</Label>
+                  <Input id="crop" placeholder="e.g. Wheat, Tomato, Rice" value={diseaseForm.cropName} onChange={e => setDiseaseForm({ ...diseaseForm, cropName: e.target.value })} className="h-8 text-sm bg-white/60 border-white/60" />
                 </div>
                 <div className="space-y-1">
-                  <Label htmlFor="symptoms" className="text-xs">Symptoms <span className="text-muted-foreground">(optional if photo provided)</span></Label>
-                  <Textarea id="symptoms" placeholder="e.g. Yellowing leaves with brown spots..." rows={2} value={diseaseForm.imageDescription} onChange={e => setDiseaseForm({ ...diseaseForm, imageDescription: e.target.value })} className="text-sm" />
+                  <Label htmlFor="symptoms" className="text-xs text-gray-600">Symptoms <span className="text-gray-400">(optional if photo provided)</span></Label>
+                  <Textarea id="symptoms" placeholder="e.g. Yellowing leaves with brown spots..." rows={2} value={diseaseForm.imageDescription} onChange={e => setDiseaseForm({ ...diseaseForm, imageDescription: e.target.value })} className="text-sm bg-white/60 border-white/60" />
                 </div>
-                <Button type="submit" className="w-full relative" size="sm" disabled={isRunning}>
-                  {isRunning ? <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />{archiving ? "Archiving to IPFS..." : t("ai.analyzing")}</> : <><Camera className="w-3.5 h-3.5 mr-1.5" />{t("ai.analyzeDisease")} {walletAddress && <span className="absolute right-3 text-[9px] bg-white/20 px-1.5 py-0.5 rounded-full">+10 FLOW</span>}</>}
+                <Button type="submit" className="w-full relative bg-violet-600 hover:bg-violet-700 text-white" size="sm" disabled={isRunning}>
+                  {isRunning
+                    ? <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />{archiving ? "Archiving to IPFS..." : t("ai.analyzing")}</>
+                    : <><Camera className="w-3.5 h-3.5 mr-1.5" />{t("ai.analyzeDisease")} {walletAddress && <span className="absolute right-3 text-[9px] bg-white/20 px-1.5 py-0.5 rounded-full">+10 FLOW</span>}</>
+                  }
                 </Button>
               </form>
-            </CardContent>
-          </Card>
+            </div>
 
-          {/* Disease result */}
-          {diagnosisData && (
-            <Card className="border-destructive/30 bg-destructive/5">
-              <CardHeader className="pb-2 pt-3">
-                <CardTitle className="text-sm text-destructive flex items-center gap-1.5">
-                  <CheckCircle2 className="w-4 h-4 text-green-600" />{t("ai.diseaseDetected")}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="bg-background p-2 rounded-lg text-center shadow-sm">
-                    <p className="text-[10px] uppercase text-muted-foreground font-bold">Disease</p>
-                    <p className="font-bold text-sm text-destructive truncate">{diagnosisData.diseaseName}</p>
+            {/* Disease result */}
+            {diagnosisData && (
+              <div className={cn(glassCard, "p-4 border-red-200/50 bg-red-50/20")}>
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-7 h-7 rounded-lg bg-emerald-100 flex items-center justify-center">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
                   </div>
-                  <div className="bg-background p-2 rounded-lg text-center shadow-sm">
-                    <p className="text-[10px] uppercase text-muted-foreground font-bold">Confidence</p>
-                    <p className="font-bold text-sm">{diagnosisData.confidencePercent}%</p>
+                  <p className="text-sm font-bold text-gray-800">{t("ai.diseaseDetected")}</p>
+                </div>
+                <div className="grid grid-cols-2 gap-2 mb-3">
+                  <div className="bg-white/50 backdrop-blur-sm p-2 rounded-xl text-center">
+                    <p className="text-[10px] uppercase text-gray-400 font-bold">Disease</p>
+                    <p className="font-bold text-sm text-red-600 truncate">{diagnosisData.diseaseName}</p>
+                  </div>
+                  <div className="bg-white/50 backdrop-blur-sm p-2 rounded-xl text-center">
+                    <p className="text-[10px] uppercase text-gray-400 font-bold">Confidence</p>
+                    <p className="font-bold text-sm text-gray-800">{diagnosisData.confidencePercent}%</p>
                   </div>
                 </div>
                 <div className="space-y-2 text-xs">
@@ -758,17 +766,17 @@ export default function AiHub() {
                     { label: "Severity", value: diagnosisData.severity },
                     { label: "Treatment", value: diagnosisData.treatment },
                   ].map(item => (
-                    <div key={item.label} className="p-2.5 bg-background rounded-lg border border-border">
-                      <p className="font-semibold mb-0.5">{item.label}</p>
-                      <p className="text-muted-foreground">{item.value}</p>
+                    <div key={item.label} className="p-2.5 bg-white/50 backdrop-blur-sm rounded-xl border border-white/60">
+                      <p className="font-semibold mb-0.5 text-gray-700">{item.label}</p>
+                      <p className="text-gray-600">{item.value}</p>
                     </div>
                   ))}
                 </div>
 
                 {/* IPFS Evidence */}
                 {evidence && (
-                  <div className="bg-green-50 border border-green-200 rounded-lg p-2.5 space-y-2">
-                    <div className="flex items-center gap-1.5 text-green-700 text-xs font-semibold">
+                  <div className="mt-3 bg-emerald-50/80 border border-emerald-200 rounded-xl p-2.5 space-y-2">
+                    <div className="flex items-center gap-1.5 text-emerald-700 text-xs font-semibold">
                       <Database className="w-3 h-3" />Evidence Archived to Filecoin/IPFS
                     </div>
                     {[
@@ -776,34 +784,34 @@ export default function AiHub() {
                       ...(evidence.imageCid !== evidence.reportCid ? [{ label: "Photo CID", cid: evidence.imageCid, url: evidence.imageUrl }] : []),
                     ].map(({ label, cid, url }) => (
                       <div key={label} className="space-y-0.5">
-                        <p className="text-[10px] text-muted-foreground font-medium">{label}</p>
+                        <p className="text-[10px] text-gray-500 font-medium">{label}</p>
                         <div className="flex items-center gap-1.5">
-                          <code className="text-[10px] font-mono text-green-800 flex-1 truncate">{cid}</code>
-                          <button onClick={() => copyToClipboard(cid, label)} className="text-green-600">
+                          <code className="text-[10px] font-mono text-emerald-800 flex-1 truncate">{cid}</code>
+                          <button onClick={() => copyToClipboard(cid, label)} className="text-emerald-600">
                             {copiedCid === label ? <CheckCircle2 className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
                           </button>
                           <a href={url} target="_blank" rel="noopener noreferrer" className="text-blue-500"><ExternalLink className="w-3 h-3" /></a>
                         </div>
                       </div>
                     ))}
-                    <div className={cn("text-[10px] px-1.5 py-0.5 rounded w-fit font-medium", evidence.real ? "bg-green-200 text-green-800" : "bg-yellow-100 text-yellow-700")}>
+                    <div className={cn("text-[10px] px-1.5 py-0.5 rounded w-fit font-medium", evidence.real ? "bg-emerald-200 text-emerald-800" : "bg-amber-100 text-amber-700")}>
                       {evidence.real ? "✅ Real Filecoin CID" : "⚡ Simulated (IPFS offline)"}
                     </div>
                   </div>
                 )}
 
                 {/* Lit Vault */}
-                <div className="border border-orange-300 bg-orange-50/40 rounded-lg p-2.5 space-y-2">
+                <div className="mt-3 border border-orange-300/60 bg-orange-50/50 rounded-xl p-2.5 space-y-2">
                   <div className="flex items-center gap-1.5">
                     <Lock className="w-3.5 h-3.5 text-orange-600" />
                     <p className="text-xs font-bold text-orange-800">Encrypt to Private Vault</p>
                   </div>
                   {litVaultRecord ? (
-                    <div className="bg-green-50 border border-green-200 rounded-lg p-2 space-y-1">
-                      <div className="flex items-center gap-1 text-green-700 text-[11px] font-semibold">
+                    <div className="bg-emerald-50/80 border border-emerald-200 rounded-lg p-2 space-y-1">
+                      <div className="flex items-center gap-1 text-emerald-700 text-[11px] font-semibold">
                         <ShieldCheck className="w-3 h-3" />Encrypted on Filecoin
                       </div>
-                      <code className="text-[10px] font-mono text-green-800 block truncate">{litVaultRecord.filecoinCid}</code>
+                      <code className="text-[10px] font-mono text-emerald-800 block truncate">{litVaultRecord.filecoinCid}</code>
                     </div>
                   ) : (
                     <Button size="sm" variant="outline" className="w-full border-orange-400 text-orange-700 hover:bg-orange-100 h-7 text-[11px]" onClick={() => handleEncryptDiseaseToVault()} disabled={litEncryptMutation.isPending}>
@@ -811,24 +819,24 @@ export default function AiHub() {
                     </Button>
                   )}
                 </div>
-              </CardContent>
-            </Card>
-          )}
+              </div>
+            )}
 
-          {/* Disease history */}
-          {diseaseHistory && diseaseHistory.length > 0 && (
-            <div className="space-y-2">
-              <p className="font-semibold text-sm px-1 flex items-center gap-1.5"><History className="w-3.5 h-3.5" />{t("ai.scanHistory")}</p>
-              {diseaseHistory.slice(0, 3).map((scan: any, idx: number) => (
-                <Card key={scan.id}>
-                  <CardContent className="p-3">
+            {/* Disease history */}
+            {diseaseHistory && diseaseHistory.length > 0 && (
+              <div className="space-y-2">
+                <p className="font-semibold text-sm px-1 flex items-center gap-1.5 text-gray-700">
+                  <History className="w-3.5 h-3.5 text-violet-500" />{t("ai.scanHistory")}
+                </p>
+                {diseaseHistory.slice(0, 3).map((scan: any) => (
+                  <div key={scan.id} className={cn(glassCard, "p-3")}>
                     <div className="flex items-start justify-between">
                       <div className="space-y-0.5">
-                        <p className="text-sm font-medium">{scan.diseaseName}</p>
-                        <p className="text-xs text-muted-foreground">{scan.plantName} · {scan.confidencePercent}% confidence</p>
-                        <p className="text-xs text-muted-foreground">{new Date(scan.createdAt).toLocaleDateString()}</p>
+                        <p className="text-sm font-medium text-gray-800">{scan.diseaseName}</p>
+                        <p className="text-xs text-gray-500">{scan.plantName} · {scan.confidencePercent}% confidence</p>
+                        <p className="text-xs text-gray-400">{new Date(scan.createdAt).toLocaleDateString()}</p>
                       </div>
-                      <div className={cn("text-[10px] font-semibold px-1.5 py-0.5 rounded-full", scan.severity === "LOW" ? "bg-green-100 text-green-700" : scan.severity === "HIGH" ? "bg-red-100 text-red-700" : "bg-yellow-100 text-yellow-700")}>
+                      <div className={cn("text-[10px] font-semibold px-1.5 py-0.5 rounded-full", scan.severity === "LOW" ? "bg-emerald-100 text-emerald-700" : scan.severity === "HIGH" ? "bg-red-100 text-red-700" : "bg-amber-100 text-amber-700")}>
                         {scan.severity}
                       </div>
                     </div>
@@ -837,185 +845,163 @@ export default function AiHub() {
                         <Lock className="w-3 h-3" />Encrypt this scan to vault
                       </button>
                     )}
-                  </CardContent>
-                </Card>
-              ))}
+                  </div>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          {/* ══ TAB 3 — CHARTS & ANALYTICS ══ */}
+          <TabsContent value="charts" className="space-y-4 mt-3">
+
+            {/* Violet analytics summary accent card */}
+            <div className="relative rounded-2xl overflow-hidden shadow-lg transition-all duration-200 hover:-translate-y-1 hover:shadow-2xl hover:shadow-violet-500/25 active:translate-y-0"
+              style={{ background: "linear-gradient(135deg, #7c3aed 0%, #8b5cf6 50%, #a78bfa 100%)", border: "1px solid rgba(255,255,255,0.25)" }}>
+              <div className="absolute -top-3 -right-3 w-20 h-20 rounded-full bg-white/10 blur-2xl" />
+              <div className="relative p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-7 h-7 rounded-lg bg-white/20 flex items-center justify-center">
+                    <Activity className="w-3.5 h-3.5 text-white" />
+                  </div>
+                  <p className="text-sm font-bold text-white">Analytics Overview</p>
+                </div>
+                <div className="grid grid-cols-4 gap-2">
+                  {[
+                    { label: "Readings", value: loadingSummary ? "-" : String(summary?.totalSensorReadings ?? 0) },
+                    { label: "Avg Health", value: loadingSummary ? "-" : `${summary?.avgCropHealth != null ? Math.round(summary.avgCropHealth) : 0}%` },
+                    { label: "Avg pH", value: loadingSummary ? "-" : summary?.avgSoilPh != null ? Number(summary.avgSoilPh).toFixed(1) : "-" },
+                    { label: "Moisture", value: loadingSummary ? "-" : `${summary?.avgMoisture != null ? Math.round(summary.avgMoisture) : 0}%` },
+                  ].map(({ label, value }) => (
+                    <div key={label} className="bg-white/20 backdrop-blur-sm rounded-xl p-2 text-center">
+                      <p className="text-base font-bold text-white">{value}</p>
+                      <p className="text-[9px] text-violet-100/80">{label}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
-          )}
-        </TabsContent>
 
-        {/* ══════════════════════════════════════════════════════════
-            TAB 3 — CHARTS & ANALYTICS
-        ══════════════════════════════════════════════════════════ */}
-        <TabsContent value="charts" className="space-y-4 mt-3">
-          {/* Stats grid */}
-          <div className="grid grid-cols-2 gap-3">
-            {[
-              { icon: Activity, label: "Total Readings", value: loadingSummary ? "-" : String(summary?.totalSensorReadings ?? 0) },
-              { icon: TrendingUp, label: "Avg Health", value: loadingSummary ? "-" : `${summary?.avgCropHealth != null ? Math.round(summary.avgCropHealth) : 0}%` },
-              { icon: FlaskConical, label: "Avg pH", value: loadingSummary ? "-" : summary?.avgSoilPh != null ? Number(summary.avgSoilPh).toFixed(1) : "-" },
-              { icon: Droplets, label: "Avg Moisture", value: loadingSummary ? "-" : `${summary?.avgMoisture != null ? Math.round(summary.avgMoisture) : 0}%` },
-            ].map(({ icon: Icon, label, value }) => (
-              <Card key={label}>
-                <CardContent className="p-3 flex flex-col items-center text-center">
-                  <Icon className="w-4 h-4 text-primary mb-1" />
-                  <p className="text-xl font-bold">{value}</p>
-                  <p className="text-[11px] text-muted-foreground">{label}</p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-
-          {/* NPK Chart */}
-          <Card>
-            <CardHeader className="pb-1 pt-3">
-              <CardTitle className="text-sm flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-green-500" />NPK Trends
-              </CardTitle>
-              <CardDescription className="text-xs">Nitrogen · Phosphorus · Potassium (mg/kg)</CardDescription>
-            </CardHeader>
-            <CardContent>
+            {/* NPK Chart */}
+            <div className={cn(glassCard, "p-4")}>
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-7 h-7 rounded-lg bg-emerald-100 flex items-center justify-center">
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-gray-800">NPK Trends</p>
+                  <p className="text-[11px] text-gray-500">Nitrogen · Phosphorus · Potassium (mg/kg)</p>
+                </div>
+              </div>
               <div className="h-[180px] w-full">
                 {loadingHistory ? <Skeleton className="w-full h-full" /> : chartData.length > 0 ? (
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={chartData} margin={{ top: 5, right: 5, bottom: 5, left: -20 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.06)" vertical={false} />
                       <XAxis dataKey="createdAt" tickFormatter={t => new Date(t).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} stroke="hsl(var(--muted-foreground))" fontSize={10} tickLine={false} />
                       <YAxis stroke="hsl(var(--muted-foreground))" fontSize={10} tickLine={false} axisLine={false} />
-                      <Tooltip contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px", fontSize: 11 }} labelFormatter={l => new Date(l).toLocaleString()} />
+                      <Tooltip contentStyle={{ backgroundColor: "rgba(255,255,255,0.95)", border: "1px solid rgba(124,58,237,0.2)", borderRadius: "12px", fontSize: 11, backdropFilter: "blur(8px)" }} labelFormatter={l => new Date(l).toLocaleString()} />
                       <Legend wrapperStyle={{ fontSize: 11 }} />
                       <Line type="monotone" dataKey="nitrogen" name="N" stroke="#22c55e" strokeWidth={2} dot={false} />
                       <Line type="monotone" dataKey="phosphorus" name="P" stroke="#f97316" strokeWidth={2} dot={false} />
                       <Line type="monotone" dataKey="potassium" name="K" stroke="#a855f7" strokeWidth={2} dot={false} />
                     </LineChart>
                   </ResponsiveContainer>
-                ) : <div className="h-full flex items-center justify-center text-sm text-muted-foreground">No data yet — trigger LIVE sensor on Home page</div>}
+                ) : <div className="h-full flex items-center justify-center text-sm text-gray-400">No data yet — trigger LIVE sensor on Home page</div>}
               </div>
-            </CardContent>
-          </Card>
+            </div>
 
-          {/* pH + Moisture Chart */}
-          <Card>
-            <CardHeader className="pb-1 pt-3">
-              <CardTitle className="text-sm flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-blue-500" />pH & Moisture Trends
-              </CardTitle>
-              <CardDescription className="text-xs">Soil pH · Moisture %</CardDescription>
-            </CardHeader>
-            <CardContent>
+            {/* pH + Moisture Chart */}
+            <div className={cn(glassCard, "p-4")}>
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-7 h-7 rounded-lg bg-blue-100 flex items-center justify-center">
+                  <span className="w-2.5 h-2.5 rounded-full bg-blue-500" />
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-gray-800">pH & Moisture Trends</p>
+                  <p className="text-[11px] text-gray-500">Soil pH · Moisture %</p>
+                </div>
+              </div>
               <div className="h-[180px] w-full">
                 {loadingHistory ? <Skeleton className="w-full h-full" /> : chartData.length > 0 ? (
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={chartData} margin={{ top: 5, right: 5, bottom: 5, left: -20 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.06)" vertical={false} />
                       <XAxis dataKey="createdAt" tickFormatter={t => new Date(t).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} stroke="hsl(var(--muted-foreground))" fontSize={10} tickLine={false} />
                       <YAxis stroke="hsl(var(--muted-foreground))" fontSize={10} tickLine={false} axisLine={false} />
-                      <Tooltip contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px", fontSize: 11 }} labelFormatter={l => new Date(l).toLocaleString()} />
+                      <Tooltip contentStyle={{ backgroundColor: "rgba(255,255,255,0.95)", border: "1px solid rgba(59,130,246,0.2)", borderRadius: "12px", fontSize: 11, backdropFilter: "blur(8px)" }} labelFormatter={l => new Date(l).toLocaleString()} />
                       <Legend wrapperStyle={{ fontSize: 11 }} />
                       <Line type="monotone" dataKey="ph" name="pH" stroke="#3b82f6" strokeWidth={2} dot={false} />
-                      <Line type="monotone" dataKey="moisture" name="Moisture %" stroke="#06b6d4" strokeWidth={2} dot={false} />
+                      <Line type="monotone" dataKey="moisture" name="Moisture%" stroke="#06b6d4" strokeWidth={2} dot={false} />
                     </LineChart>
                   </ResponsiveContainer>
-                ) : <div className="h-full flex items-center justify-center text-sm text-muted-foreground">No data yet</div>}
+                ) : <div className="h-full flex items-center justify-center text-sm text-gray-400">No data yet — trigger LIVE sensor on Home page</div>}
               </div>
-            </CardContent>
-          </Card>
+            </div>
 
-          {/* System activity */}
-          <Card>
-            <CardHeader className="pb-2 pt-3">
-              <CardTitle className="text-sm">{t("analytics.systemActivity")}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {loadingLogs ? (
-                <div className="space-y-2"><Skeleton className="h-10 w-full" /><Skeleton className="h-10 w-full" /></div>
-              ) : logs && logs.length > 0 ? (
-                <div className="space-y-2">
-                  {logs.map((log: any) => (
-                    <div key={log.id} className={`p-2.5 rounded-lg border-l-4 ${getLogColor(log.eventType)}`}>
-                      <div className="flex justify-between items-start mb-0.5">
-                        <span className="text-[10px] font-bold uppercase tracking-wider">{log.eventType}</span>
-                        <span className="text-[10px] text-muted-foreground">{new Date(log.createdAt).toLocaleTimeString()}</span>
+            {/* Activity Log */}
+            {logs && logs.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-sm font-bold text-gray-700 px-1 flex items-center gap-1.5">
+                  <Activity className="w-3.5 h-3.5 text-violet-500" />Activity Log
+                </p>
+                <div className="space-y-1.5 max-h-52 overflow-y-auto pr-1">
+                  {logs.slice(0, 10).map((log: any) => (
+                    <div key={log.id}
+                      className={cn("border-l-2 pl-3 py-1.5 rounded-r-xl text-xs transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm", getLogColor(log.eventType))}>
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-semibold text-gray-700">{log.eventType}</span>
+                        <span className="text-[10px] text-gray-400 shrink-0">{new Date(log.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
                       </div>
-                      <p className="text-xs font-medium">{log.description}</p>
+                      {log.details && <p className="text-gray-500 mt-0.5 leading-tight truncate">{typeof log.details === "string" ? log.details : JSON.stringify(log.details)}</p>}
                     </div>
                   ))}
                 </div>
-              ) : (
-                <div className="text-center text-muted-foreground py-4 text-sm">{t("analytics.noActivity")}</div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* ══════════════════════════════════════════════════════════
-            TAB 4 — OPEN AGRICULTURAL DATA COMMONS
-        ══════════════════════════════════════════════════════════ */}
-        <TabsContent value="market" className="space-y-4 mt-3">
-
-          {/* Header card — publish action */}
-          <Card className="bg-gradient-to-br from-violet-50 to-indigo-50 border-violet-100">
-            <CardContent className="p-4">
-              <div className="flex items-start gap-3 mb-3">
-                <div className="w-9 h-9 rounded-xl bg-violet-600 flex items-center justify-center shrink-0">
-                  <Globe className="w-4.5 h-4.5 text-white" />
-                </div>
-                <div>
-                  <p className="font-semibold text-sm">Open Agricultural Data Commons</p>
-                  <p className="text-xs text-muted-foreground">Publish your soil sensor data to <span className="font-semibold text-violet-700">IPFS/Filecoin</span> — verifiable, permanent, citable</p>
-                </div>
               </div>
+            )}
+          </TabsContent>
 
-              {/* dataset preview */}
-              {hasData && (
-                <div className="bg-white/70 rounded-lg p-2.5 mb-3 space-y-1.5">
-                  <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">Dataset Preview — {recordCount} readings</p>
-                  <div className="grid grid-cols-5 gap-1">
-                    {[
-                      { label: "N", value: sensorAvg("nitrogen").toFixed(0) + " mg/kg", color: "text-green-700 bg-green-100" },
-                      { label: "P", value: sensorAvg("phosphorus").toFixed(0) + " mg/kg", color: "text-orange-700 bg-orange-100" },
-                      { label: "K", value: sensorAvg("potassium").toFixed(0) + " mg/kg", color: "text-purple-700 bg-purple-100" },
-                      { label: "pH", value: sensorAvg("ph").toFixed(1), color: "text-blue-700 bg-blue-100" },
-                      { label: "H₂O", value: sensorAvg("moisture").toFixed(0) + "%", color: "text-cyan-700 bg-cyan-100" },
-                    ].map(({ label, value, color }) => (
-                      <div key={label} className={cn("rounded p-1.5 text-center", color)}>
-                        <p className="text-[9px] font-bold">{label}</p>
-                        <p className="text-[9px] font-semibold leading-tight">{value}</p>
-                      </div>
-                    ))}
+          {/* ══ TAB 4 — DATA COMMONS / MARKET ══ */}
+          <TabsContent value="market" className="space-y-4 mt-3">
+
+            {/* Publish card — violet accent */}
+            <div className="relative rounded-2xl overflow-hidden shadow-lg transition-all duration-200 hover:-translate-y-1 hover:shadow-2xl hover:shadow-violet-500/25 active:translate-y-0"
+              style={{ background: "linear-gradient(135deg, #5b21b6 0%, #7c3aed 50%, #8b5cf6 100%)", border: "1px solid rgba(255,255,255,0.25)" }}>
+              <div className="absolute -top-3 -right-3 w-24 h-24 rounded-full bg-white/10 blur-2xl" />
+              <div className="absolute inset-0 opacity-[0.04]"
+                style={{ backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.9) 1px, transparent 1px)", backgroundSize: "16px 16px" }} />
+              <div className="relative p-4">
+                <div className="flex items-start gap-3 mb-3">
+                  <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
+                    <Database className="w-4.5 h-4.5 text-white" />
                   </div>
-                  <p className="text-[10px] text-muted-foreground">License: CC BY 4.0 · Device: ESP32-FARM-001 · Schema: smartfasal/soil-sensor/v1</p>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold text-sm text-white">Publish to Open Data Commons</p>
+                    <p className="text-xs text-violet-100/80 mt-0.5">Share {recordCount} sensor readings · earn +15 FLOW</p>
+                  </div>
                 </div>
-              )}
+                <Button onClick={handlePublishData} disabled={publishing || !hasData}
+                  className="w-full bg-white/20 hover:bg-white/30 text-white border border-white/30 backdrop-blur-sm" size="sm">
+                  {publishing
+                    ? <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />Publishing…</>
+                    : <><Globe className="w-3.5 h-3.5 mr-1.5" />Publish Dataset {walletAddress && <span className="ml-1 text-[9px] bg-white/20 px-1.5 py-0.5 rounded-full">+15 FLOW</span>}</>
+                  }
+                </Button>
+                {!hasData && <p className="text-[10px] text-center text-violet-100/70 mt-1.5">Generate sensor readings first from the Home page</p>}
+              </div>
+            </div>
 
-              <Button
-                onClick={handlePublishData}
-                disabled={publishing || !hasData}
-                className="w-full bg-violet-600 hover:bg-violet-700 text-white"
-                size="sm"
-              >
-                {publishing
-                  ? <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />Uploading to IPFS…</>
-                  : <><Globe className="w-3.5 h-3.5 mr-1.5" />Publish to Data Commons {walletAddress && <span className="ml-1 text-[9px] bg-white/20 px-1.5 py-0.5 rounded-full">+15 pts</span>}</>
-                }
-              </Button>
-              {!hasData && <p className="text-[10px] text-center text-muted-foreground mt-1.5">Generate sensor readings first from the Home page</p>}
-            </CardContent>
-          </Card>
-
-          {/* My published datasets */}
-          {myPublished.length > 0 && (
-            <div className="space-y-2">
-              <p className="text-sm font-semibold flex items-center gap-1.5">
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> My Published Datasets
-              </p>
-              {myPublished.map(entry => (
-                <Card key={entry.id} className="border-emerald-200 bg-emerald-50/30">
-                  <CardContent className="p-3 space-y-2">
-                    <div className="flex items-start justify-between gap-2">
+            {/* My published datasets */}
+            {myPublished.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-sm font-semibold flex items-center gap-1.5 text-gray-700">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> My Published Datasets
+                </p>
+                {myPublished.map(entry => (
+                  <div key={entry.id} className={cn(glassCard, "p-3 border-emerald-200/50 bg-emerald-50/25")}>
+                    <div className="flex items-start justify-between gap-2 mb-2">
                       <div className="min-w-0">
-                        <p className="text-xs font-semibold leading-tight truncate">{entry.datasetTitle}</p>
-                        <p className="text-[10px] text-muted-foreground mt-0.5">{entry.recordCount} readings · {entry.location}</p>
+                        <p className="text-xs font-semibold leading-tight truncate text-gray-800">{entry.datasetTitle}</p>
+                        <p className="text-[10px] text-gray-500 mt-0.5">{entry.recordCount} readings · {entry.location}</p>
                       </div>
                       {entry.isReal === "true" ? (
                         <span className="shrink-0 text-[9px] bg-emerald-600 text-white rounded-full px-2 py-0.5 font-semibold">LIVE ON IPFS</span>
@@ -1023,86 +1009,72 @@ export default function AiHub() {
                         <span className="shrink-0 text-[9px] bg-violet-100 text-violet-700 rounded-full px-2 py-0.5 font-semibold">IPFS HASH</span>
                       )}
                     </div>
-                    <div className="bg-white/80 rounded p-2 space-y-1">
-                      <p className="text-[10px] font-semibold text-muted-foreground">Content ID (CID)</p>
+                    <div className="bg-white/60 rounded-xl p-2 space-y-1">
+                      <p className="text-[10px] font-semibold text-gray-400">Content ID (CID)</p>
                       <div className="flex items-center gap-1.5">
                         <code className="text-[10px] font-mono text-violet-800 flex-1 truncate">{entry.cid}</code>
-                        <button
-                          onClick={() => { navigator.clipboard.writeText(entry.cid); toast({ title: "CID copied!" }); }}
-                          className="shrink-0 text-muted-foreground hover:text-foreground"
-                        >
+                        <button onClick={() => { navigator.clipboard.writeText(entry.cid); toast({ title: "CID copied!" }); }} className="shrink-0 text-gray-400 hover:text-gray-700">
                           <Copy className="w-3 h-3" />
                         </button>
                       </div>
-                      <a
-                        href={entry.ipfsUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 text-[10px] text-blue-600 hover:underline"
-                      >
+                      <a href={entry.ipfsUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[10px] text-blue-600 hover:underline">
                         <ExternalLink className="w-2.5 h-2.5" /> View on IPFS Gateway
                       </a>
                     </div>
-                    <div className="flex items-center gap-1 text-[10px] text-emerald-700">
+                    <div className="flex items-center gap-1 text-[10px] text-emerald-700 mt-2">
                       <CheckCircle2 className="w-3 h-3" />
                       Permanently stored · CC BY 4.0 · Anyone can cite this CID
                     </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-
-          {/* Platform-wide data registry */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <p className="text-sm font-semibold flex items-center gap-1.5">
-                <BookOpen className="w-3.5 h-3.5 text-violet-600" /> Community Data Registry
-              </p>
-              <button onClick={fetchCatalog} className="text-[10px] text-muted-foreground hover:text-foreground flex items-center gap-1">
-                <TrendingUp className="w-3 h-3" /> Refresh
-              </button>
-            </div>
-            <p className="text-[11px] text-muted-foreground">Soil datasets contributed by farmers on this platform — each CID is verifiable on IPFS</p>
-
-            {catalogLoading ? (
-              <div className="space-y-2">
-                <Skeleton className="h-16 w-full" />
-                <Skeleton className="h-16 w-full" />
+                  </div>
+                ))}
               </div>
-            ) : catalog.length === 0 ? (
-              <Card>
-                <CardContent className="p-4 text-center">
-                  <Database className="w-8 h-8 mx-auto text-muted-foreground/40 mb-2" />
-                  <p className="text-sm text-muted-foreground">No datasets yet</p>
-                  <p className="text-[11px] text-muted-foreground">Be the first to publish your soil data to the commons</p>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="space-y-2">
-                {/* summary stats */}
-                <div className="grid grid-cols-3 gap-2">
-                  <div className="bg-violet-50 border border-violet-100 rounded-lg p-2 text-center">
-                    <p className="text-base font-bold text-violet-700">{catalog.length}</p>
-                    <p className="text-[10px] text-muted-foreground">Datasets</p>
-                  </div>
-                  <div className="bg-violet-50 border border-violet-100 rounded-lg p-2 text-center">
-                    <p className="text-base font-bold text-violet-700">{catalog.reduce((s, e) => s + e.recordCount, 0).toLocaleString("en-IN")}</p>
-                    <p className="text-[10px] text-muted-foreground">Readings</p>
-                  </div>
-                  <div className="bg-violet-50 border border-violet-100 rounded-lg p-2 text-center">
-                    <p className="text-base font-bold text-violet-700">{catalog.reduce((s, e) => s + e.accessCount, 0)}</p>
-                    <p className="text-[10px] text-muted-foreground">Accesses</p>
-                  </div>
-                </div>
+            )}
 
-                {catalog.map(entry => (
-                  <Card key={entry.id} className="border-violet-100/60">
-                    <CardContent className="p-3 space-y-2">
-                      <div className="flex items-start justify-between gap-2">
+            {/* Platform-wide data registry */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-semibold flex items-center gap-1.5 text-gray-700">
+                  <BookOpen className="w-3.5 h-3.5 text-violet-600" /> Community Data Registry
+                </p>
+                <button onClick={fetchCatalog} className="text-[10px] text-gray-400 hover:text-gray-700 flex items-center gap-1">
+                  <TrendingUp className="w-3 h-3" /> Refresh
+                </button>
+              </div>
+              <p className="text-[11px] text-gray-500">Soil datasets contributed by farmers — each CID is verifiable on IPFS</p>
+
+              {catalogLoading ? (
+                <div className="space-y-2">
+                  <Skeleton className="h-16 w-full rounded-2xl" />
+                  <Skeleton className="h-16 w-full rounded-2xl" />
+                </div>
+              ) : catalog.length === 0 ? (
+                <div className={cn(glassCard, "p-4 text-center")}>
+                  <Database className="w-8 h-8 mx-auto text-violet-300 mb-2" />
+                  <p className="text-sm text-gray-500">No datasets yet</p>
+                  <p className="text-[11px] text-gray-400">Be the first to publish your soil data to the commons</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {/* Summary stats */}
+                  <div className="grid grid-cols-3 gap-2">
+                    {[
+                      { label: "Datasets", value: catalog.length },
+                      { label: "Readings", value: catalog.reduce((s, e) => s + e.recordCount, 0).toLocaleString("en-IN") },
+                      { label: "Accesses", value: catalog.reduce((s, e) => s + e.accessCount, 0) },
+                    ].map(({ label, value }) => (
+                      <div key={label} className="bg-violet-50/60 border border-violet-100/60 rounded-xl p-2 text-center backdrop-blur-sm">
+                        <p className="text-base font-bold text-violet-700">{value}</p>
+                        <p className="text-[10px] text-gray-500">{label}</p>
+                      </div>
+                    ))}
+                  </div>
+
+                  {catalog.map(entry => (
+                    <div key={entry.id} className={cn(glassCard, "p-3")}>
+                      <div className="flex items-start justify-between gap-2 mb-2">
                         <div className="min-w-0 flex-1">
-                          <p className="text-xs font-semibold leading-tight">{entry.datasetTitle}</p>
-                          <p className="text-[10px] text-muted-foreground">{entry.recordCount} readings · {entry.location} · {new Date(entry.createdAt).toLocaleDateString("en-IN")}</p>
+                          <p className="text-xs font-semibold leading-tight text-gray-800">{entry.datasetTitle}</p>
+                          <p className="text-[10px] text-gray-500">{entry.recordCount} readings · {entry.location} · {new Date(entry.createdAt).toLocaleDateString("en-IN")}</p>
                         </div>
                         {entry.isReal === "true" ? (
                           <span className="shrink-0 text-[9px] bg-emerald-600 text-white rounded-full px-2 py-0.5 font-semibold">LIVE</span>
@@ -1112,17 +1084,17 @@ export default function AiHub() {
                       </div>
 
                       {/* NPK mini bars */}
-                      <div className="grid grid-cols-3 gap-1">
+                      <div className="grid grid-cols-3 gap-1 mb-2">
                         {[
-                          { label: "N", value: entry.avgNitrogen.toFixed(0), color: "bg-green-500", max: 300 },
-                          { label: "P", value: entry.avgPhosphorus.toFixed(0), color: "bg-orange-500", max: 150 },
-                          { label: "K", value: entry.avgPotassium.toFixed(0), color: "bg-purple-500", max: 400 },
+                          { label: "N", value: entry.avgNitrogen.toFixed(0), color: "bg-gradient-to-r from-emerald-400 to-green-500", max: 300 },
+                          { label: "P", value: entry.avgPhosphorus.toFixed(0), color: "bg-gradient-to-r from-orange-400 to-amber-500", max: 150 },
+                          { label: "K", value: entry.avgPotassium.toFixed(0), color: "bg-gradient-to-r from-purple-400 to-violet-500", max: 400 },
                         ].map(({ label, value, color, max }) => (
                           <div key={label}>
-                            <div className="flex justify-between text-[9px] text-muted-foreground mb-0.5">
+                            <div className="flex justify-between text-[9px] text-gray-400 mb-0.5">
                               <span>{label}</span><span>{value}</span>
                             </div>
-                            <div className="h-1 bg-muted rounded-full overflow-hidden">
+                            <div className="h-1 bg-white/60 rounded-full overflow-hidden">
                               <div className={cn("h-full rounded-full", color)} style={{ width: `${Math.min(100, (parseFloat(value) / max) * 100)}%` }} />
                             </div>
                           </div>
@@ -1130,7 +1102,7 @@ export default function AiHub() {
                       </div>
 
                       <div className="flex items-center justify-between">
-                        <code className="text-[9px] font-mono text-muted-foreground">{entry.cid.slice(0, 12)}…{entry.cid.slice(-6)}</code>
+                        <code className="text-[9px] font-mono text-gray-400">{entry.cid.slice(0, 12)}…{entry.cid.slice(-6)}</code>
                         <a
                           href={entry.ipfsUrl}
                           target="_blank"
@@ -1143,16 +1115,14 @@ export default function AiHub() {
                           <ExternalLink className="w-2.5 h-2.5" /> Open
                         </a>
                       </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
 
-          {/* What this means callout */}
-          <Card className="border-blue-100 bg-blue-50/40">
-            <CardContent className="p-3">
+            {/* Why this matters callout */}
+            <div className={cn(glassCard, "p-3 border-blue-200/50 bg-blue-50/25")}>
               <div className="flex gap-2">
                 <Users className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
                 <div>
@@ -1162,11 +1132,11 @@ export default function AiHub() {
                   </p>
                 </div>
               </div>
-            </CardContent>
-          </Card>
+            </div>
 
-        </TabsContent>
-      </Tabs>
+          </TabsContent>
+        </Tabs>
+      </div>
     </div>
   );
 }

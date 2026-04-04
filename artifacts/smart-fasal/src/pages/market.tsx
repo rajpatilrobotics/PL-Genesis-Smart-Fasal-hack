@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,7 +12,7 @@ import {
   TrendingUp, TrendingDown, Store, MapPin, Tag, ShoppingBag,
   PlusCircle, Lock, CheckCircle2, FileText, Image, ExternalLink,
   RefreshCw, Search, Star, User, Package, Leaf, Droplets,
-  ChevronRight, Shield, Database, CloudUpload, ArrowRight
+  Shield, Database, CloudUpload, ArrowRight
 } from "lucide-react";
 import {
   useGetMarketPrices, getGetMarketPricesQueryKey,
@@ -22,6 +21,7 @@ import {
   useCreateMarketListing, useBuyMarketListing, useConfirmDelivery,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
+import { cn } from "@/lib/utils";
 
 const IPFS_GATEWAY = "https://gateway.lighthouse.storage/ipfs/";
 
@@ -30,7 +30,6 @@ function cidToUrl(cid: string | null | undefined): string | null {
   return `${IPFS_GATEWAY}${cid}`;
 }
 
-// Real buy links for each product ID — Amazon IN & Flipkart only
 const PRODUCT_BUY_LINKS: Record<number, { label: string; url: string; color: string }[]> = {
   1: [
     { label: "Amazon", url: "https://www.amazon.in/s?k=IFFCO+DAP+fertilizer+50kg", color: "bg-[#FF9900] hover:bg-[#e68a00] text-black" },
@@ -139,9 +138,9 @@ function StarRating({ rating }: { rating: number }) {
   return (
     <div className="flex items-center gap-0.5">
       {[1, 2, 3, 4, 5].map(i => (
-        <Star key={i} className={`w-3 h-3 ${i <= Math.round(rating) ? "fill-amber-400 text-amber-400" : "text-muted-foreground/30"}`} />
+        <Star key={i} className={`w-3 h-3 ${i <= Math.round(rating) ? "fill-amber-400 text-amber-400" : "text-gray-300"}`} />
       ))}
-      <span className="text-[10px] text-muted-foreground ml-0.5">{rating.toFixed(1)}</span>
+      <span className="text-[10px] text-gray-400 ml-0.5">{rating.toFixed(1)}</span>
     </div>
   );
 }
@@ -183,11 +182,9 @@ function DataProvenanceTrail({ listing }: { listing: { imageCid?: string | null;
     { label: "Escrow on Filecoin", cid: listing.escrowStatus === "escrowed" ? listing.receiptCid : null, icon: <Lock className="w-3 h-3" />, done: listing.escrowStatus === "escrowed" || listing.escrowStatus === "released" },
     { label: "Trade Receipt", cid: listing.escrowStatus === "released" ? listing.receiptCid : null, icon: <FileText className="w-3 h-3" />, done: listing.escrowStatus === "released" },
   ];
-
   if (!steps.some(s => s.done)) return null;
-
   return (
-    <div className="pt-2 border-t border-muted space-y-1">
+    <div className="pt-2 border-t border-white/40 space-y-1">
       <p className="text-[10px] font-semibold text-blue-700 flex items-center gap-1 uppercase tracking-wide">
         <span>⬡</span> Protocol Labs Data Trail
       </p>
@@ -198,11 +195,11 @@ function DataProvenanceTrail({ listing }: { listing: { imageCid?: string | null;
               {step.cid ? (
                 <ProtocolBadge cid={step.cid} label={step.label} icon={step.icon} />
               ) : (
-                <span className="inline-flex items-center gap-1 text-[10px] text-green-700 bg-green-50 border border-green-200 rounded px-1.5 py-0.5">
+                <span className="inline-flex items-center gap-1 text-[10px] text-emerald-700 bg-emerald-50 border border-emerald-200 rounded px-1.5 py-0.5">
                   {step.icon} {step.label} ✓
                 </span>
               )}
-              {i < steps.length - 1 && step.done && <ArrowRight className="w-2.5 h-2.5 text-muted-foreground/40" />}
+              {i < steps.length - 1 && step.done && <ArrowRight className="w-2.5 h-2.5 text-gray-300" />}
             </div>
           )
         ))}
@@ -211,48 +208,44 @@ function DataProvenanceTrail({ listing }: { listing: { imageCid?: string | null;
   );
 }
 
+const glassCard = "glass-glow-amber rounded-2xl border border-white/50 bg-white/35 backdrop-blur-2xl hover:bg-white/45";
+
 function MandiPriceCard({ item }: { item: { id: number; crop: string; price: number; unit: string; market: string; state: string; change: number; category?: string | null } }) {
   const up = item.change >= 0;
   return (
-    <Card className="overflow-hidden hover:shadow-md transition-shadow">
-      <CardContent className="p-0">
-        <div className={`flex border-l-4 ${up ? "border-green-500" : "border-red-500"}`}>
-          <div className="p-3.5 flex-1">
-            <div className="flex justify-between items-start mb-1.5">
-              <div>
-                <h3 className="font-bold text-sm leading-tight">{item.crop}</h3>
-                {item.category && (
-                  <span className={`inline-block text-[9px] font-medium border rounded-full px-1.5 py-0 mt-0.5 ${CATEGORY_COLORS[item.category] ?? "bg-muted text-muted-foreground"}`}>
-                    {item.category}
-                  </span>
-                )}
-              </div>
-              <div className={`flex items-center gap-0.5 text-xs font-bold ${up ? "text-green-600" : "text-red-600"}`}>
-                {up ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
-                {Math.abs(item.change)}%
-              </div>
+    <div className={cn(glassCard, "overflow-hidden transition-all duration-200 hover:-translate-y-0.5")}>
+      <div className={`flex border-l-4 rounded-r-2xl ${up ? "border-emerald-500" : "border-red-500"}`}>
+        <div className="p-3.5 flex-1">
+          <div className="flex justify-between items-start mb-1.5">
+            <div>
+              <h3 className="font-bold text-sm leading-tight text-gray-800">{item.crop}</h3>
+              {item.category && (
+                <span className={`inline-block text-[9px] font-medium border rounded-full px-1.5 py-0 mt-0.5 ${CATEGORY_COLORS[item.category] ?? "bg-white/40 text-gray-600"}`}>
+                  {item.category}
+                </span>
+              )}
             </div>
-            <div className="flex items-baseline gap-1.5 mb-2">
-              <span className="text-2xl font-black">₹{item.price.toLocaleString("en-IN")}</span>
-              <span className="text-xs text-muted-foreground">{item.unit}</span>
-            </div>
-            <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
-              <span className="flex items-center gap-0.5"><Store className="w-3 h-3" />{item.market}</span>
-              <span className="flex items-center gap-0.5"><MapPin className="w-3 h-3" />{item.state}</span>
+            <div className={`flex items-center gap-0.5 text-xs font-bold bg-white/40 backdrop-blur-sm rounded-full px-2 py-0.5 ${up ? "text-emerald-600" : "text-red-600"}`}>
+              {up ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
+              {Math.abs(item.change)}%
             </div>
           </div>
+          <div className="flex items-baseline gap-1.5 mb-2">
+            <span className="text-2xl font-black text-amber-700">₹{item.price.toLocaleString("en-IN")}</span>
+            <span className="text-xs text-gray-500">{item.unit}</span>
+          </div>
+          <div className="flex items-center gap-3 text-[11px] text-gray-500">
+            <span className="flex items-center gap-0.5"><Store className="w-3 h-3" />{item.market}</span>
+            <span className="flex items-center gap-0.5"><MapPin className="w-3 h-3" />{item.state}</span>
+          </div>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
 
 function ListingCard({
-  listing,
-  onBuy,
-  onConfirm,
-  isBuying,
-  isConfirming,
+  listing, onBuy, onConfirm, isBuying, isConfirming,
 }: {
   listing: {
     id: number; title: string; description: string; crop: string; price: number;
@@ -261,28 +254,18 @@ function ListingCard({
     receiptCid?: string | null; escrowStatus: string; buyerName?: string | null;
     rating?: number | null; category?: string | null; createdAt: Date;
   };
-  onBuy: () => void;
-  onConfirm: () => void;
-  isBuying: boolean;
-  isConfirming: boolean;
+  onBuy: () => void; onConfirm: () => void; isBuying: boolean; isConfirming: boolean;
 }) {
   const imgSrc = listing.imageCid ? `${IPFS_GATEWAY}${listing.imageCid}` : listing.imageUrl;
-
   return (
-    <Card className="overflow-hidden hover:shadow-lg transition-all duration-300 flex flex-col">
+    <div className={cn(glassCard, "overflow-hidden flex flex-col")}>
       {imgSrc && (
-        <div className="h-44 w-full overflow-hidden bg-muted relative">
-          <img
-            src={imgSrc}
-            alt={listing.title}
-            className="w-full h-full object-cover"
-            onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
-          />
+        <div className="h-44 w-full overflow-hidden relative rounded-t-2xl">
+          <img src={imgSrc} alt={listing.title} className="w-full h-full object-cover"
+            onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
           {listing.imageCid && (
             <div className="absolute top-2 right-2">
-              <span className="text-[9px] bg-blue-900/80 text-blue-100 rounded-full px-2 py-0.5 flex items-center gap-1">
-                ⬡ IPFS
-              </span>
+              <span className="text-[9px] bg-blue-900/80 text-blue-100 rounded-full px-2 py-0.5 flex items-center gap-1">⬡ IPFS</span>
             </div>
           )}
           {listing.status === "sold" && (
@@ -295,10 +278,10 @@ function ListingCard({
         </div>
       )}
 
-      <CardHeader className="p-3.5 pb-2">
-        <div className="flex justify-between items-start gap-2">
+      <div className="p-3.5 pb-2 flex-1">
+        <div className="flex justify-between items-start gap-2 mb-2">
           <div className="flex-1 min-w-0">
-            <CardTitle className="text-sm leading-snug mb-1.5 line-clamp-2">{listing.title}</CardTitle>
+            <p className="text-sm font-bold leading-snug mb-1.5 line-clamp-2 text-gray-800">{listing.title}</p>
             <div className="flex flex-wrap gap-1 items-center">
               <Badge variant="outline" className={`text-[10px] h-4 px-1.5 border ${CATEGORY_COLORS[listing.category ?? ""] ?? ""}`}>
                 {listing.crop}
@@ -307,59 +290,51 @@ function ListingCard({
             </div>
           </div>
           <div className="text-right flex-shrink-0">
-            <p className="text-xl font-black text-primary">₹{listing.price.toLocaleString("en-IN")}</p>
-            <p className="text-[11px] text-muted-foreground">per {listing.unit}</p>
+            <p className="text-xl font-black text-amber-700">₹{listing.price.toLocaleString("en-IN")}</p>
+            <p className="text-[11px] text-gray-500">per {listing.unit}</p>
           </div>
         </div>
-      </CardHeader>
 
-      <CardContent className="p-3.5 pt-1 flex-1 space-y-2.5">
-        <p className="text-xs text-muted-foreground line-clamp-2">{listing.description}</p>
+        <p className="text-xs text-gray-500 line-clamp-2 mb-2">{listing.description}</p>
 
-        <div className="flex justify-between items-center text-xs">
+        <div className="flex justify-between items-center text-xs mb-2">
           <div className="space-y-0.5">
-            <p className="flex items-center text-muted-foreground gap-0.5">
-              <User className="w-3 h-3" />{listing.sellerName}
-            </p>
-            <p className="flex items-center text-muted-foreground gap-0.5">
-              <MapPin className="w-3 h-3" />{listing.location}
-            </p>
+            <p className="flex items-center text-gray-500 gap-0.5"><User className="w-3 h-3" />{listing.sellerName}</p>
+            <p className="flex items-center text-gray-500 gap-0.5"><MapPin className="w-3 h-3" />{listing.location}</p>
           </div>
           <div className="text-right">
-            <p className="text-muted-foreground text-[10px]">Available</p>
-            <p className="font-bold">{listing.quantity} {listing.unit}</p>
+            <p className="text-gray-400 text-[10px]">Available</p>
+            <p className="font-bold text-gray-800">{listing.quantity} {listing.unit}</p>
             {listing.rating && <StarRating rating={listing.rating} />}
           </div>
         </div>
 
         {listing.buyerName && (
-          <p className="text-[11px] text-muted-foreground">
-            Buyer: <span className="font-medium text-foreground">{listing.buyerName}</span>
-          </p>
+          <p className="text-[11px] text-gray-500 mb-2">Buyer: <span className="font-medium text-gray-800">{listing.buyerName}</span></p>
         )}
 
         <DataProvenanceTrail listing={listing} />
-      </CardContent>
+      </div>
 
-      <CardFooter className="p-3.5 pt-0">
+      <div className="p-3.5 pt-0">
         {listing.status !== "sold" ? (
-          <Button className="w-full h-8 text-xs gap-1.5" onClick={onBuy} disabled={isBuying}>
+          <Button className="w-full h-8 text-xs gap-1.5 bg-amber-600 hover:bg-amber-700 text-white" onClick={onBuy} disabled={isBuying}>
             <Lock className="w-3 h-3" /> {isBuying ? "Creating Escrow…" : "Buy with Filecoin Escrow"}
           </Button>
         ) : listing.escrowStatus === "escrowed" ? (
-          <Button className="w-full h-8 text-xs gap-1.5" variant="outline" onClick={onConfirm} disabled={isConfirming}>
+          <Button className="w-full h-8 text-xs gap-1.5 border-amber-400 text-amber-700 hover:bg-amber-50" variant="outline" onClick={onConfirm} disabled={isConfirming}>
             <CheckCircle2 className="w-3 h-3" />
             {isConfirming ? "Minting Receipt…" : "Confirm Delivery & Release Escrow"}
           </Button>
         ) : listing.escrowStatus === "released" ? (
-          <div className="w-full text-center text-xs text-green-600 font-semibold flex items-center justify-center gap-1 py-1">
+          <div className="w-full text-center text-xs text-emerald-600 font-semibold flex items-center justify-center gap-1 py-1">
             <CheckCircle2 className="w-3.5 h-3.5" /> Trade Complete · Permanent Filecoin Receipt
           </div>
         ) : (
           <Button className="w-full h-8 text-xs" variant="secondary" disabled>Sold</Button>
         )}
-      </CardFooter>
-    </Card>
+      </div>
+    </div>
   );
 }
 
@@ -368,62 +343,49 @@ function ProductCard({ product }: {
 }) {
   const { toast } = useToast();
   return (
-    <Card className="overflow-hidden hover:shadow-md transition-all flex flex-col">
-      <CardContent className="p-3.5 flex-1 space-y-2">
-        <div className="flex justify-between items-start gap-2">
-          <div className="flex-1">
-            <p className="font-semibold text-sm leading-tight mb-1">{product.name}</p>
-            <span className={`inline-flex items-center gap-1 text-[10px] border rounded-full px-1.5 py-0 font-medium ${CATEGORY_COLORS[product.category] ?? "bg-muted text-muted-foreground"}`}>
-              {PRODUCT_CATEGORY_ICONS[product.category]}
-              {product.category}
-            </span>
-          </div>
-          <div className="text-right flex-shrink-0">
-            <p className="text-lg font-black text-primary">₹{product.price.toLocaleString("en-IN")}</p>
+    <div className={cn(glassCard, "overflow-hidden flex flex-col p-3.5")}>
+      <div className="flex justify-between items-start gap-2 mb-2">
+        <div className="flex-1">
+          <p className="font-bold text-sm leading-tight mb-1 text-gray-800">{product.name}</p>
+          <span className={`inline-flex items-center gap-1 text-[10px] border rounded-full px-1.5 py-0 font-medium ${CATEGORY_COLORS[product.category] ?? "bg-white/40 text-gray-600"}`}>
+            {PRODUCT_CATEGORY_ICONS[product.category]}
+            {product.category}
+          </span>
+        </div>
+        <div className="text-right flex-shrink-0">
+          <p className="text-lg font-black text-amber-700">₹{product.price.toLocaleString("en-IN")}</p>
+        </div>
+      </div>
+
+      <StarRating rating={product.rating} />
+      <p className="text-[11px] text-gray-500 leading-relaxed line-clamp-3 mt-1.5 mb-2">{product.description}</p>
+
+      <div className="rounded-xl bg-amber-50/60 border border-amber-200/60 px-2 py-1.5 mb-3">
+        <p className="text-[10px] text-amber-800 flex items-start gap-1">
+          <Tag className="w-2.5 h-2.5 mt-0.5 flex-shrink-0" />
+          <span className="italic">{product.reason}</span>
+        </p>
+      </div>
+
+      {PRODUCT_BUY_LINKS[product.id] && (
+        <div className="mb-2">
+          <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wide mb-1.5">Buy Online</p>
+          <div className="flex flex-wrap gap-1.5">
+            {PRODUCT_BUY_LINKS[product.id].map(link => (
+              <a key={link.label} href={link.url} target="_blank" rel="noopener noreferrer"
+                className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-lg transition-colors ${link.color}`}>
+                {link.label}
+                <ExternalLink className="w-2.5 h-2.5" />
+              </a>
+            ))}
           </div>
         </div>
-
-        <StarRating rating={product.rating} />
-        <p className="text-[11px] text-muted-foreground leading-relaxed line-clamp-3">{product.description}</p>
-
-        <div className="rounded-md bg-accent/10 border border-accent/20 px-2 py-1.5">
-          <p className="text-[10px] text-accent-foreground flex items-start gap-1">
-            <Tag className="w-2.5 h-2.5 mt-0.5 flex-shrink-0" />
-            <span className="italic">{product.reason}</span>
-          </p>
-        </div>
-      </CardContent>
-
-      <CardFooter className="p-3.5 pt-0 flex flex-col gap-2">
-        {/* Buy now links */}
-        {PRODUCT_BUY_LINKS[product.id] && (
-          <div className="w-full space-y-1.5">
-            <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wide">Buy Online</p>
-            <div className="flex flex-wrap gap-1.5">
-              {PRODUCT_BUY_LINKS[product.id].map(link => (
-                <a
-                  key={link.label}
-                  href={link.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-md transition-colors ${link.color}`}
-                >
-                  {link.label}
-                  <ExternalLink className="w-2.5 h-2.5" />
-                </a>
-              ))}
-            </div>
-          </div>
-        )}
-        <Button
-          variant="outline"
-          className="w-full h-8 text-xs"
-          onClick={() => toast({ title: "Added to Cart", description: `${product.name} — ₹${product.price.toLocaleString("en-IN")}` })}
-        >
-          <ShoppingBag className="w-3 h-3 mr-1" /> Add to Cart
-        </Button>
-      </CardFooter>
-    </Card>
+      )}
+      <Button variant="outline" className="w-full h-8 text-xs border-amber-300 text-amber-700 hover:bg-amber-50"
+        onClick={() => toast({ title: "Added to Cart", description: `${product.name} — ₹${product.price.toLocaleString("en-IN")}` })}>
+        <ShoppingBag className="w-3 h-3 mr-1" /> Add to Cart
+      </Button>
+    </div>
   );
 }
 
@@ -445,40 +407,22 @@ export default function Market() {
     unit: "kg", sellerName: "", location: "", imageBase64: "",
   });
   const [priceStatus, setPriceStatus] = useState<{
-    isLive: boolean;
-    source: string;
-    lastFetched: string | null;
-    arrivalDate: string | null;
-    apiConfigured: boolean;
+    isLive: boolean; source: string; lastFetched: string | null; arrivalDate: string | null; apiConfigured: boolean;
   } | null>(null);
 
   useEffect(() => {
-    fetch("/api/market/prices/status")
-      .then(r => r.json())
-      .then(data => setPriceStatus(data as typeof priceStatus))
-      .catch(() => {});
+    fetch("/api/market/prices/status").then(r => r.json()).then(data => setPriceStatus(data as typeof priceStatus)).catch(() => {});
   }, []);
 
-  const { data: prices, isLoading: loadingPrices, refetch: refetchPrices } = useGetMarketPrices({
-    query: { queryKey: getGetMarketPricesQueryKey() }
-  });
-
-  const { data: listings, isLoading: loadingListings } = useGetMarketListings({
-    query: { queryKey: getGetMarketListingsQueryKey() }
-  });
-
-  const { data: products, isLoading: loadingProducts } = useGetProductRecommendations({
-    query: { queryKey: getGetProductRecommendationsQueryKey() }
-  });
+  const { data: prices, isLoading: loadingPrices, refetch: refetchPrices } = useGetMarketPrices({ query: { queryKey: getGetMarketPricesQueryKey() } });
+  const { data: listings, isLoading: loadingListings } = useGetMarketListings({ query: { queryKey: getGetMarketListingsQueryKey() } });
+  const { data: products, isLoading: loadingProducts } = useGetProductRecommendations({ query: { queryKey: getGetProductRecommendationsQueryKey() } });
 
   const createListing = useCreateMarketListing();
   const buyListing = useBuyMarketListing();
   const confirmDelivery = useConfirmDelivery();
 
-  const filteredPrices = prices?.filter(p =>
-    priceCategory === "All" || (p as { category?: string | null }).category === priceCategory
-  );
-
+  const filteredPrices = prices?.filter(p => priceCategory === "All" || (p as { category?: string | null }).category === priceCategory);
   const filteredListings = listings?.filter(l =>
     listingSearch === "" ||
     l.title.toLowerCase().includes(listingSearch.toLowerCase()) ||
@@ -487,9 +431,7 @@ export default function Market() {
   );
 
   const allProductCategories = ["All", ...Array.from(new Set(products?.map(p => p.category) ?? []))];
-  const filteredProducts = products?.filter(p =>
-    productCategory === "All" || p.category === productCategory
-  );
+  const filteredProducts = products?.filter(p => productCategory === "All" || p.category === productCategory);
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -506,12 +448,7 @@ export default function Market() {
   const handleCreateListing = (e: React.FormEvent) => {
     e.preventDefault();
     createListing.mutate({
-      data: {
-        ...listingForm,
-        price: Number(listingForm.price),
-        quantity: Number(listingForm.quantity),
-        imageBase64: listingForm.imageBase64 || undefined,
-      }
+      data: { ...listingForm, price: Number(listingForm.price), quantity: Number(listingForm.quantity), imageBase64: listingForm.imageBase64 || undefined }
     }, {
       onSuccess: () => {
         toast({ title: "⬡ Listed on IPFS + Filecoin", description: "Your produce is now live on the decentralized market." });
@@ -526,18 +463,15 @@ export default function Market() {
 
   const handleBuy = () => {
     if (buyDialogId == null) return;
-    buyListing.mutate(
-      { id: buyDialogId, data: { buyerName: buyerNameInput || "Anonymous Buyer" } },
-      {
-        onSuccess: () => {
-          toast({ title: "⬡ Funds Locked in Filecoin Escrow", description: "Release after confirming delivery. Agreement stored on IPFS." });
-          setBuyDialogId(null);
-          setBuyerNameInput("");
-          queryClient.invalidateQueries({ queryKey: getGetMarketListingsQueryKey() });
-        },
-        onError: () => toast({ title: "Error", description: "Purchase failed.", variant: "destructive" }),
-      }
-    );
+    buyListing.mutate({ id: buyDialogId, data: { buyerName: buyerNameInput || "Anonymous Buyer" } }, {
+      onSuccess: () => {
+        toast({ title: "⬡ Funds Locked in Filecoin Escrow", description: "Release after confirming delivery. Agreement stored on IPFS." });
+        setBuyDialogId(null);
+        setBuyerNameInput("");
+        queryClient.invalidateQueries({ queryKey: getGetMarketListingsQueryKey() });
+      },
+      onError: () => toast({ title: "Error", description: "Purchase failed.", variant: "destructive" }),
+    });
   };
 
   const handleConfirmDelivery = (id: number) => {
@@ -553,322 +487,292 @@ export default function Market() {
   const selectedListing = listings?.find(l => l.id === buyDialogId);
 
   return (
-    <div className="space-y-5 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      {/* Hero Header */}
-      <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-orange-500 via-amber-500 to-yellow-500 p-4 shadow-lg">
-        <div className="absolute -top-6 -right-6 w-28 h-28 rounded-full bg-white/10 blur-xl" />
-        <div className="absolute bottom-0 left-0 w-20 h-20 rounded-full bg-yellow-300/20 blur-lg" />
-        <div className="relative flex items-center justify-between">
-          <div>
-            <div className="flex items-center gap-2.5 mb-1">
-              <div className="w-7 h-7 rounded-lg bg-white/20 flex items-center justify-center shrink-0">
-                <Store className="w-4 h-4 text-white" />
-              </div>
-              <h2 className="text-xl font-extrabold text-white tracking-tight">Marketplace</h2>
-            </div>
-            <p className="text-orange-100/70 text-xs mt-0.5">Live Mandi Prices · P2P Trade · Filecoin Escrow</p>
-          </div>
-          <a
-            href="https://lighthouse.storage"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-1.5 text-xs font-bold text-orange-900 bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-md hover:bg-white transition-all"
-          >
-            <span>⬡</span> Protocol Labs
-          </a>
-        </div>
+    <div className="relative -mx-4 -mt-5 min-h-screen animate-in fade-in slide-in-from-bottom-4 duration-500"
+      style={{ background: "linear-gradient(165deg, #fffbeb 0%, #fef3c7 28%, #fff7ed 60%, #fefce8 100%)" }}>
+
+      {/* Amber blobs */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute -top-20 -right-20 w-72 h-72 rounded-full bg-amber-300/40 blur-3xl" />
+        <div className="absolute top-1/4 -left-16 w-60 h-60 rounded-full bg-orange-200/35 blur-3xl" />
+        <div className="absolute top-2/3 right-0 w-56 h-56 rounded-full bg-yellow-300/40 blur-3xl" />
+        <div className="absolute bottom-0 left-1/3 w-40 h-40 rounded-full bg-amber-200/25 blur-2xl" />
       </div>
 
-      <Tabs defaultValue="mandi" className="w-full">
-        <TabsList className="grid w-full grid-cols-3 h-auto p-1">
-          <TabsTrigger value="mandi" className="py-1.5 text-xs">📊 {t("market.mandiPrices")}</TabsTrigger>
-          <TabsTrigger value="p2p" className="py-1.5 text-xs">🏪 {t("market.p2pTrade")}</TabsTrigger>
-          <TabsTrigger value="products" className="py-1.5 text-xs">🌿 {t("market.agriInputs")}</TabsTrigger>
-        </TabsList>
+      <div className="relative space-y-5 px-4 pt-5 pb-28">
 
-        {/* ── MANDI PRICES ─────────────────────────────────────────────────── */}
-        <TabsContent value="mandi" className="space-y-4 mt-4">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center gap-2 flex-wrap">
-              {priceStatus?.isLive ? (
-                <span className="inline-flex items-center gap-1 text-[10px] font-bold bg-green-100 text-green-700 border border-green-300 px-2 py-0.5 rounded-full">
-                  <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse inline-block" />
-                  LIVE · AGMARKNET
-                </span>
-              ) : null}
-              <p className="text-[10px] text-muted-foreground">
-                {priceStatus?.isLive
-                  ? `Arrival date: ${priceStatus.arrivalDate ?? "today"} · data.gov.in`
-                  : "Mandi prices · Hourly refresh"}
-              </p>
-            </div>
-            <Button
-              variant="ghost" size="sm" className="h-7 text-xs gap-1"
-              onClick={() => { queryClient.invalidateQueries({ queryKey: getGetMarketPricesQueryKey() }); refetchPrices(); }}
-            >
-              <RefreshCw className="w-3 h-3" /> Refresh
-            </Button>
-          </div>
-
-          {/* Category filter */}
-          <div className="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar">
-            {PRICE_CATEGORIES.map(cat => (
-              <button
-                key={cat}
-                onClick={() => setPriceCategory(cat)}
-                className={`flex-shrink-0 text-[11px] font-medium px-3 py-1 rounded-full border transition-colors ${
-                  priceCategory === cat
-                    ? "bg-primary text-primary-foreground border-primary"
-                    : "bg-background border-border text-muted-foreground hover:border-primary/50"
-                }`}
-              >
-                {cat}
-              </button>
-            ))}
-          </div>
-
-          {/* Price grid */}
-          <div className="grid grid-cols-1 gap-3">
-            {loadingPrices
-              ? Array(6).fill(0).map((_, i) => <Skeleton key={i} className="h-24 w-full rounded-xl" />)
-              : filteredPrices?.map(item => (
-                <MandiPriceCard key={item.id} item={item as typeof item & { category?: string | null }} />
-              ))}
-          </div>
-
-          {/* Market stats bar */}
-          {!loadingPrices && prices && (
-            <div className="grid grid-cols-3 gap-2 pt-2">
-              {[
-                { label: "Gainers", value: prices.filter(p => p.change > 0).length, color: "text-green-600" },
-                { label: "Decliners", value: prices.filter(p => p.change < 0).length, color: "text-red-600" },
-                { label: "Markets", value: new Set(prices.map(p => p.market)).size, color: "text-blue-600" },
-              ].map(s => (
-                <div key={s.label} className="text-center p-2 rounded-lg bg-muted/50 border border-muted">
-                  <p className={`text-lg font-black ${s.color}`}>{s.value}</p>
-                  <p className="text-[10px] text-muted-foreground">{s.label}</p>
+        {/* ── Hero Header ── */}
+        <div className="relative rounded-2xl overflow-hidden p-4 shadow-xl transition-all duration-200 hover:-translate-y-1 hover:shadow-2xl hover:shadow-amber-500/30 active:translate-y-0"
+          style={{ background: "linear-gradient(135deg, #f97316 0%, #f59e0b 45%, #eab308 100%)", border: "1px solid rgba(255,255,255,0.35)" }}>
+          <div className="absolute -top-4 -right-4 w-36 h-36 rounded-full bg-yellow-300/25 blur-2xl" />
+          <div className="absolute bottom-0 left-0 w-28 h-16 rounded-full bg-orange-300/20 blur-xl" />
+          <div className="absolute inset-0 opacity-5"
+            style={{ backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.8) 1px, transparent 1px)", backgroundSize: "20px 20px" }} />
+          <div className="relative flex items-center justify-between">
+            <div>
+              <div className="flex items-center gap-2.5 mb-1">
+                <div className="w-7 h-7 rounded-lg bg-white/20 flex items-center justify-center shrink-0">
+                  <Store className="w-4 h-4 text-white" />
                 </div>
+                <h2 className="text-xl font-extrabold text-white tracking-tight drop-shadow-sm">Marketplace</h2>
+              </div>
+              <p className="text-amber-100/80 text-xs mt-0.5 font-medium">Live Mandi Prices · P2P Trade · Filecoin Escrow</p>
+            </div>
+            <a href="https://lighthouse.storage" target="_blank" rel="noopener noreferrer"
+              className="flex items-center gap-1.5 text-xs font-bold text-orange-900 bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-md hover:bg-white transition-all">
+              <span>⬡</span> Protocol Labs
+            </a>
+          </div>
+        </div>
+
+        <Tabs defaultValue="mandi" className="w-full">
+          <TabsList className="grid w-full grid-cols-3 h-auto p-1 bg-white/50 backdrop-blur-sm border border-white/60">
+            <TabsTrigger value="mandi" className="py-1.5 text-xs">📊 {t("market.mandiPrices")}</TabsTrigger>
+            <TabsTrigger value="p2p" className="py-1.5 text-xs">🏪 {t("market.p2pTrade")}</TabsTrigger>
+            <TabsTrigger value="products" className="py-1.5 text-xs">🌿 {t("market.agriInputs")}</TabsTrigger>
+          </TabsList>
+
+          {/* ── MANDI PRICES ── */}
+          <TabsContent value="mandi" className="space-y-4 mt-4">
+            <div className="flex justify-between items-center">
+              <div className="flex items-center gap-2 flex-wrap">
+                {priceStatus?.isLive ? (
+                  <span className="inline-flex items-center gap-1 text-[10px] font-bold bg-emerald-100 text-emerald-700 border border-emerald-300 px-2 py-0.5 rounded-full">
+                    <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse inline-block" />
+                    LIVE · AGMARKNET
+                  </span>
+                ) : null}
+                <p className="text-[10px] text-gray-500">
+                  {priceStatus?.isLive ? `Arrival date: ${priceStatus.arrivalDate ?? "today"} · data.gov.in` : "Mandi prices · Hourly refresh"}
+                </p>
+              </div>
+              <Button variant="ghost" size="sm" className="h-7 text-xs gap-1 text-gray-600 hover:bg-white/60"
+                onClick={() => { queryClient.invalidateQueries({ queryKey: getGetMarketPricesQueryKey() }); refetchPrices(); }}>
+                <RefreshCw className="w-3 h-3" /> Refresh
+              </Button>
+            </div>
+
+            {/* Category filter */}
+            <div className="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar">
+              {PRICE_CATEGORIES.map(cat => (
+                <button key={cat} onClick={() => setPriceCategory(cat)}
+                  className={`flex-shrink-0 text-[11px] font-medium px-3 py-1 rounded-full border transition-all ${
+                    priceCategory === cat
+                      ? "bg-amber-500 text-white border-amber-500 shadow-sm"
+                      : "bg-white/50 backdrop-blur-sm border-white/60 text-gray-600 hover:border-amber-300 hover:bg-white/70"
+                  }`}>
+                  {cat}
+                </button>
               ))}
             </div>
-          )}
-        </TabsContent>
 
-        {/* ── P2P TRADE ────────────────────────────────────────────────────── */}
-        <TabsContent value="p2p" className="space-y-4 mt-4">
-          {/* Protocol Labs info banner */}
-          <div className="rounded-xl border border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50 p-3">
-            <p className="text-xs font-semibold text-blue-800 flex items-center gap-1 mb-1">
-              ⬡ Powered by Protocol Labs — Decentralized Market
-            </p>
-            <div className="flex flex-wrap gap-2 text-[10px] text-blue-700">
-              <span className="flex items-center gap-1"><CloudUpload className="w-3 h-3" /> Photos on IPFS</span>
-              <span className="flex items-center gap-1"><Lock className="w-3 h-3" /> Escrow on FVM</span>
-              <span className="flex items-center gap-1"><FileText className="w-3 h-3" /> Receipts on Filecoin</span>
-              <span className="flex items-center gap-1"><Database className="w-3 h-3" /> Metadata permanent</span>
+            {/* Price grid */}
+            <div className="grid grid-cols-1 gap-3">
+              {loadingPrices
+                ? Array(6).fill(0).map((_, i) => <Skeleton key={i} className="h-24 w-full rounded-2xl" />)
+                : filteredPrices?.map(item => (
+                  <MandiPriceCard key={item.id} item={item as typeof item & { category?: string | null }} />
+                ))}
             </div>
-          </div>
 
-          {/* Search + Create */}
-          <div className="flex gap-2">
-            <div className="relative flex-1">
-              <Search className="absolute left-2.5 top-2.5 w-3.5 h-3.5 text-muted-foreground" />
-              <Input
-                className="pl-8 h-9 text-sm"
-                placeholder="Search crop, seller, location…"
-                value={listingSearch}
-                onChange={e => setListingSearch(e.target.value)}
-              />
+            {/* Market stats bar */}
+            {!loadingPrices && prices && (
+              <div className="grid grid-cols-3 gap-2 pt-2">
+                {[
+                  { label: "Gainers", value: prices.filter(p => p.change > 0).length, color: "text-emerald-600" },
+                  { label: "Decliners", value: prices.filter(p => p.change < 0).length, color: "text-red-600" },
+                  { label: "Markets", value: new Set(prices.map(p => p.market)).size, color: "text-amber-600" },
+                ].map(s => (
+                  <div key={s.label} className="text-center p-2.5 rounded-2xl bg-white/40 backdrop-blur-sm border border-white/60">
+                    <p className={`text-lg font-black ${s.color}`}>{s.value}</p>
+                    <p className="text-[10px] text-gray-500">{s.label}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          {/* ── P2P TRADE ── */}
+          <TabsContent value="p2p" className="space-y-4 mt-4">
+            {/* Protocol Labs banner */}
+            <div className={cn(glassCard, "p-3 border-blue-200/50 bg-blue-50/25")}>
+              <p className="text-xs font-semibold text-blue-800 flex items-center gap-1 mb-1">
+                ⬡ Powered by Protocol Labs — Decentralized Market
+              </p>
+              <div className="flex flex-wrap gap-2 text-[10px] text-blue-700">
+                <span className="flex items-center gap-1"><CloudUpload className="w-3 h-3" /> Photos on IPFS</span>
+                <span className="flex items-center gap-1"><Lock className="w-3 h-3" /> Escrow on FVM</span>
+                <span className="flex items-center gap-1"><FileText className="w-3 h-3" /> Receipts on Filecoin</span>
+                <span className="flex items-center gap-1"><Database className="w-3 h-3" /> Metadata permanent</span>
+              </div>
             </div>
-            <Dialog open={listingOpen} onOpenChange={setListingOpen}>
-              <DialogTrigger asChild>
-                <Button size="sm" className="h-9 text-xs gap-1 flex-shrink-0">
-                  <PlusCircle className="w-3.5 h-3.5" /> Sell
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-h-[90vh] overflow-y-auto">
+
+            {/* Search + Create */}
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-2.5 top-2.5 w-3.5 h-3.5 text-gray-400" />
+                <Input className="pl-8 h-9 text-sm bg-white/60 border-white/70 backdrop-blur-sm" placeholder="Search crop, seller, location…"
+                  value={listingSearch} onChange={e => setListingSearch(e.target.value)} />
+              </div>
+              <Dialog open={listingOpen} onOpenChange={setListingOpen}>
+                <DialogTrigger asChild>
+                  <Button size="sm" className="h-9 text-xs gap-1 flex-shrink-0 bg-amber-600 hover:bg-amber-700 text-white">
+                    <PlusCircle className="w-3.5 h-3.5" /> Sell
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-h-[90vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle>Create IPFS-Backed Listing</DialogTitle>
+                    <p className="text-xs text-muted-foreground mt-1">Photo → IPFS · Metadata → Filecoin · Escrow on FVM</p>
+                  </DialogHeader>
+                  <form onSubmit={handleCreateListing} className="space-y-3.5 pt-2">
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Produce Photo (stored on IPFS)</Label>
+                      <div className="border-2 border-dashed border-amber-200 rounded-xl p-4 text-center cursor-pointer hover:border-amber-400 transition-colors"
+                        onClick={() => fileInputRef.current?.click()}>
+                        {previewImage ? (
+                          <img src={previewImage} alt="Preview" className="mx-auto max-h-32 object-cover rounded-lg" />
+                        ) : (
+                          <div className="flex flex-col items-center gap-2 text-gray-400">
+                            <Image className="w-8 h-8" />
+                            <span className="text-xs font-medium">Click to upload photo</span>
+                            <span className="text-[10px] text-blue-600">⬡ Stored permanently on IPFS via Lighthouse</span>
+                          </div>
+                        )}
+                      </div>
+                      <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageSelect} />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Listing Title</Label>
+                      <Input required value={listingForm.title} onChange={e => setListingForm({ ...listingForm, title: e.target.value })} placeholder="e.g. Organic Basmati Rice Grade A" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Description</Label>
+                      <Input value={listingForm.description} onChange={e => setListingForm({ ...listingForm, description: e.target.value })} placeholder="Quality, grade, certification…" />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1.5"><Label className="text-xs">Crop Name</Label><Input required value={listingForm.crop} onChange={e => setListingForm({ ...listingForm, crop: e.target.value })} placeholder="e.g. Wheat" /></div>
+                      <div className="space-y-1.5"><Label className="text-xs">Price (₹)</Label><Input type="number" required value={listingForm.price} onChange={e => setListingForm({ ...listingForm, price: e.target.value })} placeholder="2275" /></div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1.5"><Label className="text-xs">Quantity</Label><Input type="number" required value={listingForm.quantity} onChange={e => setListingForm({ ...listingForm, quantity: e.target.value })} /></div>
+                      <div className="space-y-1.5"><Label className="text-xs">Unit</Label><Input required value={listingForm.unit} onChange={e => setListingForm({ ...listingForm, unit: e.target.value })} placeholder="kg, quintal, tonne" /></div>
+                    </div>
+                    <div className="space-y-1.5"><Label className="text-xs">Your Name</Label><Input required value={listingForm.sellerName} onChange={e => setListingForm({ ...listingForm, sellerName: e.target.value })} /></div>
+                    <div className="space-y-1.5"><Label className="text-xs">Location (District, State)</Label><Input required value={listingForm.location} onChange={e => setListingForm({ ...listingForm, location: e.target.value })} placeholder="e.g. Amritsar, Punjab" /></div>
+                    <Button type="submit" className="w-full gap-2 bg-amber-600 hover:bg-amber-700 text-white" disabled={createListing.isPending}>
+                      <span>⬡</span>
+                      {createListing.isPending ? "Uploading to IPFS + Filecoin…" : "List on Decentralized Market"}
+                    </Button>
+                  </form>
+                </DialogContent>
+              </Dialog>
+            </div>
+
+            {/* Buy escrow dialog */}
+            <Dialog open={buyDialogId != null} onOpenChange={(open) => { if (!open) setBuyDialogId(null); }}>
+              <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>Create IPFS-Backed Listing</DialogTitle>
+                  <DialogTitle className="flex items-center gap-2">
+                    <Lock className="w-4 h-4 text-amber-600" /> Lock Funds in Filecoin Escrow
+                  </DialogTitle>
                   <p className="text-xs text-muted-foreground mt-1">
-                    Photo → IPFS · Metadata → Filecoin · Escrow on FVM
+                    Payment locked in a Filecoin FVM escrow contract. Released to seller only after you confirm delivery.
                   </p>
                 </DialogHeader>
-                <form onSubmit={handleCreateListing} className="space-y-3.5 pt-2">
-                  <div className="space-y-1.5">
-                    <Label className="text-xs">Produce Photo (stored on IPFS)</Label>
-                    <div
-                      className="border-2 border-dashed border-muted-foreground/25 rounded-xl p-4 text-center cursor-pointer hover:border-primary/40 transition-colors"
-                      onClick={() => fileInputRef.current?.click()}
-                    >
-                      {previewImage ? (
-                        <img src={previewImage} alt="Preview" className="mx-auto max-h-32 object-cover rounded-lg" />
-                      ) : (
-                        <div className="flex flex-col items-center gap-2 text-muted-foreground">
-                          <Image className="w-8 h-8" />
-                          <span className="text-xs font-medium">Click to upload photo</span>
-                          <span className="text-[10px] text-blue-600">⬡ Stored permanently on IPFS via Lighthouse</span>
-                        </div>
-                      )}
-                    </div>
-                    <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageSelect} />
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <Label className="text-xs">Listing Title</Label>
-                    <Input required value={listingForm.title} onChange={e => setListingForm({ ...listingForm, title: e.target.value })} placeholder="e.g. Organic Basmati Rice Grade A" />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-xs">Description</Label>
-                    <Input value={listingForm.description} onChange={e => setListingForm({ ...listingForm, description: e.target.value })} placeholder="Quality, grade, certification, storage details…" />
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-1.5">
-                      <Label className="text-xs">Crop Name</Label>
-                      <Input required value={listingForm.crop} onChange={e => setListingForm({ ...listingForm, crop: e.target.value })} placeholder="e.g. Wheat" />
+                {selectedListing && (
+                  <div className="space-y-4 pt-2">
+                    <div className="rounded-xl bg-amber-50/60 border border-amber-200/60 p-3.5 space-y-1">
+                      <p className="font-semibold text-sm">{selectedListing.title}</p>
+                      <p className="text-xs text-muted-foreground">{selectedListing.quantity} {selectedListing.unit} of {selectedListing.crop}</p>
+                      <p className="text-muted-foreground text-xs">Seller: {selectedListing.sellerName} · {selectedListing.location}</p>
+                      <p className="text-amber-700 font-black text-2xl mt-1">₹{(selectedListing.price * selectedListing.quantity).toLocaleString("en-IN")}</p>
                     </div>
                     <div className="space-y-1.5">
-                      <Label className="text-xs">Price (₹)</Label>
-                      <Input type="number" required value={listingForm.price} onChange={e => setListingForm({ ...listingForm, price: e.target.value })} placeholder="2275" />
+                      <Label className="text-xs">Your Name (Buyer)</Label>
+                      <Input value={buyerNameInput} onChange={e => setBuyerNameInput(e.target.value)} placeholder="Enter your name" />
                     </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-1.5">
-                      <Label className="text-xs">Quantity</Label>
-                      <Input type="number" required value={listingForm.quantity} onChange={e => setListingForm({ ...listingForm, quantity: e.target.value })} />
+                    <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800 flex items-start gap-2">
+                      <Lock className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
+                      <div>
+                        <p className="font-semibold mb-0.5">How Filecoin Escrow works:</p>
+                        <p>1. Your payment is locked in a smart contract on Filecoin FVM</p>
+                        <p>2. The escrow agreement is stored permanently on IPFS</p>
+                        <p>3. Funds release to the seller only after you confirm delivery</p>
+                      </div>
                     </div>
-                    <div className="space-y-1.5">
-                      <Label className="text-xs">Unit</Label>
-                      <Input required value={listingForm.unit} onChange={e => setListingForm({ ...listingForm, unit: e.target.value })} placeholder="kg, quintal, tonne" />
-                    </div>
+                    <Button className="w-full gap-2 bg-amber-600 hover:bg-amber-700 text-white" onClick={handleBuy} disabled={buyListing.isPending}>
+                      <Lock className="w-4 h-4" />
+                      {buyListing.isPending ? "Creating Filecoin Escrow…" : "⬡ Lock in Filecoin Escrow"}
+                    </Button>
                   </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-xs">Your Name</Label>
-                    <Input required value={listingForm.sellerName} onChange={e => setListingForm({ ...listingForm, sellerName: e.target.value })} />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-xs">Location (District, State)</Label>
-                    <Input required value={listingForm.location} onChange={e => setListingForm({ ...listingForm, location: e.target.value })} placeholder="e.g. Amritsar, Punjab" />
-                  </div>
-                  <Button type="submit" className="w-full gap-2" disabled={createListing.isPending}>
-                    <span>⬡</span>
-                    {createListing.isPending ? "Uploading to IPFS + Filecoin…" : "List on Decentralized Market"}
-                  </Button>
-                </form>
+                )}
               </DialogContent>
             </Dialog>
-          </div>
 
-          {/* Buy escrow dialog */}
-          <Dialog open={buyDialogId != null} onOpenChange={(open) => { if (!open) setBuyDialogId(null); }}>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle className="flex items-center gap-2">
-                  <Lock className="w-4 h-4 text-amber-600" /> Lock Funds in Filecoin Escrow
-                </DialogTitle>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Payment locked in a Filecoin FVM escrow contract. Released to seller only after you confirm delivery.
-                  Agreement stored permanently on IPFS.
-                </p>
-              </DialogHeader>
-              {selectedListing && (
-                <div className="space-y-4 pt-2">
-                  <div className="rounded-xl bg-muted/60 p-3.5 space-y-1">
-                    <p className="font-semibold text-sm">{selectedListing.title}</p>
-                    <p className="text-xs text-muted-foreground">{selectedListing.quantity} {selectedListing.unit} of {selectedListing.crop}</p>
-                    <p className="text-muted-foreground text-xs">Seller: {selectedListing.sellerName} · {selectedListing.location}</p>
-                    <p className="text-primary font-black text-2xl mt-1">
-                      ₹{(selectedListing.price * selectedListing.quantity).toLocaleString("en-IN")}
-                    </p>
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-xs">Your Name (Buyer)</Label>
-                    <Input value={buyerNameInput} onChange={e => setBuyerNameInput(e.target.value)} placeholder="Enter your name" />
-                  </div>
-                  <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800 flex items-start gap-2">
-                    <Lock className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
-                    <div>
-                      <p className="font-semibold mb-0.5">How Filecoin Escrow works:</p>
-                      <p>1. Your payment is locked in a smart contract on Filecoin FVM</p>
-                      <p>2. The escrow agreement is stored permanently on IPFS</p>
-                      <p>3. Funds release to the seller only after you confirm delivery</p>
+            {/* Listings grid */}
+            <div className="grid grid-cols-1 gap-4">
+              {loadingListings
+                ? Array(4).fill(0).map((_, i) => <Skeleton key={i} className="h-80 w-full rounded-2xl" />)
+                : !filteredListings || filteredListings.length === 0
+                  ? (
+                    <div className={cn(glassCard, "text-center py-16")}>
+                      <Store className="w-12 h-12 mx-auto mb-3 text-amber-200" />
+                      <p className="text-sm font-medium text-gray-500">{listingSearch ? "No listings match your search" : "No listings yet. Be the first to sell!"}</p>
                     </div>
-                  </div>
-                  <Button className="w-full gap-2" onClick={handleBuy} disabled={buyListing.isPending}>
-                    <Lock className="w-4 h-4" />
-                    {buyListing.isPending ? "Creating Filecoin Escrow…" : "⬡ Lock in Filecoin Escrow"}
-                  </Button>
-                </div>
-              )}
-            </DialogContent>
-          </Dialog>
+                  )
+                  : filteredListings.map(listing => (
+                    <ListingCard
+                      key={listing.id}
+                      listing={listing}
+                      onBuy={() => setBuyDialogId(listing.id)}
+                      onConfirm={() => handleConfirmDelivery(listing.id)}
+                      isBuying={buyListing.isPending}
+                      isConfirming={confirmDelivery.isPending}
+                    />
+                  ))}
+            </div>
+          </TabsContent>
 
-          {/* Listings grid */}
-          <div className="grid grid-cols-1 gap-4">
-            {loadingListings
-              ? Array(4).fill(0).map((_, i) => <Skeleton key={i} className="h-80 w-full rounded-xl" />)
-              : !filteredListings || filteredListings.length === 0
-                ? (
-                  <div className="text-center py-16 text-muted-foreground">
-                    <Store className="w-12 h-12 mx-auto mb-3 opacity-20" />
-                    <p className="text-sm font-medium">{listingSearch ? "No listings match your search" : "No listings yet. Be the first to sell!"}</p>
-                  </div>
-                )
-                : filteredListings.map(listing => (
-                  <ListingCard
-                    key={listing.id}
-                    listing={listing}
-                    onBuy={() => setBuyDialogId(listing.id)}
-                    onConfirm={() => handleConfirmDelivery(listing.id)}
-                    isBuying={buyListing.isPending}
-                    isConfirming={confirmDelivery.isPending}
-                  />
-                ))}
-          </div>
-        </TabsContent>
+          {/* ── AGRI INPUTS ── */}
+          <TabsContent value="products" className="space-y-4 mt-4">
+            <div className={cn(glassCard, "p-3 border-emerald-200/50 bg-emerald-50/25")}>
+              <p className="text-xs font-semibold text-emerald-800 flex items-center gap-1.5">
+                <Leaf className="w-3.5 h-3.5" /> AI-recommended inputs based on your soil & crop profile
+              </p>
+              <p className="text-[10px] text-emerald-700 mt-0.5">
+                Products selected based on your latest NPK readings, pH levels, and crop type
+              </p>
+            </div>
 
-        {/* ── AGRI INPUTS ──────────────────────────────────────────────────── */}
-        <TabsContent value="products" className="space-y-4 mt-4">
-          <div className="rounded-xl bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 p-3">
-            <p className="text-xs font-semibold text-green-800 flex items-center gap-1.5">
-              <Leaf className="w-3.5 h-3.5" /> AI-recommended inputs based on your soil & crop profile
-            </p>
-            <p className="text-[10px] text-green-700 mt-0.5">
-              Products selected based on your latest NPK readings, pH levels, and crop type
-            </p>
-          </div>
-
-          {/* Category filter */}
-          <div className="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar">
-            {allProductCategories.map(cat => (
-              <button
-                key={cat}
-                onClick={() => setProductCategory(cat)}
-                className={`flex-shrink-0 text-[11px] font-medium px-3 py-1 rounded-full border transition-colors flex items-center gap-1 ${
-                  productCategory === cat
-                    ? "bg-primary text-primary-foreground border-primary"
-                    : "bg-background border-border text-muted-foreground hover:border-primary/50"
-                }`}
-              >
-                {cat !== "All" && PRODUCT_CATEGORY_ICONS[cat]}
-                {cat}
-              </button>
-            ))}
-          </div>
-
-          {/* Product count */}
-          {!loadingProducts && (
-            <p className="text-xs text-muted-foreground">{filteredProducts?.length ?? 0} products found</p>
-          )}
-
-          {/* Products grid */}
-          <div className="grid grid-cols-1 gap-3">
-            {loadingProducts
-              ? Array(6).fill(0).map((_, i) => <Skeleton key={i} className="h-40 w-full rounded-xl" />)
-              : filteredProducts?.map(product => (
-                <ProductCard key={product.id} product={product} />
+            {/* Category filter */}
+            <div className="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar">
+              {allProductCategories.map(cat => (
+                <button key={cat} onClick={() => setProductCategory(cat)}
+                  className={`flex-shrink-0 text-[11px] font-medium px-3 py-1 rounded-full border transition-all flex items-center gap-1 ${
+                    productCategory === cat
+                      ? "bg-amber-500 text-white border-amber-500 shadow-sm"
+                      : "bg-white/50 backdrop-blur-sm border-white/60 text-gray-600 hover:border-amber-300 hover:bg-white/70"
+                  }`}>
+                  {cat !== "All" && PRODUCT_CATEGORY_ICONS[cat]}
+                  {cat}
+                </button>
               ))}
-          </div>
-        </TabsContent>
-      </Tabs>
+            </div>
+
+            {!loadingProducts && (
+              <p className="text-xs text-gray-500">{filteredProducts?.length ?? 0} products found</p>
+            )}
+
+            <div className="grid grid-cols-1 gap-3">
+              {loadingProducts
+                ? Array(6).fill(0).map((_, i) => <Skeleton key={i} className="h-40 w-full rounded-2xl" />)
+                : filteredProducts?.map(product => (
+                  <ProductCard key={product.id} product={product} />
+                ))}
+            </div>
+          </TabsContent>
+        </Tabs>
+      </div>
     </div>
   );
 }

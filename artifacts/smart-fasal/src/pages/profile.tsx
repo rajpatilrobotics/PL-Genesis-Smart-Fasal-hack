@@ -114,31 +114,43 @@ export default function Profile() {
   }
 
   return (
-    <div className="space-y-5 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="relative -mx-4 -mt-5 min-h-screen animate-in fade-in slide-in-from-bottom-4 duration-500"
+      style={{ background: "linear-gradient(165deg, #fdf4ff 0%, #fae8ff 28%, #ede9fe 60%, #f5f3ff 100%)" }}>
 
-      {/* Hero Header */}
-      <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-emerald-600 via-green-600 to-teal-700 p-4 shadow-lg mb-1">
-        <div className="absolute -top-6 -right-6 w-28 h-28 rounded-full bg-white/10 blur-xl" />
-        <div className="absolute bottom-0 left-4 opacity-10">
-          <Leaf className="w-28 h-28" />
-        </div>
-        <div className="relative">
-          <div className="flex items-center gap-2.5 mb-1">
-            <div className="w-7 h-7 rounded-lg bg-white/20 flex items-center justify-center shrink-0">
-              <Sprout className="w-4 h-4 text-white" />
-            </div>
-            <h2 className="text-xl font-extrabold text-white tracking-tight">{t("profile.title")}</h2>
-          </div>
-          <p className="text-emerald-100/70 text-xs mt-0.5">Credit Score · Farm History · Identity</p>
-        </div>
+      {/* Purple blobs */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute -top-20 -right-20 w-72 h-72 rounded-full bg-purple-300/35 blur-3xl" />
+        <div className="absolute top-1/4 -left-16 w-60 h-60 rounded-full bg-violet-200/30 blur-3xl" />
+        <div className="absolute top-2/3 right-0 w-56 h-56 rounded-full bg-fuchsia-200/35 blur-3xl" />
+        <div className="absolute bottom-0 left-1/3 w-40 h-40 rounded-full bg-purple-100/25 blur-2xl" />
       </div>
 
-      {/* Profile Hero Card */}
-      <Card className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border-primary/20 overflow-hidden relative">
-        <div className="absolute right-0 top-0 opacity-5">
-          <Leaf className="w-40 h-40 -mr-8 -mt-8" />
+      <div className="relative space-y-5 px-4 pt-5 pb-28">
+
+        {/* Hero Header */}
+        <div className="relative rounded-2xl overflow-hidden p-4 shadow-xl transition-all duration-200 hover:-translate-y-1 hover:shadow-2xl hover:shadow-purple-500/30 active:translate-y-0 mb-1"
+          style={{ background: "linear-gradient(135deg, #6d28d9 0%, #7c3aed 45%, #a855f7 100%)", border: "1px solid rgba(255,255,255,0.35)" }}>
+          <div className="absolute -top-4 -right-4 w-36 h-36 rounded-full bg-fuchsia-300/20 blur-2xl" />
+          <div className="absolute bottom-0 left-4 w-28 h-16 rounded-full bg-violet-300/15 blur-xl" />
+          <div className="absolute inset-0 opacity-5"
+            style={{ backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.8) 1px, transparent 1px)", backgroundSize: "20px 20px" }} />
+          <div className="relative">
+            <div className="flex items-center gap-2.5 mb-1">
+              <div className="w-7 h-7 rounded-lg bg-white/20 flex items-center justify-center shrink-0">
+                <Sprout className="w-4 h-4 text-white" />
+              </div>
+              <h2 className="text-xl font-extrabold text-white tracking-tight drop-shadow-sm">{t("profile.title")}</h2>
+            </div>
+            <p className="text-purple-100/80 text-xs mt-0.5 font-medium">Credit Score · Farm History · Identity</p>
+          </div>
         </div>
-        <CardContent className="p-5 relative z-10">
+
+        {/* Profile Hero Card */}
+        <div className="rounded-2xl border border-white/50 bg-white/35 backdrop-blur-2xl hover:bg-white/45 overflow-hidden relative shadow-sm" style={{ boxShadow: "0 0 0 1px rgba(168,85,247,0.10), 0 4px 24px rgba(168,85,247,0.08)" }}>
+          <div className="absolute right-0 top-0 opacity-5">
+            <Leaf className="w-40 h-40 -mr-8 -mt-8" />
+          </div>
+          <div className="p-5 relative z-10">
           {editing ? (
             <div className="space-y-3">
               <div className="flex items-center justify-between mb-1">
@@ -250,14 +262,13 @@ export default function Profile() {
               </div>
             </div>
           )}
-        </CardContent>
-      </Card>
+          </div>
+        </div>
 
-      {/* Account card */}
-      <Card className="border-primary/20 bg-primary/5 overflow-hidden">
-        <CardContent className="p-4 flex items-center gap-4">
-          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-            <UserCircle className="w-5 h-5 text-primary" />
+        {/* Account card */}
+        <div className="rounded-2xl border border-white/50 bg-white/35 backdrop-blur-2xl hover:bg-white/45 p-4 flex items-center gap-4 shadow-sm">
+          <div className="w-10 h-10 rounded-xl bg-purple-100/60 flex items-center justify-center shrink-0">
+            <UserCircle className="w-5 h-5 text-purple-600" />
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold truncate">{authUser?.fullName || "Farmer"}</p>
@@ -271,24 +282,21 @@ export default function Profile() {
           >
             <LogOut className="w-3.5 h-3.5 mr-1" /> Sign Out
           </Button>
-        </CardContent>
-      </Card>
+        </div>
 
-      {/* Wallet connect prompt */}
-      {!walletAddress && (
-        <Card className="border-dashed border-primary/30">
-          <CardContent className="p-4 flex items-center gap-4">
-            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-              <Wallet className="w-5 h-5 text-primary" />
+        {/* Wallet connect prompt */}
+        {!walletAddress && (
+          <div className="rounded-2xl border border-dashed border-purple-200/60 bg-white/25 backdrop-blur-xl p-4 flex items-center gap-4">
+            <div className="w-10 h-10 rounded-xl bg-purple-100/60 flex items-center justify-center shrink-0">
+              <Wallet className="w-5 h-5 text-purple-600" />
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold">Connect Flow Wallet</p>
               <p className="text-xs text-muted-foreground">Earn rewards and track contributions</p>
             </div>
             <Button size="sm" variant="outline" onClick={handleConnect} className="shrink-0">Connect</Button>
-          </CardContent>
-        </Card>
-      )}
+          </div>
+        )}
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 gap-3">
@@ -528,6 +536,7 @@ export default function Profile() {
         </div>
       )}
 
+      </div>
     </div>
   );
 }
