@@ -22,13 +22,18 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 // Switch to gemini-1.5-flash if gemini-2.0-flash is unavailable in your region.
 const GEMINI_FREE_MODEL = "gemini-2.0-flash";
 
+// Support both GOOGLE_API_KEY and GEMINI_API_KEY (Render commonly uses the latter)
+function getGeminiApiKey(): string | undefined {
+  return process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY;
+}
+
 function getProvider(): "openai" | "gemini" {
   // On Replit: the AI integration sets these env vars automatically.
   if (process.env.AI_INTEGRATIONS_OPENAI_BASE_URL || process.env.AI_INTEGRATIONS_OPENAI_API_KEY) {
     return "openai";
   }
-  // On Render / external: use Gemini free tier if GOOGLE_API_KEY is set.
-  if (process.env.GOOGLE_API_KEY) {
+  // On Render / external: use Gemini free tier if GOOGLE_API_KEY or GEMINI_API_KEY is set.
+  if (getGeminiApiKey()) {
     return "gemini";
   }
   // Default: attempt OpenAI (will show a clear error if integration not provisioned).
@@ -39,8 +44,8 @@ let geminiClient: GoogleGenerativeAI | null = null;
 
 function getGeminiClient(): GoogleGenerativeAI {
   if (!geminiClient) {
-    const apiKey = process.env.GOOGLE_API_KEY;
-    if (!apiKey) throw new Error("GOOGLE_API_KEY not set. Get a free key at https://aistudio.google.com/apikey");
+    const apiKey = getGeminiApiKey();
+    if (!apiKey) throw new Error("Gemini API key not set. Add GOOGLE_API_KEY or GEMINI_API_KEY in your Render environment variables. Get a free key at https://aistudio.google.com/apikey");
     geminiClient = new GoogleGenerativeAI(apiKey);
   }
   return geminiClient;
