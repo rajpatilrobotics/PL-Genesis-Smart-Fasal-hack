@@ -17,7 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 import {
   CloudRain, Droplets, Thermometer, Wind, Brain, Database,
   RefreshCw, Shield, Zap, Lock, Globe, Users, CheckCircle2,
-  Loader2, AlertTriangle, Activity, Cpu, MapPin
+  Loader2, AlertTriangle, Activity, Cpu, MapPin, Pencil, X, Search
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useQueryClient } from "@tanstack/react-query";
@@ -94,6 +94,10 @@ export default function Home() {
   const [locationDenied, setLocationDenied] = useState(false);
   const [locationBlocked, setLocationBlocked] = useState(false);
   const [locationLoading, setLocationLoading] = useState(false);
+  const [showLocationEdit, setShowLocationEdit] = useState(false);
+  const [locationSearch, setLocationSearch] = useState("");
+  const [locationSearching, setLocationSearching] = useState(false);
+  const [locationSuggestions, setLocationSuggestions] = useState<Array<{ lat: number; lon: number; label: string }>>([]);
   const [liveTime, setLiveTime] = useState(new Date());
   const [pipelineRunning, setPipelineRunning] = useState(false);
   const [pipelineResult, setPipelineResult] = useState<PipelineResult | null>(null);
@@ -110,8 +114,30 @@ export default function Home() {
     return () => clearInterval(id);
   }, []);
 
+  // IP-based location fallback when GPS is unavailable
+  const tryIpGeolocation = useCallback(async () => {
+    try {
+      const base = import.meta.env.BASE_URL?.replace(/\/$/, "") ?? "";
+      const r = await fetch(`${base}/api/weather/geoip`);
+      if (!r.ok) return;
+      const json = (await r.json()) as { lat?: number; lon?: number };
+      if (json.lat && json.lon) {
+        setGpsCoords({ lat: json.lat, lon: json.lon });
+        setLocationDenied(false);
+      }
+    } catch {
+      // IP geolocation also failed — leave locationDenied as-is
+    } finally {
+      setLocationLoading(false);
+    }
+  }, []);
+
   const doGpsRequest = useCallback(() => {
-    if (!navigator.geolocation) { setLocationBlocked(true); return; }
+    if (!navigator.geolocation) {
+      setLocationBlocked(true);
+      tryIpGeolocation();
+      return;
+    }
     setLocationLoading(true);
     setLocationDenied(false);
     setLocationBlocked(false);
@@ -123,16 +149,17 @@ export default function Home() {
         setLocationLoading(false);
       },
       (err) => {
-        setLocationLoading(false);
         if (err.code === 1) {
-          setLocationBlocked(true); // PERMISSION_DENIED — needs settings change
+          setLocationBlocked(true);
         } else {
-          setLocationDenied(true); // TIMEOUT / UNAVAILABLE — can retry
+          setLocationDenied(true);
         }
+        // Always try IP geolocation as fallback
+        tryIpGeolocation();
       },
-      { timeout: 15000, maximumAge: 0 }
+      { timeout: 15000, maximumAge: 0, enableHighAccuracy: true }
     );
-  }, []);
+  }, [tryIpGeolocation]);
 
   const requestLocation = useCallback(async () => {
     try {
@@ -141,6 +168,23 @@ export default function Home() {
     } catch { /* Permissions API not supported, proceed anyway */ }
     doGpsRequest();
   }, [doGpsRequest]);
+
+  // Search for a city by name and return coordinates + label
+  const searchLocation = useCallback(async (query: string) => {
+    if (!query.trim()) { setLocationSuggestions([]); return; }
+    setLocationSearching(true);
+    try {
+      const base = import.meta.env.BASE_URL?.replace(/\/$/, "") ?? "";
+      const r = await fetch(`${base}/api/weather/geocode?q=${encodeURIComponent(query)}`);
+      if (!r.ok) return;
+      const json = (await r.json()) as { results: Array<{ lat: number; lon: number; label: string }> };
+      setLocationSuggestions(json.results ?? []);
+    } catch {
+      setLocationSuggestions([]);
+    } finally {
+      setLocationSearching(false);
+    }
+  }, []);
 
   // Always request fresh GPS on mount
   useEffect(() => {
@@ -558,28 +602,81 @@ export default function Home() {
               </div>
             ) : weather ? (
               <div className="flex items-center justify-between">
-                <div>
-                  <div className="flex items-center gap-1 mb-0.5">
-                    <CloudRain className="w-3 h-3 text-white/80" />
-                    <span className="text-[9px] font-bold text-white/75 uppercase tracking-wider">
-                      {t("home.weather")} · {weather.location}
-                    </span>
-                  </div>
-                  <p className="text-3xl font-extrabold text-white tracking-tight drop-shadow">{weather.temperature}°C</p>
-                  <p className="text-xs text-white/80 capitalize mt-0.5">{weather.description}</p>
-                  <div className="flex items-center gap-2 mt-1.5">
-                    <span className="text-[10px] text-white/70 font-semibold">
-                      {liveTime.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
-                    </span>
-                    {gpsCoords && (
-                      <>
-                        <span className="text-white/40 text-[10px]">·</span>
-                        <span className="text-[9px] text-white/60 font-medium">📍 GPS</span>
-                      </>
-                    )}
-                  </div>
+                <div className="flex-1 min-w-0">
+                  {showLocationEdit ? (
+                    <div className="mb-1.5">
+                      <div className="flex items-center gap-1.5 bg-white/20 rounded-full px-2.5 py-1.5">
+                        <Search className="w-3 h-3 text-white/70 shrink-0" />
+                        <input
+                          autoFocus
+                          type="text"
+                          value={locationSearch}
+                          onChange={(e) => {
+                            setLocationSearch(e.target.value);
+                            searchLocation(e.target.value);
+                          }}
+                          onKeyDown={(e) => { if (e.key === "Escape") { setShowLocationEdit(false); setLocationSearch(""); setLocationSuggestions([]); } }}
+                          placeholder="Search city…"
+                          className="bg-transparent text-[11px] text-white placeholder:text-white/50 outline-none w-full"
+                        />
+                        {locationSearching
+                          ? <Loader2 className="w-3 h-3 text-white/60 animate-spin shrink-0" />
+                          : <button onClick={() => { setShowLocationEdit(false); setLocationSearch(""); setLocationSuggestions([]); }}><X className="w-3 h-3 text-white/60" /></button>
+                        }
+                      </div>
+                      {locationSuggestions.length > 0 && (
+                        <div className="mt-1 bg-white/95 rounded-xl shadow-xl overflow-hidden">
+                          {locationSuggestions.map((s, i) => (
+                            <button
+                              key={i}
+                              onClick={() => {
+                                setGpsCoords({ lat: s.lat, lon: s.lon });
+                                setShowLocationEdit(false);
+                                setLocationSearch("");
+                                setLocationSuggestions([]);
+                              }}
+                              className="w-full text-left px-3 py-2 text-[11px] text-gray-800 hover:bg-sky-50 active:bg-sky-100 border-b border-gray-100 last:border-0 font-medium"
+                            >
+                              📍 {s.label}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-1 mb-0.5">
+                      <CloudRain className="w-3 h-3 text-white/80" />
+                      <span className="text-[9px] font-bold text-white/75 uppercase tracking-wider">
+                        {t("home.weather")} · {weather.location}
+                      </span>
+                      <button
+                        onClick={() => { setShowLocationEdit(true); setLocationSuggestions([]); }}
+                        className="ml-0.5 p-0.5 rounded-full hover:bg-white/20 active:bg-white/30 transition-colors"
+                        title="Change location"
+                      >
+                        <Pencil className="w-2.5 h-2.5 text-white/60" />
+                      </button>
+                    </div>
+                  )}
+                  {!showLocationEdit && (
+                    <>
+                      <p className="text-3xl font-extrabold text-white tracking-tight drop-shadow">{weather.temperature}°C</p>
+                      <p className="text-xs text-white/80 capitalize mt-0.5">{weather.description}</p>
+                      <div className="flex items-center gap-2 mt-1.5">
+                        <span className="text-[10px] text-white/70 font-semibold">
+                          {liveTime.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+                        </span>
+                        {gpsCoords && (
+                          <>
+                            <span className="text-white/40 text-[10px]">·</span>
+                            <span className="text-[9px] text-white/60 font-medium">📍 GPS</span>
+                          </>
+                        )}
+                      </div>
+                    </>
+                  )}
                 </div>
-                <div className="flex flex-col items-end gap-1.5">
+                {!showLocationEdit && <div className="flex flex-col items-end gap-1.5">
                   <div className="flex items-center gap-1 bg-white/25 backdrop-blur-sm rounded-full px-2.5 py-1">
                     <Droplets className="w-2.5 h-2.5 text-white" />
                     <span className="text-[11px] font-bold text-white">{weather.humidity}%</span>
@@ -598,7 +695,7 @@ export default function Home() {
                       <span className="text-[11px] font-bold text-white">{weather.rainfall} mm</span>
                     </div>
                   )}
-                </div>
+                </div>}
               </div>
             ) : <p className="text-xs text-white/60">Unavailable</p>}
           </div>

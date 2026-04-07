@@ -244,4 +244,39 @@ router.get("/weather", async (req, res): Promise<void> => {
   }));
 });
 
+// Forward geocode: city name → lat/lon via Nominatim
+router.get("/geocode", async (req, res): Promise<void> => {
+  const q = typeof req.query.q === "string" ? req.query.q.trim() : "";
+  if (!q) { res.status(400).json({ error: "q is required" }); return; }
+  try {
+    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=5&addressdetails=1`;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 6000);
+    const r = await fetch(url, {
+      signal: controller.signal,
+      headers: { "User-Agent": "SmartFasal/1.0 (smart-fasal-app)" },
+    });
+    clearTimeout(timeoutId);
+    if (!r.ok) { res.status(502).json({ error: "geocode failed" }); return; }
+    const json = (await r.json()) as Array<{
+      lat: string; lon: string;
+      display_name: string;
+      address?: { city?: string; town?: string; village?: string; state?: string; country?: string };
+    }>;
+    const results = json.map((item) => {
+      const a = item.address ?? {};
+      const place = a.city ?? a.town ?? a.village ?? "";
+      const state = a.state ?? "";
+      const country = a.country ?? "";
+      const label = place
+        ? `${place}${state ? ", " + state : ""}${country ? ", " + country : ""}`
+        : item.display_name.split(",").slice(0, 2).join(",").trim();
+      return { lat: parseFloat(item.lat), lon: parseFloat(item.lon), label };
+    });
+    res.json({ results });
+  } catch {
+    res.status(502).json({ error: "geocode timeout" });
+  }
+});
+
 export default router;
