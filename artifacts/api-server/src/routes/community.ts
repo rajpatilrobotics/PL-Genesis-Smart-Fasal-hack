@@ -43,10 +43,36 @@ async function ensureExperts() {
   }
 }
 
+// Map of author -> imageUrl for patching existing posts that are missing images
+const SEED_IMAGE_MAP: Record<string, string> = {
+  "AgriWeather Network": "https://images.unsplash.com/photo-1534274988757-a28bf1a57c17?w=700&q=80",
+  "Suresh Yadav": "https://images.unsplash.com/photo-1574943320219-553eb213f72d?w=700&q=80",
+  "Ramesh Agarwal": "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=700&q=80",
+  "Lakshmi Devi": "https://images.unsplash.com/photo-1530836369250-ef72a3f5cda8?w=700&q=80",
+  "Vijay Patil": "https://images.unsplash.com/photo-1592982537447-7440770cbfc9?w=700&q=80",
+  "Kiran Mehta": "https://images.unsplash.com/photo-1464226184884-fa280b87c399?w=700&q=80",
+};
+
+// Patch existing posts that are missing imageUrls
+async function patchPostImages() {
+  const rows = await db.select().from(communityPostsTable);
+  for (const row of rows) {
+    if (!row.imageUrl && SEED_IMAGE_MAP[row.author]) {
+      await db
+        .update(communityPostsTable)
+        .set({ imageUrl: SEED_IMAGE_MAP[row.author] })
+        .where(eq(communityPostsTable.id, row.id));
+    }
+  }
+}
+
 // Seed demo community posts if empty
 async function ensurePosts() {
   const existing = await db.select().from(communityPostsTable).limit(1);
-  if (existing.length > 0) return;
+  if (existing.length > 0) {
+    await patchPostImages();
+    return;
+  }
 
   const now = Date.now();
   const h = (hours: number) => new Date(now - hours * 3600000);
