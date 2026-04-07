@@ -962,7 +962,7 @@ export default function Home() {
                 href="https://www.linkedin.com/in/raj-patil-a492a1155/?skipRedirect=true"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-center w-4 h-4 rounded-[3px] bg-[#0A66C2] hover:bg-[#004182] transition-colors shadow-sm"
+                className="flex items-center justify-center w-[18px] h-[18px] rounded-[3px] bg-[#0A66C2] hover:bg-[#004182] transition-colors shadow-sm"
                 title="Raj Patil on LinkedIn"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" className="w-2.5 h-2.5">
