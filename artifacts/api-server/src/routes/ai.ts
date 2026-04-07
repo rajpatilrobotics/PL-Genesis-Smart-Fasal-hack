@@ -161,11 +161,12 @@ Respond with a JSON object with exactly these fields:
       severity = result.severity || severity;
     }
   } catch (err) {
-    console.error("Disease detection AI error:", err);
+    const errMsg = err instanceof Error ? err.message : String(err);
+    console.error("Disease detection AI error:", errMsg);
     plantName = cropName || "Unknown Plant";
     diseaseName = "Analysis Failed";
     confidencePercent = 0;
-    treatment = "Could not complete analysis. Please try again or consult your local agricultural extension officer.";
+    treatment = `AI Error: ${errMsg}`;
     severity = "Moderate";
   }
 

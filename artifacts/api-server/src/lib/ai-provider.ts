@@ -124,15 +124,14 @@ export async function generateVisionJSON(params: {
 
   if (provider === "gemini") {
     const genAI = getGeminiClient();
+    // Note: Do NOT set responseMimeType:"application/json" for vision (multimodal) requests —
+    // it conflicts with inlineData in some Gemini model versions and causes silent failures.
+    // Instead, we embed the system instruction in the prompt and extract JSON from the text output.
     return withGeminiFallback(async (modelName) => {
-      const model = genAI.getGenerativeModel({
-        model: modelName,
-        generationConfig: { responseMimeType: "application/json" },
-        systemInstruction: systemPrompt,
-      });
+      const model = genAI.getGenerativeModel({ model: modelName });
       const result = await model.generateContent([
+        `${systemPrompt}\n\n${userPrompt}`,
         { inlineData: { mimeType, data: imageBase64 } },
-        userPrompt,
       ]);
       return result.response.text();
     });
