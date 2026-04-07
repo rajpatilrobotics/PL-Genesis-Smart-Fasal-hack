@@ -935,7 +935,7 @@ export default function Home() {
               <p className="text-sm font-extrabold text-gray-800 leading-tight">Smart Fasal</p>
               <p className="text-[10px] font-semibold text-emerald-600 leading-tight">The Agriculture Platform</p>
             </div>
-            <div className="flex flex-col items-center gap-1">
+            <div className="flex items-center gap-1.5">
               <p className="text-[10px] text-gray-500">Developed by Raj Patil</p>
               <a
                 href="https://www.linkedin.com/in/raj-patil-a492a1155/?skipRedirect=true"
