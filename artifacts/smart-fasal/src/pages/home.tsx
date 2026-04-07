@@ -780,11 +780,18 @@ export default function Home() {
                   )}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className={cn("text-xs font-semibold flex items-center gap-1",
+                  <p className={cn("text-xs font-semibold flex items-center gap-1.5",
                     step.status === "done" ? "text-emerald-700" :
                     step.status === "running" ? "text-sky-700" : "text-gray-400"
                   )}>
-                    {step.id === "iot" && <Cpu className="w-3 h-3 shrink-0" />}
+                    {step.id === "iot" && <Cpu className="w-3.5 h-3.5 shrink-0" />}
+                    {step.id === "ai" && <img src="/ai-brain-logo.png" alt="AI" className="w-3.5 h-3.5 rounded-full object-contain bg-white shrink-0" onError={e => (e.currentTarget.style.display="none")} />}
+                    {step.id === "privacy" && <img src="/zama-logo.png" alt="Zama" className="w-3.5 h-3.5 rounded-full object-contain bg-white shrink-0" />}
+                    {step.id === "filecoin" && <img src="/filecoin-logo.png" alt="Filecoin" className="w-3.5 h-3.5 rounded-full object-contain bg-white shrink-0" />}
+                    {step.id === "access" && <img src="/lit-logo.png" alt="Lit" className="w-3.5 h-3.5 rounded-full object-contain bg-white shrink-0" />}
+                    {step.id === "rewards" && <img src="/flow-logo.png" alt="Flow" className="w-3.5 h-3.5 rounded-full object-contain bg-white shrink-0" />}
+                    {step.id === "insurance" && <img src="/starknet-logo.png" alt="Starknet" className="w-3.5 h-3.5 rounded-full object-contain bg-white shrink-0" />}
+                    {step.id === "hypercerts" && <img src="/hypercerts-logo.png" alt="HyperCerts" className="w-3.5 h-3.5 rounded-full object-contain bg-white shrink-0" />}
                     {step.label}
                   </p>
                   {step.status === "done" && step.result && <p className="text-[10px] text-emerald-600 mt-0.5">{step.result}</p>}
