@@ -18,9 +18,16 @@ const router: IRouter = Router();
 const STARKNET_RPC    = process.env.STARKNET_RPC_URL || "https://starknet-sepolia.drpc.org/";
 const PRIV_KEY        = process.env.STARKNET_PRIVATE_KEY || "0x0ef319415259f51659596f39e8e5a34d4bea0f2db92351c8ca8bfd937697d9c";
 const WALLET_ADDR     = process.env.STARKNET_WALLET_ADDRESS || "0x17ecda611fa4c7f75758f669a2cf0a0d1091032b1e3172bc9f293f462818d9c";
-// State file lives in artifacts/api-server/ (one level above dist/).
-// Using __dirname (= dist/) so the path is correct regardless of process.cwd().
-const STATE_FILE      = join(__dirname, "../starknet-state.json");
+
+// State file — probe multiple candidate paths so it works on both Replit and Render.
+// Priority: __dirname-relative (dist/../ = artifacts/api-server/) → cwd → cwd/artifacts/api-server/
+const STATE_FILE_CANDIDATES = [
+  join(__dirname, "../starknet-state.json"),          // works when dist/ lives inside artifacts/api-server/
+  join(process.cwd(), "starknet-state.json"),         // legacy path (cwd = artifacts/api-server on Render)
+  join(process.cwd(), "artifacts/api-server/starknet-state.json"), // cwd = repo root
+];
+const STATE_FILE = STATE_FILE_CANDIDATES.find(p => existsSync(p)) ?? STATE_FILE_CANDIDATES[0];
+
 // Contract artifacts are copied into dist/contracts/ during the build step.
 // __dirname is injected by the esbuild banner and points to the dist/ directory.
 const SIERRA_PATH     = join(__dirname, "contracts/insurance.sierra.json");
@@ -29,13 +36,20 @@ const EXPLORER_BASE   = "https://sepolia.voyager.online";
 const NETWORK_NAME    = "Starknet Sepolia";
 const OZ_CLASS_HASH   = "0x061dac032f228abef9c6626f995015233097ae253a7f72d68552db02f2971b8f";
 
+// Known-good on-chain values — used as fallback if the state file is missing/empty.
+// These were deployed on 2026-04-02 and are verifiable on Voyager explorer.
+const KNOWN_CONTRACT_ADDRESS = "0x73dafec413b4b120afd6da386f6b2c2c3f1c4d89865eee30465e21444584b42";
+const KNOWN_CLASS_HASH       = "0x2a90f920a5bba38c0022ff9493f363f14cce28e61d9990d68b200bb523ede7c";
+const KNOWN_DEPLOY_TX        = "0x7fb23e822721e056b86c97043a5495fb51fc0e73e64061ee4c4e7abaa853611";
+const KNOWN_DEPLOYED_AT      = "2026-04-02T20:22:51.908Z";
+
 // Fallback RPC list — tried in order until one responds.
-// BlastAPI (starknet-sepolia.public.blastapi.io) is DEAD as of Apr 2026 — do not use it.
+// BlastAPI (*.blastapi.io) is DEAD as of Apr 2026 — excluded.
+// dRPC supports: blockNumber, getNonce, getClassHashAt, getTransactionReceipt, call, estimateFee.
 const RPC_FALLBACKS = [
-  STARKNET_RPC,
   "https://starknet-sepolia.drpc.org/",
   "https://free-rpc.nethermind.io/sepolia-juno/",
-  "https://starknet-testnet.public.blastapi.io/rpc/v0_7",
+  ...(STARKNET_RPC.includes("blastapi") ? [] : [STARKNET_RPC]),
 ].filter((url, idx, arr) => arr.indexOf(url) === idx); // deduplicate
 
 let _provider: RpcProvider | null = null;
@@ -70,7 +84,7 @@ function getAccount(p: RpcProvider) {
 
 function isNetworkError(err: unknown): boolean {
   const msg = (err as any)?.message ?? String(err);
-  return /fetch failed|Failed to fetch|Failed to determine starting block|tip statistics|ECONNREFUSED|ENOTFOUND|network error|getaddrinfo/i.test(msg);
+  return /fetch failed|Failed to fetch|Failed to determine starting block|tip statistics|ECONNREFUSED|ENOTFOUND|network error|getaddrinfo|Blast API is no longer available|no longer available/i.test(msg);
 }
 
 async function isAccountDeployed(address: string): Promise<boolean> {
@@ -104,13 +118,65 @@ interface StarknetState {
 
 function loadState(): StarknetState {
   if (existsSync(STATE_FILE)) {
-    try { return JSON.parse(readFileSync(STATE_FILE, "utf-8")); } catch { /**/ }
+    try {
+      const parsed = JSON.parse(readFileSync(STATE_FILE, "utf-8")) as StarknetState;
+      // Apply known-good fallback if file exists but is missing the contract address
+      if (!parsed.contractAddress) {
+        parsed.contractAddress = KNOWN_CONTRACT_ADDRESS;
+        parsed.classHash       = KNOWN_CLASS_HASH;
+        parsed.deployTxHash    = KNOWN_DEPLOY_TX;
+        parsed.deployedAt      = KNOWN_DEPLOYED_AT;
+      }
+      return parsed;
+    } catch { /**/ }
   }
-  return { contractAddress: null, classHash: null, deployTxHash: null, deployedAt: null, policies: {}, claims: [] };
+  // State file not found — seed with known on-chain data so the UI shows deployed status
+  console.warn(`[Starknet] State file not found at ${STATE_FILE} — seeding from known deployment`);
+  return {
+    contractAddress: KNOWN_CONTRACT_ADDRESS,
+    classHash:       KNOWN_CLASS_HASH,
+    deployTxHash:    KNOWN_DEPLOY_TX,
+    deployedAt:      KNOWN_DEPLOYED_AT,
+    policies:        {},
+    claims:          [],
+  };
 }
 
 function saveState(s: StarknetState) {
-  try { writeFileSync(STATE_FILE, JSON.stringify(s, null, 2)); } catch { /**/ }
+  try { writeFileSync(STATE_FILE, JSON.stringify(s, null, 2)); } catch (e: any) {
+    console.warn("[Starknet] Could not write state file:", e?.message?.slice(0, 80));
+  }
+}
+
+/**
+ * Custom transaction waiter that only uses starknet_getTransactionReceipt.
+ * This avoids starknet_getBlockWithTxHashes / starknet_getTransactionStatus
+ * which are NOT supported by dRPC (the only reliable free Sepolia RPC).
+ */
+async function waitForTx(p: RpcProvider, txHash: string, maxMs = 120_000): Promise<void> {
+  const deadline = Date.now() + maxMs;
+  let pollMs = 4000;
+  while (Date.now() < deadline) {
+    try {
+      const receipt: any = await p.getTransactionReceipt(txHash);
+      const status: string = receipt?.finality_status ?? receipt?.status ?? "";
+      if (/ACCEPTED_ON_L[12]|SUCCEEDED/i.test(status)) {
+        console.log(`[Starknet] tx ${txHash.slice(0, 18)}… accepted (${status})`);
+        return;
+      }
+      if (/REJECTED|REVERTED/i.test(status)) {
+        throw new Error(`Transaction ${txHash.slice(0, 18)}… reverted: ${receipt?.revert_reason ?? status}`);
+      }
+    } catch (err: any) {
+      // getTransactionReceipt throws while the tx is still pending — that's normal
+      const msg: string = err?.message ?? String(err);
+      if (/reverted|REJECTED/i.test(msg)) throw err;
+      // Otherwise keep polling
+    }
+    await new Promise(r => setTimeout(r, pollMs));
+    pollMs = Math.min(pollMs * 1.4, 12_000); // gentle back-off
+  }
+  throw new Error(`Transaction ${txHash.slice(0, 18)}… not confirmed after ${maxMs / 1000}s`);
 }
 
 async function withRetry<T>(fn: () => Promise<T>, retries = 3, delayMs = 3000): Promise<T> {
@@ -226,7 +292,7 @@ router.post("/starknet/deploy-account", async (_req, res): Promise<void> => {
       constructorCalldata: ctorData,
       addressSalt: pubKey,
     });
-    await p.waitForTransaction(transaction_hash);
+    await waitForTx(p, transaction_hash);
     res.json({
       success: true,
       txHash: transaction_hash,
@@ -272,7 +338,7 @@ router.post("/starknet/deploy", async (_req, res): Promise<void> => {
     let classHash: string;
     try {
       const declareResp = await account.declare({ contract: sierraJson, casm: casmJson });
-      await p.waitForTransaction(declareResp.transaction_hash);
+      await waitForTx(p, declareResp.transaction_hash);
       classHash = declareResp.class_hash;
     } catch (declErr: any) {
       const declMsg: string = declErr?.message ?? String(declErr);
@@ -287,7 +353,7 @@ router.post("/starknet/deploy", async (_req, res): Promise<void> => {
     // Deploy an instance — oracle = our own wallet address
     const constructorCalldata = CallData.compile({ oracle: WALLET_ADDR });
     const deployResp = await account.deployContract({ classHash, constructorCalldata });
-    await p.waitForTransaction(deployResp.transaction_hash);
+    await waitForTx(p, deployResp.transaction_hash);
     const contractAddress = deployResp.contract_address;
 
     state.contractAddress = contractAddress;
@@ -372,7 +438,7 @@ router.post("/starknet/register-policy", async (req, res): Promise<void> => {
       entrypoint: "register_policy",
       calldata,
     }));
-    await p.waitForTransaction(resp.transaction_hash);
+    await waitForTx(p, resp.transaction_hash);
 
     const { blockNumber, networkLive } = await getLiveBlock();
     state.policies[farmerId] = {
@@ -464,7 +530,7 @@ router.post("/starknet/submit-claim", async (req, res): Promise<void> => {
       entrypoint: "submit_claim",
       calldata,
     }));
-    await p.waitForTransaction(resp.transaction_hash);
+    await waitForTx(p, resp.transaction_hash);
 
     const { blockNumber, networkLive } = await getLiveBlock();
     const claimId = state.claims.length;
@@ -596,7 +662,7 @@ router.post("/starknet/carbon-credit/mint", async (req, res): Promise<void> => {
           entrypoint:      "register_policy",
           calldata,
         }));
-        await p.waitForTransaction(resp.transaction_hash);
+        await waitForTx(p, resp.transaction_hash);
 
         txHash  = resp.transaction_hash;
         txUrl   = `${EXPLORER_BASE}/tx/${txHash}`;
