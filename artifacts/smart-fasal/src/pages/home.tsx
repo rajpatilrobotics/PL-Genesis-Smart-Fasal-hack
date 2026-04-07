@@ -785,7 +785,12 @@ export default function Home() {
                     step.status === "running" ? "text-sky-700" : "text-gray-400"
                   )}>
                     {step.id === "iot" && <Cpu className="w-3.5 h-3.5 shrink-0" />}
-                    {step.id === "ai" && <img src="/ai-brain-logo.png" alt="AI" className="w-3.5 h-3.5 rounded-full object-contain bg-white shrink-0" onError={e => (e.currentTarget.style.display="none")} />}
+                    {step.id === "ai" && (
+                      <>
+                        <img src="/openai-logo.png" alt="OpenAI" className="w-3.5 h-3.5 rounded-full object-contain bg-white shrink-0" />
+                        <img src="/gemini-logo.svg" alt="Gemini" className="w-3.5 h-3.5 rounded-full object-contain bg-white shrink-0" />
+                      </>
+                    )}
                     {step.id === "privacy" && <img src="/zama-logo.png" alt="Zama" className="w-3.5 h-3.5 rounded-full object-contain bg-white shrink-0" />}
                     {step.id === "filecoin" && <img src="/filecoin-logo.png" alt="Filecoin" className="w-3.5 h-3.5 rounded-full object-contain bg-white shrink-0" />}
                     {step.id === "access" && <img src="/lit-logo.png" alt="Lit" className="w-3.5 h-3.5 rounded-full object-contain bg-white shrink-0" />}
