@@ -3,7 +3,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { build as esbuild } from "esbuild";
 import esbuildPluginPino from "esbuild-plugin-pino";
-import { rm } from "node:fs/promises";
+import { rm, cp, mkdir } from "node:fs/promises";
 
 // Plugins (e.g. 'esbuild-plugin-pino') may use `require` to resolve dependencies
 globalThis.require = createRequire(import.meta.url);
@@ -13,6 +13,18 @@ const artifactDir = path.dirname(fileURLToPath(import.meta.url));
 async function buildAll() {
   const distDir = path.resolve(artifactDir, "dist");
   await rm(distDir, { recursive: true, force: true });
+
+  // Copy Starknet contract artifacts (Sierra + CASM) into dist/contracts/
+  // so the server can read them regardless of process.cwd().
+  const contractsSrc  = path.resolve(artifactDir, "contracts");
+  const contractsDest = path.resolve(distDir, "contracts");
+  await mkdir(contractsDest, { recursive: true });
+  try {
+    await cp(contractsSrc, contractsDest, { recursive: true });
+    console.log("[build] Copied contracts/ → dist/contracts/");
+  } catch {
+    console.warn("[build] No contracts/ directory found — skipping copy");
+  }
 
   await esbuild({
     entryPoints: [path.resolve(artifactDir, "src/index.ts")],

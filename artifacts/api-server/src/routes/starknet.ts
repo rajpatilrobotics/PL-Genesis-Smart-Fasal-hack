@@ -15,24 +15,27 @@ const __dirname = dirname(__filename);
 const router: IRouter = Router();
 
 // ─── Config ────────────────────────────────────────────────────────────────
-const STARKNET_RPC    = process.env.STARKNET_RPC_URL || "https://starknet-sepolia.public.blastapi.io/rpc/v0_7";
+const STARKNET_RPC    = process.env.STARKNET_RPC_URL || "https://starknet-sepolia.drpc.org/";
 const PRIV_KEY        = process.env.STARKNET_PRIVATE_KEY || "0x0ef319415259f51659596f39e8e5a34d4bea0f2db92351c8ca8bfd937697d9c";
 const WALLET_ADDR     = process.env.STARKNET_WALLET_ADDRESS || "0x17ecda611fa4c7f75758f669a2cf0a0d1091032b1e3172bc9f293f462818d9c";
-const STATE_FILE      = join(process.cwd(), "starknet-state.json");
-// Use __dirname (injected by the esbuild banner → points to dist/) so the path
-// stays correct regardless of what directory the server is started from.
-const SIERRA_PATH     = join(__dirname, "../contracts/insurance.sierra.json");
-const CASM_PATH       = join(__dirname, "../contracts/insurance.casm.json");
+// State file lives in artifacts/api-server/ (one level above dist/).
+// Using __dirname (= dist/) so the path is correct regardless of process.cwd().
+const STATE_FILE      = join(__dirname, "../starknet-state.json");
+// Contract artifacts are copied into dist/contracts/ during the build step.
+// __dirname is injected by the esbuild banner and points to the dist/ directory.
+const SIERRA_PATH     = join(__dirname, "contracts/insurance.sierra.json");
+const CASM_PATH       = join(__dirname, "contracts/insurance.casm.json");
 const EXPLORER_BASE   = "https://sepolia.voyager.online";
 const NETWORK_NAME    = "Starknet Sepolia";
 const OZ_CLASS_HASH   = "0x061dac032f228abef9c6626f995015233097ae253a7f72d68552db02f2971b8f";
 
-// Fallback RPC list — tried in order until one responds
+// Fallback RPC list — tried in order until one responds.
+// BlastAPI (starknet-sepolia.public.blastapi.io) is DEAD as of Apr 2026 — do not use it.
 const RPC_FALLBACKS = [
   STARKNET_RPC,
-  "https://starknet-sepolia.public.blastapi.io/rpc/v0_7",
-  "https://free-rpc.nethermind.io/sepolia-juno/",
   "https://starknet-sepolia.drpc.org/",
+  "https://free-rpc.nethermind.io/sepolia-juno/",
+  "https://starknet-testnet.public.blastapi.io/rpc/v0_7",
 ].filter((url, idx, arr) => arr.indexOf(url) === idx); // deduplicate
 
 let _provider: RpcProvider | null = null;
@@ -73,9 +76,18 @@ function isNetworkError(err: unknown): boolean {
 async function isAccountDeployed(address: string): Promise<boolean> {
   try {
     const p = await getProvider();
-    await p.getClassAt(address);
+    // Use getClassHashAt — supported by dRPC and most Starknet nodes.
+    // getClassAt is NOT supported by all public RPCs (e.g. dRPC returns -32601).
+    await p.getClassHashAt(address);
     return true;
-  } catch {
+  } catch (err: any) {
+    // Starknet JSON-RPC error code 20 = CONTRACT_NOT_FOUND (not deployed)
+    // We must NOT catch -32601 (method not available) — that should bubble up.
+    const code = err?.code ?? err?.errorCode ?? (err as any)?.baseError?.code;
+    const msg: string = err?.message ?? String(err);
+    if (code === 20 || /Contract not found/i.test(msg)) return false;
+    // For any other failure, assume unknown and return false so the UI stays functional
+    console.warn("[Starknet] isAccountDeployed check failed:", msg.slice(0, 120));
     return false;
   }
 }
