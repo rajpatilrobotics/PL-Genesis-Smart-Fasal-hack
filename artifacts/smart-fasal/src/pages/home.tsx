@@ -496,10 +496,6 @@ export default function Home() {
                     <span className="text-[10px] text-white/70 font-semibold">
                       {liveTime.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
                     </span>
-                    <span className="text-white/40 text-[10px]">·</span>
-                    <span className="text-[10px] text-white/70 font-medium">
-                      {liveTime.toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short" })}
-                    </span>
                     {gpsCoords && (
                       <>
                         <span className="text-white/40 text-[10px]">·</span>
