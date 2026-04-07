@@ -143,6 +143,13 @@ export default function Home() {
     setLocationBlocked(false);
     navigator.geolocation.getCurrentPosition(
       (pos) => {
+        const accuracy = pos.coords.accuracy; // metres
+        // If accuracy is worse than 5km, the browser is guessing from IP/WiFi
+        // — use server-side IP geolocation instead which is more reliable
+        if (accuracy > 5000) {
+          tryIpGeolocation();
+          return;
+        }
         setGpsCoords({ lat: pos.coords.latitude, lon: pos.coords.longitude });
         setLocationDenied(false);
         setLocationBlocked(false);
