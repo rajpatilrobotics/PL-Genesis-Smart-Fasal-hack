@@ -17,7 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 import {
   CloudRain, Droplets, Thermometer, Wind, Brain, Database,
   RefreshCw, Shield, Zap, Lock, Globe, Users, CheckCircle2,
-  Loader2, AlertTriangle, Activity, Cpu, MapPin, Pencil, X, Search
+  Loader2, AlertTriangle, Activity, Cpu, MapPin, Pencil, X, Search, Navigation
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useQueryClient } from "@tanstack/react-query";
@@ -90,10 +90,7 @@ export default function Home() {
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
   const [privacyEnabled, setPrivacyEnabled] = useState(false);
   const [accessLevel, setAccessLevel] = useState<AccessLevel>("Expert");
-  const [gpsCoords, setGpsCoords] = useState<{ lat: number; lon: number } | null>(null);
-  const [locationDenied, setLocationDenied] = useState(false);
-  const [locationBlocked, setLocationBlocked] = useState(false);
-  const [locationLoading, setLocationLoading] = useState(false);
+  const [coords, setCoords] = useState<{ lat: number; lon: number } | null>(null);
   const [showLocationEdit, setShowLocationEdit] = useState(false);
   const [locationSearch, setLocationSearch] = useState("");
   const [locationSearching, setLocationSearching] = useState(false);
@@ -114,69 +111,18 @@ export default function Home() {
     return () => clearInterval(id);
   }, []);
 
-  // IP-based location fallback when GPS is unavailable
-  const tryIpGeolocation = useCallback(async () => {
-    try {
-      const base = import.meta.env.BASE_URL?.replace(/\/$/, "") ?? "";
-      const r = await fetch(`${base}/api/weather/geoip`);
-      if (!r.ok) return;
-      const json = (await r.json()) as { lat?: number; lon?: number };
-      if (json.lat && json.lon) {
-        setGpsCoords({ lat: json.lat, lon: json.lon });
-        setLocationDenied(false);
-      }
-    } catch {
-      // IP geolocation also failed — leave locationDenied as-is
-    } finally {
-      setLocationLoading(false);
-    }
+  // Auto-detect location from IP on mount — no permission needed
+  useEffect(() => {
+    const base = import.meta.env.BASE_URL?.replace(/\/$/, "") ?? "";
+    fetch(`${base}/api/weather/geoip`)
+      .then(r => r.ok ? r.json() : null)
+      .then((json: { lat?: number; lon?: number } | null) => {
+        if (json?.lat && json?.lon) setCoords({ lat: json.lat, lon: json.lon });
+      })
+      .catch(() => {});
   }, []);
 
-  const doGpsRequest = useCallback(() => {
-    if (!navigator.geolocation) {
-      setLocationBlocked(true);
-      tryIpGeolocation();
-      return;
-    }
-    setLocationLoading(true);
-    setLocationDenied(false);
-    setLocationBlocked(false);
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const accuracy = pos.coords.accuracy; // metres
-        // If accuracy is worse than 5km, the browser is guessing from IP/WiFi
-        // — use server-side IP geolocation instead which is more reliable
-        if (accuracy > 5000) {
-          tryIpGeolocation();
-          return;
-        }
-        setGpsCoords({ lat: pos.coords.latitude, lon: pos.coords.longitude });
-        setLocationDenied(false);
-        setLocationBlocked(false);
-        setLocationLoading(false);
-      },
-      (err) => {
-        if (err.code === 1) {
-          setLocationBlocked(true);
-        } else {
-          setLocationDenied(true);
-        }
-        // Always try IP geolocation as fallback
-        tryIpGeolocation();
-      },
-      { timeout: 15000, maximumAge: 0, enableHighAccuracy: true }
-    );
-  }, [tryIpGeolocation]);
-
-  const requestLocation = useCallback(async () => {
-    try {
-      const perm = await navigator.permissions.query({ name: "geolocation" });
-      if (perm.state === "denied") { setLocationBlocked(true); return; }
-    } catch { /* Permissions API not supported, proceed anyway */ }
-    doGpsRequest();
-  }, [doGpsRequest]);
-
-  // Search for a city by name and return coordinates + label
+  // Search city by name → coordinates
   const searchLocation = useCallback(async (query: string) => {
     if (!query.trim()) { setLocationSuggestions([]); return; }
     setLocationSearching(true);
@@ -193,19 +139,12 @@ export default function Home() {
     }
   }, []);
 
-  // Always request fresh GPS on mount
-  useEffect(() => {
-    try { localStorage.removeItem("sf_gps_coords"); } catch { /* ignore */ }
-    requestLocation();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const weatherParams = gpsCoords ?? { lat: 0, lon: 0 };
+  const weatherParams = coords ?? { lat: 0, lon: 0 };
   const { data: weather, isLoading: loadingWeather } = useGetWeather(weatherParams, {
     query: {
       queryKey: getGetWeatherQueryKey(weatherParams),
       refetchInterval: 10 * 60 * 1000,
-      enabled: !!gpsCoords,
+      enabled: !!coords,
     }
   });
 
@@ -559,152 +498,117 @@ export default function Home() {
         </div>
 
         {/* ── Weather ── */}
-        <div className="relative rounded-2xl overflow-hidden shadow-lg transition-all duration-200 hover:-translate-y-1 hover:shadow-2xl hover:shadow-sky-300/50 active:translate-y-0"
-          style={{ background: "linear-gradient(135deg, #0ea5e9 0%, #38bdf8 50%, #7dd3fc 100%)", border: "1px solid rgba(255,255,255,0.35)" }}>
-          <div className="absolute -top-4 -right-4 w-24 h-24 rounded-full bg-white/20 blur-2xl" />
+        <div
+          className="relative rounded-2xl overflow-visible shadow-lg"
+          style={{ background: "linear-gradient(135deg, #0ea5e9 0%, #38bdf8 50%, #7dd3fc 100%)", border: "1px solid rgba(255,255,255,0.35)" }}
+        >
+          <div className="absolute -top-4 -right-4 w-24 h-24 rounded-full bg-white/20 blur-2xl pointer-events-none" />
           <div className="relative p-3.5">
-            {locationLoading && !weather ? (
-              <div className="space-y-1.5">
-                <Skeleton className="h-3 w-16 bg-white/30" />
-                <Skeleton className="h-7 w-24 bg-white/30" />
-              </div>
-            ) : locationBlocked ? (
-              <div className="flex flex-col items-start gap-2">
-                <div className="flex items-center gap-1.5">
-                  <CloudRain className="w-3 h-3 text-white/70" />
-                  <span className="text-[9px] font-bold text-white/70 uppercase tracking-wider">{t("home.weather")}</span>
+
+            {/* ── Location search overlay ── */}
+            {showLocationEdit && (
+              <div className="mb-2">
+                <div className="flex items-center gap-1.5 bg-white/25 rounded-full px-2.5 py-1.5">
+                  <Search className="w-3 h-3 text-white/80 shrink-0" />
+                  <input
+                    autoFocus
+                    type="text"
+                    value={locationSearch}
+                    onChange={e => { setLocationSearch(e.target.value); searchLocation(e.target.value); }}
+                    onKeyDown={e => { if (e.key === "Escape") { setShowLocationEdit(false); setLocationSearch(""); setLocationSuggestions([]); } }}
+                    placeholder="Type your city…"
+                    className="bg-transparent text-[12px] text-white font-medium placeholder:text-white/60 outline-none flex-1"
+                  />
+                  {locationSearching
+                    ? <Loader2 className="w-3 h-3 text-white/70 animate-spin shrink-0" />
+                    : <button onClick={() => { setShowLocationEdit(false); setLocationSearch(""); setLocationSuggestions([]); }}>
+                        <X className="w-3.5 h-3.5 text-white/70" />
+                      </button>
+                  }
                 </div>
-                <p className="text-[11px] text-white font-semibold">Location blocked in browser</p>
-                <p className="text-[10px] text-white/85 leading-relaxed">
-                  On iPhone: Settings → Safari → Location → Allow<br />
-                  On Chrome: tap 🔒 in address bar → Location → Allow
-                </p>
-                <button
-                  onClick={doGpsRequest}
-                  className="flex items-center gap-1.5 bg-white/25 hover:bg-white/35 active:bg-white/20 transition-colors rounded-full px-3 py-1.5 mt-0.5"
-                >
-                  <MapPin className="w-3 h-3 text-white" />
-                  <span className="text-[11px] font-bold text-white">Try Again</span>
-                </button>
+                {locationSuggestions.length > 0 && (
+                  <div className="absolute left-0 right-0 top-full mt-1 mx-1 bg-white rounded-xl shadow-2xl z-50 overflow-hidden">
+                    {locationSuggestions.map((s, i) => (
+                      <button
+                        key={i}
+                        onClick={() => { setCoords({ lat: s.lat, lon: s.lon }); setShowLocationEdit(false); setLocationSearch(""); setLocationSuggestions([]); }}
+                        className="w-full text-left flex items-center gap-2 px-3 py-2.5 text-[12px] text-gray-700 font-medium hover:bg-sky-50 active:bg-sky-100 border-b border-gray-100 last:border-0"
+                      >
+                        <MapPin className="w-3 h-3 text-sky-500 shrink-0" />
+                        {s.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
-            ) : locationDenied && !weather ? (
-              <div className="flex flex-col items-start gap-2">
-                <div className="flex items-center gap-1.5">
-                  <CloudRain className="w-3 h-3 text-white/70" />
-                  <span className="text-[9px] font-bold text-white/70 uppercase tracking-wider">{t("home.weather")}</span>
-                </div>
-                <p className="text-[11px] text-white/80">Allow location access for real-time weather</p>
-                <button
-                  onClick={doGpsRequest}
-                  className="flex items-center gap-1.5 bg-white/25 hover:bg-white/35 active:bg-white/20 transition-colors rounded-full px-3 py-1.5"
-                >
-                  <MapPin className="w-3 h-3 text-white" />
-                  <span className="text-[11px] font-bold text-white">Share Location</span>
-                </button>
-              </div>
-            ) : loadingWeather ? (
-              <div className="space-y-1.5">
-                <Skeleton className="h-3 w-16 bg-white/30" />
-                <Skeleton className="h-7 w-24 bg-white/30" />
-              </div>
-            ) : weather ? (
-              <div className="flex items-center justify-between">
-                <div className="flex-1 min-w-0">
-                  {showLocationEdit ? (
-                    <div className="mb-1.5">
-                      <div className="flex items-center gap-1.5 bg-white/20 rounded-full px-2.5 py-1.5">
-                        <Search className="w-3 h-3 text-white/70 shrink-0" />
-                        <input
-                          autoFocus
-                          type="text"
-                          value={locationSearch}
-                          onChange={(e) => {
-                            setLocationSearch(e.target.value);
-                            searchLocation(e.target.value);
-                          }}
-                          onKeyDown={(e) => { if (e.key === "Escape") { setShowLocationEdit(false); setLocationSearch(""); setLocationSuggestions([]); } }}
-                          placeholder="Search city…"
-                          className="bg-transparent text-[11px] text-white placeholder:text-white/50 outline-none w-full"
-                        />
-                        {locationSearching
-                          ? <Loader2 className="w-3 h-3 text-white/60 animate-spin shrink-0" />
-                          : <button onClick={() => { setShowLocationEdit(false); setLocationSearch(""); setLocationSuggestions([]); }}><X className="w-3 h-3 text-white/60" /></button>
-                        }
+            )}
+
+            {/* ── Weather data ── */}
+            {!showLocationEdit && (
+              <>
+                {(loadingWeather || !coords) ? (
+                  <div className="space-y-2">
+                    <Skeleton className="h-3 w-28 bg-white/30 rounded-full" />
+                    <Skeleton className="h-8 w-20 bg-white/30 rounded-lg" />
+                    <Skeleton className="h-3 w-24 bg-white/30 rounded-full" />
+                  </div>
+                ) : weather ? (
+                  <div className="flex items-center justify-between gap-3">
+                    {/* Left: location + temp */}
+                    <div>
+                      <div className="flex items-center gap-1 mb-1">
+                        <Navigation className="w-3 h-3 text-white/80" />
+                        <span className="text-[10px] font-bold text-white/80 uppercase tracking-wider">{weather.location}</span>
+                        <button
+                          onClick={() => { setShowLocationEdit(true); setLocationSuggestions([]); setLocationSearch(""); }}
+                          className="ml-0.5 p-0.5 rounded-full hover:bg-white/25 active:bg-white/35 transition-colors"
+                          title="Change location"
+                        >
+                          <Pencil className="w-2.5 h-2.5 text-white/60" />
+                        </button>
                       </div>
-                      {locationSuggestions.length > 0 && (
-                        <div className="mt-1 bg-white/95 rounded-xl shadow-xl overflow-hidden">
-                          {locationSuggestions.map((s, i) => (
-                            <button
-                              key={i}
-                              onClick={() => {
-                                setGpsCoords({ lat: s.lat, lon: s.lon });
-                                setShowLocationEdit(false);
-                                setLocationSearch("");
-                                setLocationSuggestions([]);
-                              }}
-                              className="w-full text-left px-3 py-2 text-[11px] text-gray-800 hover:bg-sky-50 active:bg-sky-100 border-b border-gray-100 last:border-0 font-medium"
-                            >
-                              📍 {s.label}
-                            </button>
-                          ))}
+                      <p className="text-3xl font-extrabold text-white tracking-tight drop-shadow-sm">{weather.temperature}°C</p>
+                      <p className="text-[11px] text-white/80 capitalize mt-0.5">{weather.description}</p>
+                      <p className="text-[10px] text-white/60 mt-1">
+                        {liveTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+                      </p>
+                    </div>
+                    {/* Right: stats */}
+                    <div className="flex flex-col items-end gap-1.5">
+                      <div className="flex items-center gap-1 bg-white/25 backdrop-blur-sm rounded-full px-2.5 py-1">
+                        <Droplets className="w-2.5 h-2.5 text-white" />
+                        <span className="text-[11px] font-bold text-white">{weather.humidity}%</span>
+                      </div>
+                      <div className="flex items-center gap-1 bg-white/25 backdrop-blur-sm rounded-full px-2.5 py-1">
+                        <Wind className="w-2.5 h-2.5 text-white" />
+                        <span className="text-[11px] font-bold text-white">{weather.windSpeed} m/s</span>
+                      </div>
+                      <div className="flex items-center gap-1 bg-white/25 backdrop-blur-sm rounded-full px-2.5 py-1">
+                        <Thermometer className="w-2.5 h-2.5 text-amber-200" />
+                        <span className="text-[11px] font-bold text-white">Feels {weather.feelsLike ?? weather.temperature}°C</span>
+                      </div>
+                      {weather.rainfall > 0 && (
+                        <div className="flex items-center gap-1 bg-white/25 backdrop-blur-sm rounded-full px-2.5 py-1">
+                          <CloudRain className="w-2.5 h-2.5 text-sky-200" />
+                          <span className="text-[11px] font-bold text-white">{weather.rainfall} mm</span>
                         </div>
                       )}
                     </div>
-                  ) : (
-                    <div className="flex items-center gap-1 mb-0.5">
-                      <CloudRain className="w-3 h-3 text-white/80" />
-                      <span className="text-[9px] font-bold text-white/75 uppercase tracking-wider">
-                        {t("home.weather")} · {weather.location}
-                      </span>
-                      <button
-                        onClick={() => { setShowLocationEdit(true); setLocationSuggestions([]); }}
-                        className="ml-0.5 p-0.5 rounded-full hover:bg-white/20 active:bg-white/30 transition-colors"
-                        title="Change location"
-                      >
-                        <Pencil className="w-2.5 h-2.5 text-white/60" />
-                      </button>
-                    </div>
-                  )}
-                  {!showLocationEdit && (
-                    <>
-                      <p className="text-3xl font-extrabold text-white tracking-tight drop-shadow">{weather.temperature}°C</p>
-                      <p className="text-xs text-white/80 capitalize mt-0.5">{weather.description}</p>
-                      <div className="flex items-center gap-2 mt-1.5">
-                        <span className="text-[10px] text-white/70 font-semibold">
-                          {liveTime.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
-                        </span>
-                        {gpsCoords && (
-                          <>
-                            <span className="text-white/40 text-[10px]">·</span>
-                            <span className="text-[9px] text-white/60 font-medium">📍 GPS</span>
-                          </>
-                        )}
-                      </div>
-                    </>
-                  )}
-                </div>
-                {!showLocationEdit && <div className="flex flex-col items-end gap-1.5">
-                  <div className="flex items-center gap-1 bg-white/25 backdrop-blur-sm rounded-full px-2.5 py-1">
-                    <Droplets className="w-2.5 h-2.5 text-white" />
-                    <span className="text-[11px] font-bold text-white">{weather.humidity}%</span>
                   </div>
-                  <div className="flex items-center gap-1 bg-white/25 backdrop-blur-sm rounded-full px-2.5 py-1">
-                    <Wind className="w-2.5 h-2.5 text-white" />
-                    <span className="text-[11px] font-bold text-white">{weather.windSpeed} m/s</span>
+                ) : (
+                  <div className="flex items-center justify-between">
+                    <p className="text-[11px] text-white/70">Could not load weather</p>
+                    <button
+                      onClick={() => { const base = import.meta.env.BASE_URL?.replace(/\/$/, "") ?? ""; fetch(`${base}/api/weather/geoip`).then(r => r.ok ? r.json() : null).then((j: { lat?: number; lon?: number } | null) => { if (j?.lat && j?.lon) setCoords({ lat: j.lat, lon: j.lon }); }).catch(() => {}); }}
+                      className="flex items-center gap-1 bg-white/25 rounded-full px-2.5 py-1"
+                    >
+                      <RefreshCw className="w-3 h-3 text-white" />
+                      <span className="text-[11px] font-bold text-white">Retry</span>
+                    </button>
                   </div>
-                  <div className="flex items-center gap-1 bg-white/25 backdrop-blur-sm rounded-full px-2.5 py-1">
-                    <Thermometer className="w-2.5 h-2.5 text-amber-200" />
-                    <span className="text-[11px] font-bold text-white">{t("home.feels")} {weather.feelsLike ?? weather.temperature}°C</span>
-                  </div>
-                  {weather.rainfall > 0 && (
-                    <div className="flex items-center gap-1 bg-white/25 backdrop-blur-sm rounded-full px-2.5 py-1">
-                      <CloudRain className="w-2.5 h-2.5 text-sky-200" />
-                      <span className="text-[11px] font-bold text-white">{weather.rainfall} mm</span>
-                    </div>
-                  )}
-                </div>}
-              </div>
-            ) : <p className="text-xs text-white/60">Unavailable</p>}
+                )}
+              </>
+            )}
           </div>
         </div>
 
