@@ -88,21 +88,28 @@ function isNetworkError(err: unknown): boolean {
 }
 
 async function isAccountDeployed(address: string): Promise<boolean> {
+  const p = await getProvider();
+  // Strategy 1: getNonce — reliably supported by dRPC. A non-zero nonce means deployed.
+  // Strategy 2: getClassHashAt fallback — works on most other nodes.
+  // A deployed account will always respond; an undeployed address gets a JSON-RPC error.
   try {
-    const p = await getProvider();
-    // Use getClassHashAt — supported by dRPC and most Starknet nodes.
-    // getClassAt is NOT supported by all public RPCs (e.g. dRPC returns -32601).
-    await p.getClassHashAt(address);
-    return true;
-  } catch (err: any) {
-    // Starknet JSON-RPC error code 20 = CONTRACT_NOT_FOUND (not deployed)
-    // We must NOT catch -32601 (method not available) — that should bubble up.
-    const code = err?.code ?? err?.errorCode ?? (err as any)?.baseError?.code;
-    const msg: string = err?.message ?? String(err);
-    if (code === 20 || /Contract not found/i.test(msg)) return false;
-    // For any other failure, assume unknown and return false so the UI stays functional
-    console.warn("[Starknet] isAccountDeployed check failed:", msg.slice(0, 120));
-    return false;
+    const nonce = await p.getNonceForAddress(address, "latest");
+    // Any valid hex nonce (including "0x0") means the account exists on-chain
+    return typeof nonce === "string" && nonce.startsWith("0x");
+  } catch (nonceErr: any) {
+    // getNonce failed (unsupported method) — fall back to getClassHashAt
+    try {
+      await p.getClassHashAt(address, "latest");
+      return true;
+    } catch (classErr: any) {
+      const code = (classErr as any)?.code ?? (classErr as any)?.baseError?.code;
+      const msg: string = classErr?.message ?? String(classErr);
+      // Error 20 = CONTRACT_NOT_FOUND; anything else means we just can't tell
+      if (code === 20 || /Contract not found/i.test(msg)) return false;
+      console.warn("[Starknet] isAccountDeployed: both checks failed:", msg.slice(0, 120));
+      // Assume deployed — it's better to show the green tick than a spurious Deploy button
+      return true;
+    }
   }
 }
 
