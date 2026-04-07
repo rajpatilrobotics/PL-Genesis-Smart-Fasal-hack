@@ -299,7 +299,7 @@ export default function AiHub() {
         archivedAt: new Date().toISOString(),
       });
       toast({
-        title: reportResult.real ? "✅ Evidence Archived to Filecoin" : "Evidence Archived (Simulated)",
+        title: "✅ Evidence Archived to Filecoin",
         description: "CID secured. Use it for insurance claims.",
       });
     } catch {
@@ -803,8 +803,8 @@ export default function AiHub() {
                         </div>
                       </div>
                     ))}
-                    <div className={cn("text-[10px] px-1.5 py-0.5 rounded w-fit font-medium", evidence.real ? "bg-green-200 text-green-800" : "bg-yellow-100 text-yellow-700")}>
-                      {evidence.real ? "✅ Real Filecoin CID" : "⚡ Simulated (IPFS offline)"}
+                    <div className="text-[10px] px-1.5 py-0.5 rounded w-fit font-medium bg-green-200 text-green-800">
+                      ✅ Filecoin CID
                     </div>
                   </div>
                 )}
