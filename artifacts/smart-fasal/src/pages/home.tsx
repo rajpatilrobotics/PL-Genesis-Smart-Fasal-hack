@@ -878,7 +878,7 @@ export default function Home() {
                     {step.id === "rewards" && <img src="/flow-logo.png" alt="Flow" className="w-3.5 h-3.5 rounded-full object-contain bg-white shrink-0" />}
                     {step.id === "insurance" && <img src="/starknet-logo.png" alt="Starknet" className="w-3.5 h-3.5 rounded-full object-contain bg-white shrink-0" />}
                     {step.id === "hypercerts" && <img src="/hypercerts-logo.png" alt="HyperCerts" className="w-3.5 h-3.5 rounded-full object-contain bg-white shrink-0" />}
-                    {step.label}
+                    {step.id === "access" ? <>Lit {step.label}</> : step.id === "privacy" ? <>Zama {step.label}</> : step.label}
                   </p>
                   {step.status === "done" && step.result && <p className="text-[10px] text-emerald-600 mt-0.5">{step.result}</p>}
                   {step.status === "running" && <p className="text-[10px] text-sky-600 mt-0.5">{step.description}</p>}
