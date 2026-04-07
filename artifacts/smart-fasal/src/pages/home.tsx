@@ -139,15 +139,14 @@ export default function Home() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const weatherParams = gpsCoords ?? {};
-  const { data: weather, isLoading: loadingWeather, refetch: refetchWeather } = useGetWeather(weatherParams, {
-    query: { queryKey: getGetWeatherQueryKey(weatherParams), refetchInterval: 10 * 60 * 1000 }
+  const weatherParams = gpsCoords ?? { lat: 0, lon: 0 };
+  const { data: weather, isLoading: loadingWeather } = useGetWeather(weatherParams, {
+    query: {
+      queryKey: getGetWeatherQueryKey(weatherParams),
+      refetchInterval: 10 * 60 * 1000,
+      enabled: !!gpsCoords,
+    }
   });
-
-  // Force immediate weather refetch whenever real coordinates arrive
-  useEffect(() => {
-    if (gpsCoords) refetchWeather();
-  }, [gpsCoords, refetchWeather]);
 
   const { data: sensorData, isLoading: loadingSensor } = useGetLatestSensorData({
     query: { queryKey: getGetLatestSensorDataQueryKey(), refetchInterval: 5000 }
