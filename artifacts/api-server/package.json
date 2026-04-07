@@ -10,7 +10,6 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@clerk/express": "^2.0.8",
     "@google/generative-ai": "^0.24.1",
     "@hypercerts-org/sdk": "^2.9.1",
     "@lighthouse-web3/sdk": "^0.4.5",

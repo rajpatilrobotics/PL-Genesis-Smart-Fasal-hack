@@ -2,8 +2,6 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useWallet } from "@/lib/wallet-context";
 import { useUserProfile, useUpdateProfile } from "@/lib/useUserProfile";
-import { useClerk, useUser } from "@clerk/react";
-import { useLocation } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -12,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import {
   Wallet, Award, Database, ShieldCheck, Zap, Lock,
   Users, Globe, Clock, CheckCircle2, AlertTriangle,
-  Leaf, Star, TrendingUp, MapPin, Sprout, Pencil, Save, X, LogOut, LogIn, UserCircle
+  Leaf, Star, TrendingUp, MapPin, Sprout, Pencil, Save, X
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { RiskStatus } from "@/lib/wallet-context";
@@ -61,14 +59,9 @@ function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("en-IN", { year: "numeric", month: "long", day: "numeric" });
 }
 
-const clerkEnabled = !!import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
-
 export default function Profile() {
   const { t } = useTranslation();
   const { walletAddress, flowRewards, contributionCount, dataHistory, certificates, currentRisk, handleConnect } = useWallet();
-  const { signOut } = useClerk();
-  const { isSignedIn, user: clerkUser } = useUser();
-  const [, setLocation] = useLocation();
   const { data: profileData, isLoading } = useUserProfile();
   const { mutateAsync: updateProfile, isPending: isSaving } = useUpdateProfile();
   const [activeTab, setActiveTab] = useState<"timeline" | "expert">("timeline");
@@ -255,40 +248,6 @@ export default function Profile() {
           )}
         </CardContent>
       </Card>
-
-      {/* Sign In / Account card */}
-      {clerkEnabled && (
-        <Card className={cn("border overflow-hidden", isSignedIn ? "border-primary/20 bg-primary/5" : "border-dashed border-primary/30")}>
-          <CardContent className="p-4 flex items-center gap-4">
-            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-              {isSignedIn ? <UserCircle className="w-5 h-5 text-primary" /> : <LogIn className="w-5 h-5 text-primary" />}
-            </div>
-            {isSignedIn ? (
-              <>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold truncate">
-                    {clerkUser?.firstName || clerkUser?.emailAddresses[0]?.emailAddress?.split("@")[0] || "Farmer"}
-                  </p>
-                  <p className="text-xs text-muted-foreground truncate">{clerkUser?.emailAddresses[0]?.emailAddress}</p>
-                </div>
-                <Button size="sm" variant="outline" onClick={() => signOut()} className="shrink-0 text-destructive border-destructive/30 hover:bg-destructive/5">
-                  <LogOut className="w-3.5 h-3.5 mr-1" /> Sign Out
-                </Button>
-              </>
-            ) : (
-              <>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold">Sign In to your Account</p>
-                  <p className="text-xs text-muted-foreground">Save your profile and access all features</p>
-                </div>
-                <Button size="sm" onClick={() => setLocation("/sign-in")} className="shrink-0 bg-primary text-white hover:bg-primary/90">
-                  <LogIn className="w-3.5 h-3.5 mr-1" /> Sign In
-                </Button>
-              </>
-            )}
-          </CardContent>
-        </Card>
-      )}
 
       {/* Wallet connect prompt */}
       {!walletAddress && (
@@ -544,19 +503,6 @@ export default function Profile() {
         </div>
       )}
 
-      {/* Sign Out */}
-      {clerkEnabled && isSignedIn && (
-        <div className="pt-2 pb-4">
-          <Button
-            variant="outline"
-            className="w-full border-destructive/30 text-destructive hover:bg-destructive/5 hover:border-destructive/60 font-semibold gap-2"
-            onClick={() => signOut(() => setLocation("/"))}
-          >
-            <LogOut className="w-4 h-4" />
-            Sign Out
-          </Button>
-        </div>
-      )}
     </div>
   );
 }

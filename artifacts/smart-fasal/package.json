@@ -75,7 +75,6 @@
     "zod": "catalog:"
   },
   "dependencies": {
-    "@clerk/react": "^6.1.4",
     "@lit-protocol/auth-helpers": "^8.2.1",
     "@lit-protocol/constants": "^9.0.1",
     "@lit-protocol/lit-node-client": "^7.4.0",

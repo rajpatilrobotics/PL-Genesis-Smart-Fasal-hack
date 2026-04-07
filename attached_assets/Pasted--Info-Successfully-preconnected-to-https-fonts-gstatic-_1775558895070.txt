@@ -1,0 +1,26 @@
+[Info] Successfully preconnected to https://fonts.gstatic.com/
+[Info] Successfully preconnected to https://verify.walletconnect.com/
+[Info] Successfully preconnected to https://fonts.googleapis.com/
+[Info] Successfully preconnected to https://fcl-discovery.onflow.org/
+[Info] Successfully preconnected to https://relay.walletconnect.com/
+[Info] Successfully preconnected to https://rest-testnet.onflow.org/
+[Error] Error: Missing VITE_CLERK_PUBLISHABLE_KEY
+	Module Code (index-BmA9d5lx.js:1452:183517)
+[Debug] Object (index-BmA9d5lx.js, line 205)
+[Debug] Object (index-BmA9d5lx.js, line 205)
+[Log] Object (index-BmA9d5lx.js, line 205)
+[Log] Object (index-BmA9d5lx.js, line 205)
+[Log] Object (index-BmA9d5lx.js, line 205)
+[Log] Object (index-BmA9d5lx.js, line 205)
+[Log] Object (index-BmA9d5lx.js, line 205)
+[Log] Object (index-BmA9d5lx.js, line 205)
+[Log] {time: 1775558341061, level: 30, context: "core", msg: "Starting WS connection skipped because the client has no topics to work with."} (index-BmA9d5lx.js, line 205)
+[Log] {time: 1775558346059, level: 30, context: "core", msg: "Starting WS connection skipped because the client has no topics to work with."} (index-BmA9d5lx.js, line 205)
+[Log] {time: 1775558351060, level: 30, context: "core", msg: "Starting WS connection skipped because the client has no topics to work with."} (index-BmA9d5lx.js, line 205)
+[Log] {time: 1775558356061, level: 30, context: "core", msg: "Starting WS connection skipped because the client has no topics to work with."} (index-BmA9d5lx.js, line 205)
+[Log] {time: 1775558361062, level: 30, context: "core", msg: "Starting WS connection skipped because the client has no topics to work with."} (index-BmA9d5lx.js, line 205)
+[Log] {time: 1775558366062, level: 30, context: "core", msg: "Starting WS connection skipped because the client has no topics to work with."} (index-BmA9d5lx.js, line 205)
+[Log] {time: 1775558371063, level: 30, context: "core", msg: "Starting WS connection skipped because the client has no topics to work with."} (index-BmA9d5lx.js, line 205)
+[Log] {time: 1775558458751, level: 30, context: "core", msg: "Starting WS connection skipped because the client has no topics to work with."} (index-BmA9d5lx.js, line 205)
+[Log] {time: 1775558463752, level: 30, context: "core", msg: "Starting WS connection skipped because the client has no topics to work with."} (index-BmA9d5lx.js, line 205)
+[Log] {time: 1775558863770, level: 30, context: "core", msg: "Starting WS connection skipped because the client has no topics to work with."} (index-BmA9d5lx.js, line 205)
