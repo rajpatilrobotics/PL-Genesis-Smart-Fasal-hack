@@ -107,17 +107,33 @@ export default function Home() {
     return () => clearInterval(id);
   }, []);
 
-  // Fallback: get approximate location via IP geolocation (browser sends its own real IP)
+  // Fallback: try multiple IP geolocation services in sequence (browser sends its own real IP)
   const fetchIpLocation = useCallback(async () => {
-    try {
-      const res = await fetch("https://ipapi.co/json/", { signal: AbortSignal.timeout(6000) });
-      if (!res.ok) return;
-      const json = (await res.json()) as { latitude?: number; longitude?: number };
-      if (json.latitude && json.longitude) {
-        setGpsCoords({ lat: json.latitude, lon: json.longitude });
-      }
-    } catch {
-      // silent — will stay on server-side region rotation
+    const services = [
+      async () => {
+        const r = await fetch("https://ipapi.co/json/", { signal: AbortSignal.timeout(5000) });
+        if (!r.ok) return null;
+        const j = (await r.json()) as { latitude?: number; longitude?: number };
+        return j.latitude && j.longitude ? { lat: j.latitude, lon: j.longitude } : null;
+      },
+      async () => {
+        const r = await fetch("https://api.db-ip.com/v2/free/self", { signal: AbortSignal.timeout(5000) });
+        if (!r.ok) return null;
+        const j = (await r.json()) as { latitude?: number; longitude?: number };
+        return j.latitude && j.longitude ? { lat: j.latitude, lon: j.longitude } : null;
+      },
+      async () => {
+        const r = await fetch("https://freeipapi.com/api/json", { signal: AbortSignal.timeout(5000) });
+        if (!r.ok) return null;
+        const j = (await r.json()) as { latitude?: number; longitude?: number };
+        return j.latitude && j.longitude ? { lat: j.latitude, lon: j.longitude } : null;
+      },
+    ];
+    for (const service of services) {
+      try {
+        const coords = await service();
+        if (coords) { setGpsCoords(coords); return; }
+      } catch { /* try next */ }
     }
   }, []);
 
@@ -135,9 +151,14 @@ export default function Home() {
   }, [fetchIpLocation]);
 
   const weatherParams = gpsCoords ?? {};
-  const { data: weather, isLoading: loadingWeather } = useGetWeather(weatherParams, {
+  const { data: weather, isLoading: loadingWeather, refetch: refetchWeather } = useGetWeather(weatherParams, {
     query: { queryKey: getGetWeatherQueryKey(weatherParams), refetchInterval: 10 * 60 * 1000 }
   });
+
+  // Force immediate weather refetch whenever real coordinates arrive
+  useEffect(() => {
+    if (gpsCoords) refetchWeather();
+  }, [gpsCoords, refetchWeather]);
 
   const { data: sensorData, isLoading: loadingSensor } = useGetLatestSensorData({
     query: { queryKey: getGetLatestSensorDataQueryKey(), refetchInterval: 5000 }
