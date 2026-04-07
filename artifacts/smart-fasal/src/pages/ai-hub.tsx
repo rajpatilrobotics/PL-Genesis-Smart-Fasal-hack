@@ -655,7 +655,7 @@ export default function AiHub() {
           )}
 
           {/* Rec history */}
-          {recHistory && recHistory.length > 0 && (
+          {Array.isArray(recHistory) && recHistory.length > 0 && (
             <div className="space-y-2">
               <p className="font-semibold text-sm px-1 flex items-center gap-1.5"><History className="w-3.5 h-3.5" />{t("ai.pastRecommendations")}</p>
               {recHistory.slice(0, 3).map((rec: any) => (

@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 export interface UserProfile {
   id: number;
-  clerkId: string;
+  email: string;
   fullName: string;
   phone: string | null;
   village: string | null;

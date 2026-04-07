@@ -169,6 +169,39 @@ async function fetchOpenMeteoForCoords(lat: number, lon: number, location: strin
 // Cache for GPS-based requests keyed by rounded lat/lon string
 const gpsCache = new Map<string, WeatherCache>();
 
+// IP-based geolocation — resolves the real user IP from headers and calls ip-api.com
+router.get("/geoip", async (req, res): Promise<void> => {
+  const forwarded = req.headers["x-forwarded-for"];
+  const rawIp = (Array.isArray(forwarded) ? forwarded[0] : forwarded)?.split(",")[0]?.trim()
+    ?? req.socket.remoteAddress
+    ?? "";
+
+  // Strip IPv6 loopback prefix
+  const ip = rawIp.replace(/^::ffff:/, "");
+  const isPrivate = !ip || ip === "::1" || /^127\./.test(ip) || /^10\./.test(ip) || /^192\.168\./.test(ip) || /^172\.(1[6-9]|2\d|3[01])\./.test(ip);
+
+  if (isPrivate) {
+    res.json({ lat: null, lon: null, location: null });
+    return;
+  }
+
+  try {
+    const controller = new AbortController();
+    const tid = setTimeout(() => controller.abort(), 5000);
+    const geoRes = await fetch(`http://ip-api.com/json/${ip}?fields=lat,lon,city,regionName,status`, { signal: controller.signal });
+    clearTimeout(tid);
+    const data = await geoRes.json() as { lat: number; lon: number; city: string; regionName: string; status: string };
+    if (data.status === "success") {
+      console.log(`[GeoIP] ${ip} → ${data.city}, ${data.regionName} (${data.lat}, ${data.lon})`);
+      res.json({ lat: data.lat, lon: data.lon, location: `${data.city}, ${data.regionName}` });
+    } else {
+      res.json({ lat: null, lon: null, location: null });
+    }
+  } catch {
+    res.json({ lat: null, lon: null, location: null });
+  }
+});
+
 router.get("/weather", async (req, res): Promise<void> => {
   const lat = req.query.lat ? Number(req.query.lat) : null;
   const lon = req.query.lon ? Number(req.query.lon) : null;

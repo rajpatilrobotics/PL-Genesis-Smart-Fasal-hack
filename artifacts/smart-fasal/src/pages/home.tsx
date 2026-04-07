@@ -93,17 +93,55 @@ export default function Home() {
   const [pipelineRunning, setPipelineRunning] = useState(false);
   const [pipelineResult, setPipelineResult] = useState<PipelineResult | null>(null);
   const [steps, setSteps] = useState<PipelineStep[]>([]);
-  const [displaySensor, setDisplaySensor] = useState({ nitrogen: 0, phosphorus: 0, potassium: 0, ph: 0, moisture: 0 });
+  const [displaySensor, setDisplaySensor] = useState(DUMMY_SENSOR_BASE);
   const [isSampling, setIsSampling] = useState(false);
-  const [tick, setTick] = useState(0);
+  const [now, setNow] = useState(new Date());
+  const [gpsCoords, setGpsCoords] = useState<{ lat: number; lon: number } | null>(null);
+  const [locationStatus, setLocationStatus] = useState<"pending" | "granted" | "denied">("pending");
 
   useEffect(() => {
-    const id = setInterval(() => setTick(t => t + 1), 1000);
+    const id = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(id);
   }, []);
 
-  const { data: weather, isLoading: loadingWeather } = useGetWeather({}, {
-    query: { queryKey: getGetWeatherQueryKey({}) }
+  useEffect(() => {
+    let gpsResolved = false;
+
+    // Try IP geolocation via our own backend (no permission needed, uses real user IP from headers)
+    const tryIpGeo = async () => {
+      try {
+        const res = await fetch("/api/geoip");
+        const data = await res.json() as { lat: number | null; lon: number | null; location: string | null };
+        if (data.lat !== null && data.lon !== null && !gpsResolved) {
+          setGpsCoords({ lat: data.lat, lon: data.lon });
+          setLocationStatus("granted");
+        } else if (!gpsResolved) {
+          setLocationStatus("denied");
+        }
+      } catch {
+        if (!gpsResolved) setLocationStatus("denied");
+      }
+    };
+
+    // Also try GPS (more accurate, user may grant it in real browser)
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          gpsResolved = true;
+          setGpsCoords({ lat: pos.coords.latitude, lon: pos.coords.longitude });
+          setLocationStatus("granted");
+        },
+        () => { /* GPS denied — IP geo already handles fallback */ },
+        { timeout: 8000, enableHighAccuracy: false }
+      );
+    }
+
+    tryIpGeo();
+  }, []);
+
+  const weatherParams = gpsCoords ?? {};
+  const { data: weather, isLoading: loadingWeather } = useGetWeather(weatherParams, {
+    query: { queryKey: getGetWeatherQueryKey(weatherParams), staleTime: 5 * 60 * 1000 }
   });
 
   const { data: sensorData, isLoading: loadingSensor } = useGetLatestSensorData({
@@ -265,11 +303,11 @@ export default function Home() {
     let filecoinReal = false;
     try {
       const farmPayload = {
-        nitrogen: privacyEnabled ? "***" : sensorData.nitrogen,
-        phosphorus: privacyEnabled ? "***" : sensorData.phosphorus,
-        potassium: privacyEnabled ? "***" : sensorData.potassium,
-        ph: sensorData.ph,
-        moisture: sensorData.moisture,
+        nitrogen: privacyEnabled ? "***" : activeSensor.nitrogen,
+        phosphorus: privacyEnabled ? "***" : activeSensor.phosphorus,
+        potassium: privacyEnabled ? "***" : activeSensor.potassium,
+        ph: activeSensor.ph,
+        moisture: activeSensor.moisture,
         temperature: weather?.temperature,
         timestamp: new Date().toISOString(),
         walletAddress: walletAddress ?? "anonymous",
@@ -366,11 +404,11 @@ export default function Home() {
         aiHealth,
         aiYield,
         insights: fertilizerAdvice,
-        nitrogen: sensorData.nitrogen,
-        phosphorus: sensorData.phosphorus,
-        potassium: sensorData.potassium,
-        ph: sensorData.ph,
-        moisture: sensorData.moisture,
+        nitrogen: activeSensor.nitrogen,
+        phosphorus: activeSensor.phosphorus,
+        potassium: activeSensor.potassium,
+        ph: activeSensor.ph,
+        moisture: activeSensor.moisture,
         temperature: weather?.temperature,
       });
     }
@@ -424,13 +462,18 @@ export default function Home() {
               <h2 className="text-xl font-extrabold text-white tracking-tight drop-shadow-sm">{t("home.farmDashboard")}</h2>
               <p className="text-green-100/90 text-xs mt-0.5 font-medium">🌾 AI · IoT · Web3 Powered</p>
             </div>
-            <button
-              onClick={handleSimulateSensor}
-              className="flex items-center gap-1.5 text-xs font-bold text-green-900 bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-full hover:bg-white transition-all border border-white/70 shadow-md"
-            >
-              <RefreshCw className={cn("w-3 h-3", submitSensor.isPending && "animate-spin")} />
-              <span>{lastUpdated.toLocaleTimeString()}</span>
-            </button>
+            <div className="flex flex-col items-end gap-1">
+              <button
+                onClick={handleSimulateSensor}
+                className="flex items-center gap-1.5 text-xs font-bold text-green-900 bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-full hover:bg-white transition-all border border-white/70 shadow-md"
+              >
+                <RefreshCw className={cn("w-3 h-3", submitSensor.isPending && "animate-spin")} />
+                <span>{now.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true })}</span>
+              </button>
+              <span className="text-[9px] text-green-100/80 font-medium pr-1">
+                {now.toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short" })}
+              </span>
+            </div>
           </div>
         </div>
 
@@ -449,7 +492,10 @@ export default function Home() {
                 <div>
                   <div className="flex items-center gap-1 mb-1">
                     <CloudRain className="w-3 h-3 text-white/80" />
-                    <span className="text-[9px] font-bold text-white/75 uppercase tracking-wider">{t("home.weather")} · Punjab, India</span>
+                    <span className="text-[9px] font-bold text-white/75 uppercase tracking-wider">
+                      {t("home.weather")} · {weather.location}
+                      {locationStatus === "granted" && " 📍"}
+                    </span>
                   </div>
                   <p className="text-3xl font-extrabold text-white tracking-tight drop-shadow">{weather.temperature}°C</p>
                   <p className="text-xs text-white/70 capitalize mt-0.5">{weather.description}</p>
@@ -549,7 +595,7 @@ export default function Home() {
                 <p className="text-[10px] text-gray-400 font-mono">ESP32-FARM-001</p>
                 <span className="text-[9px] text-gray-300">·</span>
                 <p className="text-[10px] text-gray-400">
-                  {lastUpdated ? `${Math.round((Date.now() - lastUpdated.getTime() + tick * 0) / 1000)}s ago` : "connecting..."}
+                  {lastUpdated ? `${Math.round((now.getTime() - lastUpdated.getTime()) / 1000)}s ago` : "connecting..."}
                 </p>
               </div>
             </div>
@@ -709,7 +755,7 @@ export default function Home() {
 
             <button
               onClick={runPipeline}
-              disabled={!sensorData || pipelineRunning}
+              disabled={pipelineRunning}
               className={cn(
                 "w-full h-12 font-bold text-base rounded-xl transition-all duration-200 flex items-center justify-center gap-2",
                 "bg-amber-400 text-green-900 shadow-xl shadow-amber-400/30",
@@ -729,7 +775,7 @@ export default function Home() {
             </button>
 
             {!sensorData && (
-              <p className="text-center text-xs text-green-200/50">Tap the clock above to sync sensor data first</p>
+              <p className="text-center text-xs text-green-200/50">Using demo sensor data — tap the clock to sync live readings</p>
             )}
           </div>
         </div>
@@ -841,26 +887,21 @@ export default function Home() {
             <img
               src="/logo.jpeg"
               alt="Smart Fasal"
-              className="w-12 h-12 rounded-2xl object-cover ring-2 ring-white/80 shadow-md"
+              className="w-12 h-12 rounded-full object-cover ring-2 ring-white/80 shadow-md"
             />
             <div>
               <p className="text-sm font-extrabold text-gray-800 leading-tight">Smart Fasal</p>
               <p className="text-[10px] font-semibold text-emerald-600 leading-tight">The Agriculture Platform</p>
             </div>
-            <div className="flex flex-col items-center gap-1">
-              <p className="text-[10px] text-gray-500">Developed by Raj Patil</p>
-              <a
-                href="https://www.linkedin.com/in/raj-patil-a492a1155/?skipRedirect=true"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-center w-5 h-5 rounded-[4px] bg-[#0A66C2] hover:bg-[#004182] transition-colors"
-                title="Raj Patil on LinkedIn"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" className="w-3 h-3">
-                  <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
-                </svg>
-              </a>
-            </div>
+            <a
+              href="https://www.linkedin.com/in/raj-patil-a492a1155/?skipRedirect=true"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 text-blue-600 text-[10px] hover:text-blue-800 transition-colors"
+            >
+              Developed by Raj Patil
+              <img src="https://upload.wikimedia.org/wikipedia/commons/c/ca/LinkedIn_logo_initials.png" alt="LinkedIn" className="w-4 h-4" />
+            </a>
             <p className="text-[10px] text-gray-400 leading-snug max-w-[220px]">
               Built on cutting-edge Web3 protocols &amp; decentralized infrastructure
             </p>

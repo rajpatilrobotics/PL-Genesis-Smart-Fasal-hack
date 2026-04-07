@@ -6,21 +6,23 @@ import { requireAuth } from "../middlewares/requireAuth.js";
 const router: IRouter = Router();
 
 router.get("/user/profile", requireAuth, async (req, res): Promise<void> => {
-  const userId = (req as any).userId as string;
+  const userId = (req as any).userId as number;
   try {
-    const [user] = await db.select().from(usersTable).where(eq(usersTable.clerkId, userId));
+    const [user] = await db.select().from(usersTable).where(eq(usersTable.id, userId));
     if (!user) {
       res.json({ exists: false, profile: null });
       return;
     }
-    res.json({ exists: true, profile: user });
+    const { passwordHash: _ph, googleId: _gi, ...safeUser } = user;
+    res.json({ exists: true, profile: safeUser });
   } catch (err) {
+    console.error("[GET /user/profile] Error:", err);
     res.status(500).json({ error: "Failed to fetch profile" });
   }
 });
 
 router.put("/user/profile", requireAuth, async (req, res): Promise<void> => {
-  const userId = (req as any).userId as string;
+  const userId = (req as any).userId as number;
   const {
     fullName,
     phone,
@@ -39,9 +41,7 @@ router.put("/user/profile", requireAuth, async (req, res): Promise<void> => {
   }
 
   try {
-    const [existing] = await db.select().from(usersTable).where(eq(usersTable.clerkId, userId));
     const profileData = {
-      clerkId: userId,
       fullName,
       phone: phone || null,
       village: village || null,
@@ -55,13 +55,19 @@ router.put("/user/profile", requireAuth, async (req, res): Promise<void> => {
       updatedAt: new Date(),
     };
 
-    if (existing) {
-      const [updated] = await db.update(usersTable).set(profileData).where(eq(usersTable.clerkId, userId)).returning();
-      res.json({ profile: updated });
-    } else {
-      const [created] = await db.insert(usersTable).values(profileData).returning();
-      res.json({ profile: created });
+    const [updated] = await db
+      .update(usersTable)
+      .set(profileData)
+      .where(eq(usersTable.id, userId))
+      .returning();
+
+    if (!updated) {
+      res.status(404).json({ error: "User not found" });
+      return;
     }
+
+    const { passwordHash: _ph, googleId: _gi, ...safeUser } = updated;
+    res.json({ profile: safeUser });
   } catch (err) {
     console.error("[PUT /user/profile] Error:", err);
     res.status(500).json({ error: "Failed to save profile" });
