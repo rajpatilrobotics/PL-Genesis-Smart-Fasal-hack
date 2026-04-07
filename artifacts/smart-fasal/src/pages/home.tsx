@@ -929,7 +929,7 @@ export default function Home() {
             <img
               src="/logo.jpeg"
               alt="Smart Fasal"
-              className="w-12 h-12 rounded-2xl object-cover ring-2 ring-white/80 shadow-md"
+              className="w-12 h-12 rounded-full object-cover ring-2 ring-white/80 shadow-md"
             />
             <div>
               <p className="text-sm font-extrabold text-gray-800 leading-tight">Smart Fasal</p>
