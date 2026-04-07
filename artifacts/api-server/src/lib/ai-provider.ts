@@ -7,10 +7,10 @@
  *      Detected via: AI_INTEGRATIONS_OPENAI_BASE_URL or AI_INTEGRATIONS_OPENAI_API_KEY
  *
  *   2. Render / external deployment: Google Gemini free tier
- *      Set GOOGLE_API_KEY in Render environment variables.
+ *      Set GOOGLE_API_KEY or GEMINI_API_KEY in Render environment variables.
  *      Get a free key at: https://aistudio.google.com/apikey
- *      Model: gemini-2.0-flash — supports text + vision (image analysis),
- *      free tier limits: 15 req/min, 1,500 req/day, 1M tokens/day.
+ *      Model: gemini-2.0-flash (falls back to gemini-1.5-flash automatically)
+ *      Free tier limits: 15 req/min, 1,500 req/day, 1M tokens/day.
  *
  * Both providers return identical response shapes — routes are provider-agnostic.
  */
@@ -18,25 +18,21 @@
 import { openai } from "@workspace/integrations-openai-ai-server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-// Free-tier Gemini model — supports both text and image (vision) inputs.
-// Switch to gemini-1.5-flash if gemini-2.0-flash is unavailable in your region.
-const GEMINI_FREE_MODEL = "gemini-2.0-flash";
+const GEMINI_PRIMARY_MODEL = "gemini-2.0-flash";
+const GEMINI_FALLBACK_MODEL = "gemini-1.5-flash";
 
-// Support both GOOGLE_API_KEY and GEMINI_API_KEY (Render commonly uses the latter)
+// Support GOOGLE_API_KEY (official SDK name) and GEMINI_API_KEY (common on Render/Vercel)
 function getGeminiApiKey(): string | undefined {
   return process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY;
 }
 
 function getProvider(): "openai" | "gemini" {
-  // On Replit: the AI integration sets these env vars automatically.
   if (process.env.AI_INTEGRATIONS_OPENAI_BASE_URL || process.env.AI_INTEGRATIONS_OPENAI_API_KEY) {
     return "openai";
   }
-  // On Render / external: use Gemini free tier if GOOGLE_API_KEY or GEMINI_API_KEY is set.
   if (getGeminiApiKey()) {
     return "gemini";
   }
-  // Default: attempt OpenAI (will show a clear error if integration not provisioned).
   return "openai";
 }
 
@@ -45,10 +41,44 @@ let geminiClient: GoogleGenerativeAI | null = null;
 function getGeminiClient(): GoogleGenerativeAI {
   if (!geminiClient) {
     const apiKey = getGeminiApiKey();
-    if (!apiKey) throw new Error("Gemini API key not set. Add GOOGLE_API_KEY or GEMINI_API_KEY in your Render environment variables. Get a free key at https://aistudio.google.com/apikey");
+    if (!apiKey) {
+      throw new Error(
+        "Gemini API key not set. Add GOOGLE_API_KEY or GEMINI_API_KEY to your environment variables. " +
+        "Get a free key at https://aistudio.google.com/apikey"
+      );
+    }
     geminiClient = new GoogleGenerativeAI(apiKey);
   }
   return geminiClient;
+}
+
+/**
+ * Gemini sometimes wraps JSON in markdown code fences even with responseMimeType: application/json.
+ * This extracts the raw JSON from such responses.
+ */
+function extractJSON(raw: string): string {
+  const trimmed = raw.trim();
+  const fenceMatch = trimmed.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/);
+  if (fenceMatch) return fenceMatch[1].trim();
+  return trimmed;
+}
+
+/**
+ * Call a Gemini generation function, automatically falling back to gemini-1.5-flash if
+ * gemini-2.0-flash fails (e.g. region unavailability or quota errors).
+ */
+async function withGeminiFallback(
+  run: (modelName: string) => Promise<string>
+): Promise<string> {
+  try {
+    const raw = await run(GEMINI_PRIMARY_MODEL);
+    return extractJSON(raw);
+  } catch (primaryErr: unknown) {
+    const msg = primaryErr instanceof Error ? primaryErr.message : String(primaryErr);
+    console.warn(`[ai-provider] ${GEMINI_PRIMARY_MODEL} failed (${msg}), retrying with ${GEMINI_FALLBACK_MODEL}…`);
+    const raw = await run(GEMINI_FALLBACK_MODEL);
+    return extractJSON(raw);
+  }
 }
 
 /**
@@ -60,12 +90,14 @@ export async function generateJSON(prompt: string): Promise<string> {
 
   if (provider === "gemini") {
     const genAI = getGeminiClient();
-    const model = genAI.getGenerativeModel({
-      model: GEMINI_FREE_MODEL,
-      generationConfig: { responseMimeType: "application/json" },
+    return withGeminiFallback(async (modelName) => {
+      const model = genAI.getGenerativeModel({
+        model: modelName,
+        generationConfig: { responseMimeType: "application/json" },
+      });
+      const result = await model.generateContent(prompt);
+      return result.response.text();
     });
-    const result = await model.generateContent(prompt);
-    return result.response.text();
   }
 
   const completion = await openai.chat.completions.create({
@@ -80,7 +112,6 @@ export async function generateJSON(prompt: string): Promise<string> {
 /**
  * Generate a JSON response from an image + text prompt.
  * Used for: disease detection from crop photos.
- * Both gemini-2.0-flash and gpt-4o support multimodal vision inputs.
  */
 export async function generateVisionJSON(params: {
   imageBase64: string;
@@ -93,16 +124,18 @@ export async function generateVisionJSON(params: {
 
   if (provider === "gemini") {
     const genAI = getGeminiClient();
-    const model = genAI.getGenerativeModel({
-      model: GEMINI_FREE_MODEL,
-      generationConfig: { responseMimeType: "application/json" },
-      systemInstruction: systemPrompt,
+    return withGeminiFallback(async (modelName) => {
+      const model = genAI.getGenerativeModel({
+        model: modelName,
+        generationConfig: { responseMimeType: "application/json" },
+        systemInstruction: systemPrompt,
+      });
+      const result = await model.generateContent([
+        { inlineData: { mimeType, data: imageBase64 } },
+        userPrompt,
+      ]);
+      return result.response.text();
     });
-    const result = await model.generateContent([
-      { inlineData: { mimeType, data: imageBase64 } },
-      userPrompt,
-    ]);
-    return result.response.text();
   }
 
   const completion = await openai.chat.completions.create({
@@ -138,15 +171,17 @@ export async function generateCreditJSON(prompt: string): Promise<string> {
 
   if (provider === "gemini") {
     const genAI = getGeminiClient();
-    const model = genAI.getGenerativeModel({
-      model: GEMINI_FREE_MODEL,
-      generationConfig: {
-        responseMimeType: "application/json",
-        maxOutputTokens: 512,
-      },
+    return withGeminiFallback(async (modelName) => {
+      const model = genAI.getGenerativeModel({
+        model: modelName,
+        generationConfig: {
+          responseMimeType: "application/json",
+          maxOutputTokens: 512,
+        },
+      });
+      const result = await model.generateContent(prompt);
+      return result.response.text();
     });
-    const result = await model.generateContent(prompt);
-    return result.response.text();
   }
 
   const completion = await openai.chat.completions.create({
