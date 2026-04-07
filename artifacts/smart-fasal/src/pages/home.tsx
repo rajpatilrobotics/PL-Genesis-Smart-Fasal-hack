@@ -107,15 +107,32 @@ export default function Home() {
     return () => clearInterval(id);
   }, []);
 
+  // Fallback: get approximate location via IP geolocation
+  const fetchIpLocation = useCallback(async () => {
+    try {
+      const res = await fetch("https://freeipapi.com/api/json", { signal: AbortSignal.timeout(6000) });
+      if (!res.ok) return;
+      const json = (await res.json()) as { latitude?: number; longitude?: number };
+      if (json.latitude && json.longitude) {
+        setGpsCoords({ lat: json.latitude, lon: json.longitude });
+      }
+    } catch {
+      // silent — will stay on server-side region rotation
+    }
+  }, []);
+
   // Request GPS on mount; on success store coords & refetch weather
   useEffect(() => {
-    if (!navigator.geolocation) return;
+    if (!navigator.geolocation) {
+      fetchIpLocation();
+      return;
+    }
     navigator.geolocation.getCurrentPosition(
       (pos) => setGpsCoords({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
-      () => { /* permission denied or unavailable — fall back to region-based */ },
+      () => { fetchIpLocation(); },
       { timeout: 8000, maximumAge: 5 * 60 * 1000 }
     );
-  }, []);
+  }, [fetchIpLocation]);
 
   const weatherParams = gpsCoords ?? {};
   const { data: weather, isLoading: loadingWeather } = useGetWeather(weatherParams, {
