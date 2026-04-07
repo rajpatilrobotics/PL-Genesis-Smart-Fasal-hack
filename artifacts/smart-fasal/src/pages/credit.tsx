@@ -207,9 +207,11 @@ function CreditSeasonCard({ season }: { season: any }) {
                   size="sm"
                   variant="outline"
                   className="h-7 text-xs gap-1"
-                  onClick={() => window.open(season.ipfsUrl, "_blank")}
+                  disabled={!season.ipfsUrl}
+                  onClick={() => { if (season.ipfsUrl) window.open(season.ipfsUrl, "_blank"); }}
+                  title={season.ipfsUrl ? "View on IPFS" : "IPFS upload simulated — not available on-chain"}
                 >
-                  <Link className="w-3 h-3" /> View on IPFS
+                  <Link className="w-3 h-3" /> {season.ipfsUrl ? "View on IPFS" : "IPFS (Simulated)"}
                 </Button>
               </div>
             </div>

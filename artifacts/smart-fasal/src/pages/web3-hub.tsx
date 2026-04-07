@@ -1103,9 +1103,9 @@ function LitTab() {
                       </p>
                     </div>
                     <div className="shrink-0 text-right">
-                      {record.filecoinCid && (
+                      {record.filecoinUrl ? (
                         <a
-                          href={record.filecoinUrl ?? `https://gateway.lighthouse.storage/ipfs/${record.filecoinCid}`}
+                          href={record.filecoinUrl}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-[10px] text-blue-500 hover:underline flex items-center gap-0.5 justify-end"
@@ -1113,6 +1113,8 @@ function LitTab() {
                           <ExternalLink className="w-2.5 h-2.5" />
                           Filecoin
                         </a>
+                      ) : (
+                        <span className="text-[9px] text-muted-foreground">Simulated</span>
                       )}
                       <p className="text-[9px] font-mono text-orange-400 mt-0.5">
                         🔐 {record.filecoinCid ? record.filecoinCid.slice(0, 10) + "…" : "pinning…"}

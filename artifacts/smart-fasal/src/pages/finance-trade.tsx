@@ -39,19 +39,30 @@ function truncateCid(cid: string) {
   return `${cid.slice(0, 10)}...${cid.slice(-6)}`;
 }
 
-function ProtocolLabsBadge({ cid, label }: { cid: string; label: string }) {
+function ProtocolLabsBadge({ cid, label, url }: { cid: string; label: string; url?: string | null }) {
+  const href = url && url.startsWith("http") ? url : null;
+  if (href) {
+    return (
+      <a
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="inline-flex items-center gap-1 text-[10px] text-blue-600 hover:text-blue-800 transition-colors"
+      >
+        <span className="font-semibold">⬡ IPFS</span>
+        <span className="text-muted-foreground">{label}:</span>
+        <span className="font-mono">{truncateCid(cid)}</span>
+        <ExternalLink className="w-2.5 h-2.5" />
+      </a>
+    );
+  }
   return (
-    <a
-      href={`${IPFS_GATEWAY}${cid}`}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="inline-flex items-center gap-1 text-[10px] text-blue-600 hover:text-blue-800 transition-colors"
-    >
+    <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground">
       <span className="font-semibold">⬡ IPFS</span>
-      <span className="text-muted-foreground">{label}:</span>
+      <span>{label}:</span>
       <span className="font-mono">{truncateCid(cid)}</span>
-      <ExternalLink className="w-2.5 h-2.5" />
-    </a>
+      <span className="text-[9px] bg-muted px-1 py-0.5 rounded">Simulated</span>
+    </span>
   );
 }
 
@@ -598,7 +609,7 @@ function LoansTab({ creditScore }: { creditScore: number }) {
             {result.ipfsCid && (
               <div className="border-t pt-2 space-y-1">
                 <p className="text-[10px] font-semibold text-muted-foreground uppercase">IPFS Agreement Record</p>
-                <ProtocolLabsBadge cid={result.ipfsCid} label="loan-agreement" />
+                <ProtocolLabsBadge cid={result.ipfsCid} label="loan-agreement" url={result.ipfsUrl} />
                 <p className="text-[10px] text-muted-foreground">Share this CID with lender as immutable proof</p>
               </div>
             )}
@@ -623,7 +634,7 @@ function LoansTab({ creditScore }: { creditScore: number }) {
                   <span>EMI: <span className="font-medium text-foreground">{formatINR(loan.emiAmount)}/mo</span></span>
                   <span>{loan.interestRate}% · {loan.tenureMonths}mo</span>
                 </div>
-                {loan.ipfsCid && <ProtocolLabsBadge cid={loan.ipfsCid} label="agreement" />}
+                {loan.ipfsCid && <ProtocolLabsBadge cid={loan.ipfsCid} label="agreement" url={loan.ipfsUrl} />}
               </CardContent>
             </Card>
           ))}
@@ -877,7 +888,7 @@ function InsuranceTab() {
               <span>Valid till {new Date(activePolicy.endDate).toLocaleDateString("en-IN")}</span>
             </div>
             {activePolicy.ipfsCid && (
-              <ProtocolLabsBadge cid={activePolicy.ipfsCid} label="policy" />
+              <ProtocolLabsBadge cid={activePolicy.ipfsCid} label="policy" url={activePolicy.ipfsUrl} />
             )}
             <div className="pt-1 border-t border-dashed border-green-200">
               <Button
