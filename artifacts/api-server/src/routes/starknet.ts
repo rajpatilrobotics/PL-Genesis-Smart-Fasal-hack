@@ -256,10 +256,21 @@ router.post("/starknet/deploy", async (_req, res): Promise<void> => {
     const sierraJson = JSON.parse(readFileSync(SIERRA_PATH, "utf-8"));
     const casmJson   = JSON.parse(readFileSync(CASM_PATH,   "utf-8"));
 
-    // Declare the class
-    const declareResp = await account.declare({ contract: sierraJson, casm: casmJson });
-    await p.waitForTransaction(declareResp.transaction_hash);
-    const classHash = declareResp.class_hash;
+    // Declare the class — gracefully handle the case where it is already declared
+    let classHash: string;
+    try {
+      const declareResp = await account.declare({ contract: sierraJson, casm: casmJson });
+      await p.waitForTransaction(declareResp.transaction_hash);
+      classHash = declareResp.class_hash;
+    } catch (declErr: any) {
+      const declMsg: string = declErr?.message ?? String(declErr);
+      const alreadyDeclared =
+        /already declared|already known|duplicate|class hash already|ALREADY_EXISTS|CLASS_ALREADY_DECLARED/i.test(declMsg);
+      if (!alreadyDeclared) throw declErr; // re-throw genuine errors
+      // Class is already on-chain — compute its hash locally (no RPC needed)
+      classHash = hash.computeContractClassHash(sierraJson);
+      console.log("[Starknet] Class already declared, reusing hash:", classHash.slice(0, 20));
+    }
 
     // Deploy an instance — oracle = our own wallet address
     const constructorCalldata = CallData.compile({ oracle: WALLET_ADDR });
@@ -286,9 +297,11 @@ router.post("/starknet/deploy", async (_req, res): Promise<void> => {
   } catch (err: any) {
     resetProvider();
     console.error("[Starknet] Deploy error:", err);
-    const msg: string = err?.message ?? String(err);
-    const isNotDeployed = msg.includes("is not deployed") || msg.includes("Contract not found");
-    const isInsufficientFunds = msg.includes("insufficient") || msg.includes("Insufficient") || msg.includes("balance");
+    // Truncate raw message — Starknet.js errors can embed the full Sierra program
+    const rawMsg: string = err?.message ?? String(err);
+    const msg = rawMsg.slice(0, 300) + (rawMsg.length > 300 ? "…" : "");
+    const isNotDeployed = rawMsg.includes("is not deployed") || rawMsg.includes("Contract not found");
+    const isInsufficientFunds = /insufficient|balance|fee|fund/i.test(rawMsg);
     const isNetwork = isNetworkError(err);
     let userError = msg;
     let hint = "Make sure the wallet has Starknet Sepolia ETH from https://faucet.starknet.io/";
