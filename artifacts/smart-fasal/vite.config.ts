@@ -4,86 +4,87 @@ import tailwindcss from "@tailwindcss/vite";
 import path from "path";
 import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
 
-const rawPort = process.env.PORT;
+export default defineConfig(async ({ command }) => {
+  const isBuild = command === "build";
 
-if (!rawPort) {
-  throw new Error(
-    "PORT environment variable is required but was not provided.",
-  );
-}
+  const rawPort = process.env.PORT;
+  if (!isBuild && !rawPort) {
+    throw new Error(
+      "PORT environment variable is required but was not provided.",
+    );
+  }
+  const port = rawPort ? Number(rawPort) : 5000;
+  if (!isBuild && (Number.isNaN(port) || port <= 0)) {
+    throw new Error(`Invalid PORT value: "${rawPort}"`);
+  }
 
-const port = Number(rawPort);
+  const basePath = process.env.BASE_PATH;
+  if (!isBuild && !basePath) {
+    throw new Error(
+      "BASE_PATH environment variable is required but was not provided.",
+    );
+  }
+  const base = basePath ?? "/";
 
-if (Number.isNaN(port) || port <= 0) {
-  throw new Error(`Invalid PORT value: "${rawPort}"`);
-}
-
-const basePath = process.env.BASE_PATH;
-
-if (!basePath) {
-  throw new Error(
-    "BASE_PATH environment variable is required but was not provided.",
-  );
-}
-
-export default defineConfig({
-  base: basePath,
-  define: {
-    global: "globalThis",
-  },
-  plugins: [
-    react(),
-    tailwindcss(),
-    runtimeErrorOverlay(),
-    ...(process.env.NODE_ENV !== "production" &&
-    process.env.REPL_ID !== undefined
-      ? [
-          await import("@replit/vite-plugin-cartographer").then((m) =>
-            m.cartographer({
-              root: path.resolve(import.meta.dirname, ".."),
-            }),
-          ),
-          await import("@replit/vite-plugin-dev-banner").then((m) =>
-            m.devBanner(),
-          ),
-        ]
-      : []),
-  ],
-  resolve: {
-    alias: {
-      "@": path.resolve(import.meta.dirname, "src"),
-      "@assets": path.resolve(import.meta.dirname, "..", "..", "attached_assets"),
-      buffer: "buffer",
+  return {
+    base,
+    define: {
+      global: "globalThis",
     },
-    dedupe: ["react", "react-dom"],
-  },
-  root: path.resolve(import.meta.dirname),
-  build: {
-    outDir: path.resolve(import.meta.dirname, "dist/public"),
-    emptyOutDir: true,
-  },
-  server: {
-    port,
-    strictPort: true,
-    host: "0.0.0.0",
-    allowedHosts: true,
-    headers: {
-      "Cross-Origin-Resource-Policy": "cross-origin",
-      ...(process.env.NODE_ENV !== "production"
-        ? { "Cache-Control": "no-store" }
-        : {}),
+    plugins: [
+      react(),
+      tailwindcss(),
+      runtimeErrorOverlay(),
+      ...(process.env.NODE_ENV !== "production" &&
+      process.env.REPL_ID !== undefined
+        ? [
+            await import("@replit/vite-plugin-cartographer").then((m) =>
+              m.cartographer({
+                root: path.resolve(import.meta.dirname, ".."),
+              }),
+            ),
+            await import("@replit/vite-plugin-dev-banner").then((m) =>
+              m.devBanner(),
+            ),
+          ]
+        : []),
+    ],
+    resolve: {
+      alias: {
+        "@": path.resolve(import.meta.dirname, "src"),
+        "@assets": path.resolve(import.meta.dirname, "..", "..", "attached_assets"),
+        buffer: "buffer",
+      },
+      dedupe: ["react", "react-dom"],
     },
-    fs: {
-      strict: true,
-      deny: ["**/.*"],
+    root: path.resolve(import.meta.dirname),
+    build: {
+      outDir: path.resolve(import.meta.dirname, "dist/public"),
+      emptyOutDir: true,
     },
-  },
-  preview: {
-    port,
-    host: "0.0.0.0",
-    allowedHosts: true,
-    headers: {
-      "Cross-Origin-Resource-Policy": "cross-origin",
+    server: {
+      port,
+      strictPort: true,
+      host: "0.0.0.0",
+      allowedHosts: true,
+      headers: {
+        "Cross-Origin-Resource-Policy": "cross-origin",
+        ...(process.env.NODE_ENV !== "production"
+          ? { "Cache-Control": "no-store" }
+          : {}),
+      },
+      fs: {
+        strict: true,
+        deny: ["**/.*"],
+      },
     },
-  },
+    preview: {
+      port,
+      host: "0.0.0.0",
+      allowedHosts: true,
+      headers: {
+        "Cross-Origin-Resource-Policy": "cross-origin",
+      },
+    },
+  };
 });
