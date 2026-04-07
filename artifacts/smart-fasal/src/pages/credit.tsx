@@ -203,16 +203,16 @@ function CreditSeasonCard({ season }: { season: any }) {
                 >
                   <Copy className="w-3 h-3" /> Copy CID
                 </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="h-7 text-xs gap-1"
-                  disabled={!season.ipfsUrl}
-                  onClick={() => { if (season.ipfsUrl) window.open(season.ipfsUrl, "_blank"); }}
-                  title={season.ipfsUrl ? "View on IPFS" : "IPFS upload simulated — not available on-chain"}
-                >
-                  <Link className="w-3 h-3" /> {season.ipfsUrl ? "View on IPFS" : "IPFS (Simulated)"}
-                </Button>
+                {season.ipfsUrl && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-7 text-xs gap-1"
+                    onClick={() => window.open(season.ipfsUrl, "_blank")}
+                  >
+                    <Link className="w-3 h-3" /> View on IPFS
+                  </Button>
+                )}
               </div>
             </div>
           </div>

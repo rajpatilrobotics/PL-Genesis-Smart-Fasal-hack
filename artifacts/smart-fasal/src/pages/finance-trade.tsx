@@ -56,14 +56,7 @@ function ProtocolLabsBadge({ cid, label, url }: { cid: string; label: string; ur
       </a>
     );
   }
-  return (
-    <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground">
-      <span className="font-semibold">⬡ IPFS</span>
-      <span>{label}:</span>
-      <span className="font-mono">{truncateCid(cid)}</span>
-      <span className="text-[9px] bg-muted px-1 py-0.5 rounded">Simulated</span>
-    </span>
-  );
+  return null;
 }
 
 // ─── Credit Score Arc ─────────────────────────────────────────────────────────

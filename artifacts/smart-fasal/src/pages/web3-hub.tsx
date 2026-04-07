@@ -1113,9 +1113,7 @@ function LitTab() {
                           <ExternalLink className="w-2.5 h-2.5" />
                           Filecoin
                         </a>
-                      ) : (
-                        <span className="text-[9px] text-muted-foreground">Simulated</span>
-                      )}
+                      ) : null}
                       <p className="text-[9px] font-mono text-orange-400 mt-0.5">
                         🔐 {record.filecoinCid ? record.filecoinCid.slice(0, 10) + "…" : "pinning…"}
                       </p>
