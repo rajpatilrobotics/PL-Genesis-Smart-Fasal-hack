@@ -25,10 +25,17 @@ const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
 function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="pb-20 min-h-screen dot-grid-bg" style={{
-      background: "linear-gradient(160deg, hsl(145, 40%, 97%) 0%, hsl(120, 30%, 98%) 40%, hsl(200, 35%, 97%) 100%)"
+      background: "linear-gradient(165deg, #f0f9ff 0%, #ecfdf5 25%, #fefce8 55%, #fef9c3 80%, #f0fdf4 100%)"
     }}>
+      {/* Ambient blobs — visible through glass cards on every page */}
+      <div className="pointer-events-none fixed inset-0 overflow-hidden -z-0">
+        <div className="absolute -top-24 -right-24 w-80 h-80 rounded-full bg-sky-200/45 blur-3xl" />
+        <div className="absolute top-1/3 -left-20 w-72 h-72 rounded-full bg-emerald-200/40 blur-3xl" />
+        <div className="absolute top-2/3 right-0 w-64 h-64 rounded-full bg-amber-200/40 blur-3xl" />
+        <div className="absolute bottom-10 left-1/3 w-48 h-48 rounded-full bg-lime-200/30 blur-2xl" />
+      </div>
       <TopHeader />
-      <main className="container mx-auto px-4 py-5 max-w-md">
+      <main className="container mx-auto px-4 py-5 max-w-md relative z-10">
         {children}
       </main>
       <BottomNav />
