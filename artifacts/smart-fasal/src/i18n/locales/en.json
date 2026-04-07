@@ -17,7 +17,8 @@
     "market": "Market",
     "web3": "Web3",
     "finance": "Finance",
-    "profile": "Profile"
+    "profile": "Profile",
+    "community": "Community"
   },
   "header": {
     "connect": "Connect Flow",

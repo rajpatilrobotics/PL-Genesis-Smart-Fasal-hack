@@ -17,7 +17,8 @@
     "market": "市场",
     "web3": "Web3",
     "finance": "财务",
-    "profile": "个人资料"
+    "profile": "个人资料",
+    "community": "社区"
   },
   "header": {
     "connect": "连接 Flow",

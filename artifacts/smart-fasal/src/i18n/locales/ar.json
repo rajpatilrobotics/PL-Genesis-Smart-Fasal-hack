@@ -17,7 +17,8 @@
     "market": "السوق",
     "web3": "ويب3",
     "finance": "المالية",
-    "profile": "الملف الشخصي"
+    "profile": "الملف الشخصي",
+    "community": "المجتمع"
   },
   "header": {
     "connect": "ربط Flow",

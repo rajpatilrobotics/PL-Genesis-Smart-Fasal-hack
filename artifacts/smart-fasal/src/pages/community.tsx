@@ -405,7 +405,7 @@ export default function Community() {
                     <SelectContent>
                       {Object.entries(CATEGORY_CONFIG).map(([key, cfg]) => (
                         <SelectItem key={key} value={key}>
-                          <span className="flex items-center gap-1.5">{cfg.icon} {cfg.label}</span>
+                          <span className="flex items-center gap-1.5">{cfg.icon} {t(cfg.labelKey)}</span>
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -451,7 +451,7 @@ export default function Community() {
                     : "bg-muted/40 text-muted-foreground border-border hover:border-primary/50"
                 )}
               >
-                {cfg.icon} {cfg.label}
+                {cfg.icon} {t(cfg.labelKey)}
               </button>
             ))}
           </div>
