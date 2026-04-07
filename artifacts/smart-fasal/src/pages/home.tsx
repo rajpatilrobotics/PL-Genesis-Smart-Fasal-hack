@@ -17,7 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 import {
   CloudRain, Droplets, Thermometer, Wind, Brain, Database,
   RefreshCw, Shield, Zap, Lock, Globe, Users, CheckCircle2,
-  Loader2, AlertTriangle, Activity, Cpu
+  Loader2, AlertTriangle, Activity, Cpu, MapPin
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useQueryClient } from "@tanstack/react-query";
@@ -90,7 +90,14 @@ export default function Home() {
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
   const [privacyEnabled, setPrivacyEnabled] = useState(false);
   const [accessLevel, setAccessLevel] = useState<AccessLevel>("Expert");
-  const [gpsCoords, setGpsCoords] = useState<{ lat: number; lon: number } | null>(null);
+  const [gpsCoords, setGpsCoords] = useState<{ lat: number; lon: number } | null>(() => {
+    try {
+      const stored = localStorage.getItem("sf_gps_coords");
+      return stored ? (JSON.parse(stored) as { lat: number; lon: number }) : null;
+    } catch { return null; }
+  });
+  const [locationDenied, setLocationDenied] = useState(false);
+  const [locationLoading, setLocationLoading] = useState(false);
   const [liveTime, setLiveTime] = useState(new Date());
   const [pipelineRunning, setPipelineRunning] = useState(false);
   const [pipelineResult, setPipelineResult] = useState<PipelineResult | null>(null);
@@ -107,48 +114,30 @@ export default function Home() {
     return () => clearInterval(id);
   }, []);
 
-  // Fallback: try multiple IP geolocation services in sequence (browser sends its own real IP)
-  const fetchIpLocation = useCallback(async () => {
-    const services = [
-      async () => {
-        const r = await fetch("https://ipapi.co/json/", { signal: AbortSignal.timeout(5000) });
-        if (!r.ok) return null;
-        const j = (await r.json()) as { latitude?: number; longitude?: number };
-        return j.latitude && j.longitude ? { lat: j.latitude, lon: j.longitude } : null;
+  const requestLocation = useCallback(() => {
+    if (!navigator.geolocation) { setLocationDenied(true); return; }
+    setLocationLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const coords = { lat: pos.coords.latitude, lon: pos.coords.longitude };
+        localStorage.setItem("sf_gps_coords", JSON.stringify(coords));
+        setGpsCoords(coords);
+        setLocationDenied(false);
+        setLocationLoading(false);
       },
-      async () => {
-        const r = await fetch("https://api.db-ip.com/v2/free/self", { signal: AbortSignal.timeout(5000) });
-        if (!r.ok) return null;
-        const j = (await r.json()) as { latitude?: number; longitude?: number };
-        return j.latitude && j.longitude ? { lat: j.latitude, lon: j.longitude } : null;
+      () => {
+        setLocationDenied(true);
+        setLocationLoading(false);
       },
-      async () => {
-        const r = await fetch("https://freeipapi.com/api/json", { signal: AbortSignal.timeout(5000) });
-        if (!r.ok) return null;
-        const j = (await r.json()) as { latitude?: number; longitude?: number };
-        return j.latitude && j.longitude ? { lat: j.latitude, lon: j.longitude } : null;
-      },
-    ];
-    for (const service of services) {
-      try {
-        const coords = await service();
-        if (coords) { setGpsCoords(coords); return; }
-      } catch { /* try next */ }
-    }
+      { timeout: 15000, maximumAge: 10 * 60 * 1000 }
+    );
   }, []);
 
-  // Request GPS on mount; on success store coords & refetch weather
+  // Auto-request GPS on mount if we don't already have cached coords
   useEffect(() => {
-    if (!navigator.geolocation) {
-      fetchIpLocation();
-      return;
-    }
-    navigator.geolocation.getCurrentPosition(
-      (pos) => setGpsCoords({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
-      () => { fetchIpLocation(); },
-      { timeout: 8000, maximumAge: 5 * 60 * 1000 }
-    );
-  }, [fetchIpLocation]);
+    if (!gpsCoords) requestLocation();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const weatherParams = gpsCoords ?? {};
   const { data: weather, isLoading: loadingWeather, refetch: refetchWeather } = useGetWeather(weatherParams, {
@@ -514,7 +503,27 @@ export default function Home() {
           style={{ background: "linear-gradient(135deg, #0ea5e9 0%, #38bdf8 50%, #7dd3fc 100%)", border: "1px solid rgba(255,255,255,0.35)" }}>
           <div className="absolute -top-4 -right-4 w-24 h-24 rounded-full bg-white/20 blur-2xl" />
           <div className="relative p-3.5">
-            {loadingWeather ? (
+            {locationLoading && !weather ? (
+              <div className="space-y-1.5">
+                <Skeleton className="h-3 w-16 bg-white/30" />
+                <Skeleton className="h-7 w-24 bg-white/30" />
+              </div>
+            ) : locationDenied && !weather ? (
+              <div className="flex flex-col items-start gap-2">
+                <div className="flex items-center gap-1.5">
+                  <CloudRain className="w-3 h-3 text-white/70" />
+                  <span className="text-[9px] font-bold text-white/70 uppercase tracking-wider">{t("home.weather")}</span>
+                </div>
+                <p className="text-[11px] text-white/80">Allow location access for real-time weather</p>
+                <button
+                  onClick={requestLocation}
+                  className="flex items-center gap-1.5 bg-white/25 hover:bg-white/35 active:bg-white/20 transition-colors rounded-full px-3 py-1.5"
+                >
+                  <MapPin className="w-3 h-3 text-white" />
+                  <span className="text-[11px] font-bold text-white">Share Location</span>
+                </button>
+              </div>
+            ) : loadingWeather ? (
               <div className="space-y-1.5">
                 <Skeleton className="h-3 w-16 bg-white/30" />
                 <Skeleton className="h-7 w-24 bg-white/30" />
