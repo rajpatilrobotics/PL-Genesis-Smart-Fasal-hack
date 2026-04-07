@@ -169,6 +169,30 @@ async function fetchOpenMeteoForCoords(lat: number, lon: number, location: strin
 // Cache for GPS-based requests keyed by rounded lat/lon string
 const gpsCache = new Map<string, WeatherCache>();
 
+// Server-side IP geolocation — avoids browser CORS restrictions
+router.get("/geoip", async (req, res): Promise<void> => {
+  const forwarded = req.headers["x-forwarded-for"];
+  const clientIp = (typeof forwarded === "string" ? forwarded.split(",")[0] : null)
+    ?? req.socket.remoteAddress
+    ?? "";
+
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+    const r = await fetch(`https://ipapi.co/${clientIp.trim()}/json/`, {
+      signal: controller.signal,
+      headers: { "User-Agent": "SmartFasal/1.0" },
+    });
+    clearTimeout(timeoutId);
+    if (!r.ok) { res.status(502).json({ error: "geoip failed" }); return; }
+    const json = (await r.json()) as { latitude?: number; longitude?: number; city?: string; region?: string; country_name?: string };
+    if (!json.latitude || !json.longitude) { res.status(502).json({ error: "no coords" }); return; }
+    res.json({ lat: json.latitude, lon: json.longitude });
+  } catch {
+    res.status(502).json({ error: "geoip timeout" });
+  }
+});
+
 router.get("/weather", async (req, res): Promise<void> => {
   const lat = req.query.lat ? Number(req.query.lat) : null;
   const lon = req.query.lon ? Number(req.query.lon) : null;
