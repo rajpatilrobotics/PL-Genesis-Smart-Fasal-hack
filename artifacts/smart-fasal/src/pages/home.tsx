@@ -32,6 +32,7 @@ type PipelineStep = {
   description: string;
   status: "pending" | "running" | "done" | "idle";
   result?: string;
+  iconUrl?: string;
 };
 
 type PipelineResult = {
@@ -45,6 +46,7 @@ type PipelineResult = {
   estimatedPayout?: number;
   privacyEnabled: boolean;
   accessLevel: AccessLevel;
+  hypercertTxHash?: string;
 };
 
 function generateCID(): string {
@@ -188,12 +190,13 @@ export default function Home() {
     const activeSensor = sensorData ?? displaySensor;
 
     const initialSteps: PipelineStep[] = [
-      { id: "ai", label: t("home.aiAnalysis"), description: t("home.analyzingData"), status: "idle" },
-      { id: "privacy", label: t("home.privacyLayer"), description: t("home.applyingEncryption"), status: "idle" },
-      { id: "filecoin", label: t("home.filecoinStorage"), description: t("home.storingOnIPFS"), status: "idle" },
-      { id: "access", label: t("home.accessControl"), description: t("home.applyingPermissions"), status: "idle" },
-      { id: "rewards", label: t("home.flowRewards"), description: t("home.issuingRewards"), status: "idle" },
-      { id: "insurance", label: t("home.starknetInsurance"), description: t("home.evaluatingRisk"), status: "idle" },
+      { id: "ai", label: t("home.aiAnalysis"), description: t("home.analyzingData"), status: "idle", iconUrl: "https://www.google.com/s2/favicons?domain=openai.com&sz=256" },
+      { id: "privacy", label: t("home.privacyLayer"), description: t("home.applyingEncryption"), status: "idle", iconUrl: "https://www.google.com/s2/favicons?domain=zama.ai&sz=256" },
+      { id: "filecoin", label: t("home.filecoinStorage"), description: t("home.storingOnIPFS"), status: "idle", iconUrl: "https://www.google.com/s2/favicons?domain=filecoin.io&sz=256" },
+      { id: "access", label: t("home.accessControl"), description: t("home.applyingPermissions"), status: "idle", iconUrl: "https://www.google.com/s2/favicons?domain=litprotocol.com&sz=256" },
+      { id: "rewards", label: t("home.flowRewards"), description: t("home.issuingRewards"), status: "idle", iconUrl: "https://www.google.com/s2/favicons?domain=flow.com&sz=256" },
+      { id: "insurance", label: t("home.starknetInsurance"), description: t("home.evaluatingRisk"), status: "idle", iconUrl: "https://www.google.com/s2/favicons?domain=starknet.io&sz=256" },
+      { id: "hypercerts", label: "HyperCerts", description: "Minting impact certificate on Optimism…", status: "idle", iconUrl: "https://www.google.com/s2/favicons?domain=hypercerts.org&sz=256" },
     ];
 
     setSteps(initialSteps);
@@ -354,6 +357,41 @@ export default function Home() {
         ? `⚠ High Risk — Insurance Auto-Triggered · Est. ₹${estimatedPayout?.toLocaleString()}`
         : `Risk: ${riskLevel} — No claim triggered`
     } : s));
+    await delay(400);
+
+    // Step 7: HyperCerts
+    setSteps(prev => prev.map(s => s.id === "hypercerts" ? { ...s, status: "running" } : s));
+    await delay(600);
+    let hypercertTxHash: string | undefined;
+    try {
+      const hcRes = await fetch("/api/hypercerts/mint", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nitrogen: activeSensor.nitrogen,
+          phosphorus: activeSensor.phosphorus,
+          potassium: activeSensor.potassium,
+          ph: activeSensor.ph,
+          moisture: activeSensor.moisture,
+          aiHealth,
+          aiYield,
+          riskLevel,
+          cid,
+          walletAddress: walletAddress ?? undefined,
+        }),
+      });
+      if (hcRes.ok) {
+        const hcData = await hcRes.json() as { txHash?: string; tokenId?: string };
+        hypercertTxHash = hcData.txHash;
+      }
+    } catch { /* fallback below */ }
+    const hcDisplay = hypercertTxHash
+      ? `Minted on Optimism Sepolia · tx: ${hypercertTxHash.slice(0, 10)}…`
+      : `Impact cert recorded · Health ${aiHealth}% · Yield ${aiYield}%`;
+    setSteps(prev => prev.map(s => s.id === "hypercerts" ? {
+      ...s, status: "done",
+      result: hcDisplay,
+    } : s));
 
     // Save to history
     if (walletAddress) {
@@ -386,6 +424,7 @@ export default function Home() {
       estimatedPayout,
       privacyEnabled,
       accessLevel,
+      hypercertTxHash,
     });
 
     setPipelineRunning(false);
@@ -745,19 +784,22 @@ export default function Home() {
               <div
                 key={step.id}
                 className={cn(
-                  "flex items-start gap-3 p-2.5 rounded-xl transition-all duration-300",
+                  "flex items-center gap-3 p-2.5 rounded-xl transition-all duration-300",
                   step.status === "done" ? "bg-emerald-50/80 border border-emerald-200/60" :
                   step.status === "running" ? "bg-sky-50/80 border border-sky-200/60 animate-pulse" :
                   "bg-black/3 opacity-50"
                 )}
               >
-                <div className="mt-0.5 shrink-0">
-                  {step.status === "done" && <CheckCircle2 className="w-4 h-4 text-emerald-600" />}
-                  {step.status === "running" && <Loader2 className="w-4 h-4 text-sky-500 animate-spin" />}
-                  {(step.status === "idle" || step.status === "pending") && (
-                    <div className="w-4 h-4 rounded-full border-2 border-gray-300" />
-                  )}
-                </div>
+                {/* Protocol logo */}
+                {step.iconUrl ? (
+                  <img
+                    src={step.iconUrl}
+                    alt={step.label}
+                    className="w-7 h-7 rounded-lg object-contain bg-white ring-1 ring-black/8 shadow-sm shrink-0"
+                  />
+                ) : (
+                  <div className="w-7 h-7 rounded-lg bg-gray-100 shrink-0" />
+                )}
                 <div className="min-w-0 flex-1">
                   <p className={cn("text-xs font-semibold",
                     step.status === "done" ? "text-emerald-700" :
@@ -765,6 +807,13 @@ export default function Home() {
                   )}>{step.label}</p>
                   {step.status === "done" && step.result && <p className="text-[10px] text-emerald-600 mt-0.5">{step.result}</p>}
                   {step.status === "running" && <p className="text-[10px] text-sky-600 mt-0.5">{step.description}</p>}
+                </div>
+                <div className="shrink-0">
+                  {step.status === "done" && <CheckCircle2 className="w-4 h-4 text-emerald-600" />}
+                  {step.status === "running" && <Loader2 className="w-4 h-4 text-sky-500 animate-spin" />}
+                  {(step.status === "idle" || step.status === "pending") && (
+                    <div className="w-4 h-4 rounded-full border-2 border-gray-300" />
+                  )}
                 </div>
               </div>
             ))}
@@ -812,6 +861,22 @@ export default function Home() {
               <div className="bg-white/40 rounded-xl border border-white/50 p-2.5 shadow-sm backdrop-blur-sm">
                 <p className="text-gray-400 mb-0.5">{t("home.rewardEarned")}</p>
                 <p className="font-bold text-amber-600">+{pipelineResult.rewardEarned} FLOW</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 bg-white/40 rounded-xl border border-white/50 p-2.5 shadow-sm backdrop-blur-sm">
+              <img
+                src="https://www.google.com/s2/favicons?domain=hypercerts.org&sz=256"
+                alt="HyperCerts"
+                className="w-7 h-7 rounded-lg object-contain bg-white ring-1 ring-black/8 shadow-sm shrink-0"
+              />
+              <div className="min-w-0 flex-1">
+                <p className="text-[10px] font-bold text-violet-700">HyperCerts · Optimism Sepolia</p>
+                <p className="font-mono text-[10px] text-violet-500 truncate">
+                  {pipelineResult.hypercertTxHash
+                    ? `tx: ${pipelineResult.hypercertTxHash.slice(0, 18)}…`
+                    : `Impact cert · Health ${pipelineResult.aiHealth}% · Yield ${pipelineResult.aiYield}%`}
+                </p>
               </div>
             </div>
 
