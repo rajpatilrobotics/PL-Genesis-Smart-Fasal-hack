@@ -90,6 +90,8 @@ export default function Home() {
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
   const [privacyEnabled, setPrivacyEnabled] = useState(false);
   const [accessLevel, setAccessLevel] = useState<AccessLevel>("Expert");
+  const [gpsCoords, setGpsCoords] = useState<{ lat: number; lon: number } | null>(null);
+  const [liveTime, setLiveTime] = useState(new Date());
   const [pipelineRunning, setPipelineRunning] = useState(false);
   const [pipelineResult, setPipelineResult] = useState<PipelineResult | null>(null);
   const [steps, setSteps] = useState<PipelineStep[]>([]);
@@ -98,12 +100,26 @@ export default function Home() {
   const [tick, setTick] = useState(0);
 
   useEffect(() => {
-    const id = setInterval(() => setTick(t => t + 1), 1000);
+    const id = setInterval(() => {
+      setTick(t => t + 1);
+      setLiveTime(new Date());
+    }, 1000);
     return () => clearInterval(id);
   }, []);
 
-  const { data: weather, isLoading: loadingWeather } = useGetWeather({}, {
-    query: { queryKey: getGetWeatherQueryKey({}) }
+  // Request GPS on mount; on success store coords & refetch weather
+  useEffect(() => {
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      (pos) => setGpsCoords({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
+      () => { /* permission denied or unavailable — fall back to region-based */ },
+      { timeout: 8000, maximumAge: 5 * 60 * 1000 }
+    );
+  }, []);
+
+  const weatherParams = gpsCoords ?? {};
+  const { data: weather, isLoading: loadingWeather } = useGetWeather(weatherParams, {
+    query: { queryKey: getGetWeatherQueryKey(weatherParams), refetchInterval: 10 * 60 * 1000 }
   });
 
   const { data: sensorData, isLoading: loadingSensor } = useGetLatestSensorData({
@@ -468,12 +484,29 @@ export default function Home() {
             ) : weather ? (
               <div className="flex items-center justify-between">
                 <div>
-                  <div className="flex items-center gap-1 mb-1">
+                  <div className="flex items-center gap-1 mb-0.5">
                     <CloudRain className="w-3 h-3 text-white/80" />
-                    <span className="text-[9px] font-bold text-white/75 uppercase tracking-wider">{t("home.weather")} · Punjab, India</span>
+                    <span className="text-[9px] font-bold text-white/75 uppercase tracking-wider">
+                      {t("home.weather")} · {weather.location}
+                    </span>
                   </div>
                   <p className="text-3xl font-extrabold text-white tracking-tight drop-shadow">{weather.temperature}°C</p>
-                  <p className="text-xs text-white/70 capitalize mt-0.5">{weather.description}</p>
+                  <p className="text-xs text-white/80 capitalize mt-0.5">{weather.description}</p>
+                  <div className="flex items-center gap-2 mt-1.5">
+                    <span className="text-[10px] text-white/70 font-semibold">
+                      {liveTime.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+                    </span>
+                    <span className="text-white/40 text-[10px]">·</span>
+                    <span className="text-[10px] text-white/70 font-medium">
+                      {liveTime.toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short" })}
+                    </span>
+                    {gpsCoords && (
+                      <>
+                        <span className="text-white/40 text-[10px]">·</span>
+                        <span className="text-[9px] text-white/60 font-medium">📍 GPS</span>
+                      </>
+                    )}
+                  </div>
                 </div>
                 <div className="flex flex-col items-end gap-1.5">
                   <div className="flex items-center gap-1 bg-white/25 backdrop-blur-sm rounded-full px-2.5 py-1">
@@ -488,6 +521,12 @@ export default function Home() {
                     <Thermometer className="w-2.5 h-2.5 text-amber-200" />
                     <span className="text-[11px] font-bold text-white">{t("home.feels")} {weather.feelsLike ?? weather.temperature}°C</span>
                   </div>
+                  {weather.rainfall > 0 && (
+                    <div className="flex items-center gap-1 bg-white/25 backdrop-blur-sm rounded-full px-2.5 py-1">
+                      <CloudRain className="w-2.5 h-2.5 text-sky-200" />
+                      <span className="text-[11px] font-bold text-white">{weather.rainfall} mm</span>
+                    </div>
+                  )}
                 </div>
               </div>
             ) : <p className="text-xs text-white/60">Unavailable</p>}
