@@ -962,9 +962,9 @@ export default function Home() {
             className="flex flex-col items-center gap-1.5 w-full px-3 py-3 rounded-xl bg-white/55 border border-white/65 hover:bg-white/75 transition-all group"
           >
             <img
-              src="/protocollabs-logo.svg"
+              src="/protocollabs-logo-official.png"
               alt="Protocol Labs"
-              className="w-8 h-8 rounded-xl object-contain bg-[#1E3A8A] ring-1 ring-blue-900/20 shadow-sm group-hover:scale-105 transition-transform"
+              className="w-8 h-8 rounded-xl object-contain shadow-sm group-hover:scale-105 transition-transform"
             />
             <div className="text-center">
               <p className="text-xs font-bold text-gray-800 leading-tight">Protocol Labs</p>
