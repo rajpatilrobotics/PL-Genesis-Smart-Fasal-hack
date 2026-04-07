@@ -971,7 +971,7 @@ export default function Home() {
                 href="https://www.linkedin.com/in/raj-patil-a492a1155/?skipRedirect=true"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="opacity-60 hover:opacity-100 transition-opacity"
+                className="hover:opacity-80 transition-opacity"
                 title="Raj Patil on LinkedIn"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#0A66C2" className="w-3.5 h-3.5">
