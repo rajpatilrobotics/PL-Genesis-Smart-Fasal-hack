@@ -91,6 +91,7 @@ export default function Home() {
   const [privacyEnabled, setPrivacyEnabled] = useState(false);
   const [accessLevel, setAccessLevel] = useState<AccessLevel>("Expert");
   const [coords, setCoords] = useState<{ lat: number; lon: number } | null>(null);
+  const [locating, setLocating] = useState(true);
   const [showLocationEdit, setShowLocationEdit] = useState(false);
   const [locationSearch, setLocationSearch] = useState("");
   const [locationSearching, setLocationSearching] = useState(false);
@@ -111,15 +112,48 @@ export default function Home() {
     return () => clearInterval(id);
   }, []);
 
+  // Fallback coords by timezone when IP lookup fails
+  const getTimezoneCoords = (): { lat: number; lon: number } | null => {
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const map: Record<string, { lat: number; lon: number }> = {
+      "Asia/Kolkata": { lat: 28.6139, lon: 77.2090 },    // Delhi
+      "Asia/Calcutta": { lat: 22.5726, lon: 88.3639 },   // Kolkata
+      "Asia/Mumbai": { lat: 19.0760, lon: 72.8777 },
+      "Asia/Chennai": { lat: 13.0827, lon: 80.2707 },
+      "Asia/Bangalore": { lat: 12.9716, lon: 77.5946 },
+      "America/New_York": { lat: 40.7128, lon: -74.0060 },
+      "America/Chicago": { lat: 41.8781, lon: -87.6298 },
+      "America/Los_Angeles": { lat: 34.0522, lon: -118.2437 },
+      "Europe/London": { lat: 51.5074, lon: -0.1278 },
+      "Europe/Paris": { lat: 48.8566, lon: 2.3522 },
+      "Asia/Tokyo": { lat: 35.6762, lon: 139.6503 },
+      "Asia/Shanghai": { lat: 31.2304, lon: 121.4737 },
+      "Australia/Sydney": { lat: -33.8688, lon: 151.2093 },
+    };
+    return map[tz] ?? null;
+  };
+
   // Auto-detect location from IP on mount — no permission needed
   useEffect(() => {
     const base = import.meta.env.BASE_URL?.replace(/\/$/, "") ?? "";
-    fetch(`${base}/api/weather/geoip`)
+    fetch(`${base}/api/geoip`)
       .then(r => r.ok ? r.json() : null)
       .then((json: { lat?: number; lon?: number } | null) => {
-        if (json?.lat && json?.lon) setCoords({ lat: json.lat, lon: json.lon });
+        if (json?.lat && json?.lon) {
+          setCoords({ lat: json.lat, lon: json.lon });
+        } else {
+          // IP lookup gave nothing — try timezone fallback
+          const tzCoords = getTimezoneCoords();
+          if (tzCoords) setCoords(tzCoords);
+        }
       })
-      .catch(() => {});
+      .catch(() => {
+        // Network error — try timezone fallback
+        const tzCoords = getTimezoneCoords();
+        if (tzCoords) setCoords(tzCoords);
+      })
+      .finally(() => setLocating(false));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Search city by name → coordinates
@@ -128,7 +162,7 @@ export default function Home() {
     setLocationSearching(true);
     try {
       const base = import.meta.env.BASE_URL?.replace(/\/$/, "") ?? "";
-      const r = await fetch(`${base}/api/weather/geocode?q=${encodeURIComponent(query)}`);
+      const r = await fetch(`${base}/api/geocode?q=${encodeURIComponent(query)}`);
       if (!r.ok) return;
       const json = (await r.json()) as { results: Array<{ lat: number; lon: number; label: string }> };
       setLocationSuggestions(json.results ?? []);
@@ -546,11 +580,26 @@ export default function Home() {
             {/* ── Weather data ── */}
             {!showLocationEdit && (
               <>
-                {(loadingWeather || !coords) ? (
+                {(locating || loadingWeather) ? (
                   <div className="space-y-2">
                     <Skeleton className="h-3 w-28 bg-white/30 rounded-full" />
                     <Skeleton className="h-8 w-20 bg-white/30 rounded-lg" />
                     <Skeleton className="h-3 w-24 bg-white/30 rounded-full" />
+                  </div>
+                ) : !coords ? (
+                  <div className="flex flex-col gap-2">
+                    <div className="flex items-center gap-1.5">
+                      <CloudRain className="w-3 h-3 text-white/70" />
+                      <span className="text-[10px] font-bold text-white/75 uppercase tracking-wider">Weather</span>
+                    </div>
+                    <p className="text-[11px] text-white/80">Couldn't detect your location automatically.</p>
+                    <button
+                      onClick={() => { setShowLocationEdit(true); setLocationSuggestions([]); setLocationSearch(""); }}
+                      className="flex items-center gap-1.5 bg-white/25 hover:bg-white/35 transition-colors rounded-full px-3 py-1.5 self-start"
+                    >
+                      <Search className="w-3 h-3 text-white" />
+                      <span className="text-[11px] font-bold text-white">Set your city</span>
+                    </button>
                   </div>
                 ) : weather ? (
                   <div className="flex items-center justify-between gap-3">
@@ -599,7 +648,7 @@ export default function Home() {
                   <div className="flex items-center justify-between">
                     <p className="text-[11px] text-white/70">Could not load weather</p>
                     <button
-                      onClick={() => { const base = import.meta.env.BASE_URL?.replace(/\/$/, "") ?? ""; fetch(`${base}/api/weather/geoip`).then(r => r.ok ? r.json() : null).then((j: { lat?: number; lon?: number } | null) => { if (j?.lat && j?.lon) setCoords({ lat: j.lat, lon: j.lon }); }).catch(() => {}); }}
+                      onClick={() => { const base = import.meta.env.BASE_URL?.replace(/\/$/, "") ?? ""; setLocating(true); fetch(`${base}/api/geoip`).then(r => r.ok ? r.json() : null).then((j: { lat?: number; lon?: number } | null) => { if (j?.lat && j?.lon) setCoords({ lat: j.lat, lon: j.lon }); }).catch(() => {}).finally(() => setLocating(false)); }}
                       className="flex items-center gap-1 bg-white/25 rounded-full px-2.5 py-1"
                     >
                       <RefreshCw className="w-3 h-3 text-white" />

@@ -172,25 +172,47 @@ const gpsCache = new Map<string, WeatherCache>();
 // Server-side IP geolocation — avoids browser CORS restrictions
 router.get("/geoip", async (req, res): Promise<void> => {
   const forwarded = req.headers["x-forwarded-for"];
-  const clientIp = (typeof forwarded === "string" ? forwarded.split(",")[0] : null)
+  const clientIp = (typeof forwarded === "string" ? forwarded.split(",")[0].trim() : null)
     ?? req.socket.remoteAddress
     ?? "";
 
+  // Try ip-api.com first (very reliable, free, no key needed)
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 5000);
-    const r = await fetch(`https://ipapi.co/${clientIp.trim()}/json/`, {
+    const r = await fetch(`http://ip-api.com/json/${clientIp}?fields=lat,lon,city,regionName,country,status`, {
       signal: controller.signal,
       headers: { "User-Agent": "SmartFasal/1.0" },
     });
     clearTimeout(timeoutId);
-    if (!r.ok) { res.status(502).json({ error: "geoip failed" }); return; }
-    const json = (await r.json()) as { latitude?: number; longitude?: number; city?: string; region?: string; country_name?: string };
-    if (!json.latitude || !json.longitude) { res.status(502).json({ error: "no coords" }); return; }
-    res.json({ lat: json.latitude, lon: json.longitude });
-  } catch {
-    res.status(502).json({ error: "geoip timeout" });
-  }
+    if (r.ok) {
+      const json = (await r.json()) as { status?: string; lat?: number; lon?: number; city?: string; regionName?: string; country?: string };
+      if (json.status === "success" && json.lat && json.lon) {
+        res.json({ lat: json.lat, lon: json.lon });
+        return;
+      }
+    }
+  } catch { /* fall through to next provider */ }
+
+  // Fallback: ipapi.co
+  try {
+    const controller2 = new AbortController();
+    const timeoutId2 = setTimeout(() => controller2.abort(), 5000);
+    const r2 = await fetch(`https://ipapi.co/${clientIp}/json/`, {
+      signal: controller2.signal,
+      headers: { "User-Agent": "SmartFasal/1.0" },
+    });
+    clearTimeout(timeoutId2);
+    if (r2.ok) {
+      const json2 = (await r2.json()) as { latitude?: number; longitude?: number };
+      if (json2.latitude && json2.longitude) {
+        res.json({ lat: json2.latitude, lon: json2.longitude });
+        return;
+      }
+    }
+  } catch { /* fall through */ }
+
+  res.status(502).json({ error: "geoip failed" });
 });
 
 router.get("/weather", async (req, res): Promise<void> => {
