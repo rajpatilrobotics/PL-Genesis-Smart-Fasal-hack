@@ -92,6 +92,7 @@ export default function Home() {
   const [accessLevel, setAccessLevel] = useState<AccessLevel>("Expert");
   const [gpsCoords, setGpsCoords] = useState<{ lat: number; lon: number } | null>(null);
   const [locationDenied, setLocationDenied] = useState(false);
+  const [locationBlocked, setLocationBlocked] = useState(false);
   const [locationLoading, setLocationLoading] = useState(false);
   const [liveTime, setLiveTime] = useState(new Date());
   const [pipelineRunning, setPipelineRunning] = useState(false);
@@ -109,25 +110,39 @@ export default function Home() {
     return () => clearInterval(id);
   }, []);
 
-  const requestLocation = useCallback(() => {
-    if (!navigator.geolocation) { setLocationDenied(true); return; }
+  const doGpsRequest = useCallback(() => {
+    if (!navigator.geolocation) { setLocationBlocked(true); return; }
     setLocationLoading(true);
+    setLocationDenied(false);
+    setLocationBlocked(false);
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        const coords = { lat: pos.coords.latitude, lon: pos.coords.longitude };
-        setGpsCoords(coords);
+        setGpsCoords({ lat: pos.coords.latitude, lon: pos.coords.longitude });
         setLocationDenied(false);
+        setLocationBlocked(false);
         setLocationLoading(false);
       },
-      () => {
-        setLocationDenied(true);
+      (err) => {
         setLocationLoading(false);
+        if (err.code === 1) {
+          setLocationBlocked(true); // PERMISSION_DENIED — needs settings change
+        } else {
+          setLocationDenied(true); // TIMEOUT / UNAVAILABLE — can retry
+        }
       },
-      { timeout: 15000, maximumAge: 10 * 60 * 1000 }
+      { timeout: 15000, maximumAge: 0 }
     );
   }, []);
 
-  // Always request fresh GPS on mount — also clear any stale cached coords
+  const requestLocation = useCallback(async () => {
+    try {
+      const perm = await navigator.permissions.query({ name: "geolocation" });
+      if (perm.state === "denied") { setLocationBlocked(true); return; }
+    } catch { /* Permissions API not supported, proceed anyway */ }
+    doGpsRequest();
+  }, [doGpsRequest]);
+
+  // Always request fresh GPS on mount
   useEffect(() => {
     try { localStorage.removeItem("sf_gps_coords"); } catch { /* ignore */ }
     requestLocation();
@@ -502,6 +517,25 @@ export default function Home() {
                 <Skeleton className="h-3 w-16 bg-white/30" />
                 <Skeleton className="h-7 w-24 bg-white/30" />
               </div>
+            ) : locationBlocked ? (
+              <div className="flex flex-col items-start gap-2">
+                <div className="flex items-center gap-1.5">
+                  <CloudRain className="w-3 h-3 text-white/70" />
+                  <span className="text-[9px] font-bold text-white/70 uppercase tracking-wider">{t("home.weather")}</span>
+                </div>
+                <p className="text-[11px] text-white font-semibold">Location blocked in browser</p>
+                <p className="text-[10px] text-white/85 leading-relaxed">
+                  On iPhone: Settings → Safari → Location → Allow<br />
+                  On Chrome: tap 🔒 in address bar → Location → Allow
+                </p>
+                <button
+                  onClick={doGpsRequest}
+                  className="flex items-center gap-1.5 bg-white/25 hover:bg-white/35 active:bg-white/20 transition-colors rounded-full px-3 py-1.5 mt-0.5"
+                >
+                  <MapPin className="w-3 h-3 text-white" />
+                  <span className="text-[11px] font-bold text-white">Try Again</span>
+                </button>
+              </div>
             ) : locationDenied && !weather ? (
               <div className="flex flex-col items-start gap-2">
                 <div className="flex items-center gap-1.5">
@@ -510,7 +544,7 @@ export default function Home() {
                 </div>
                 <p className="text-[11px] text-white/80">Allow location access for real-time weather</p>
                 <button
-                  onClick={requestLocation}
+                  onClick={doGpsRequest}
                   className="flex items-center gap-1.5 bg-white/25 hover:bg-white/35 active:bg-white/20 transition-colors rounded-full px-3 py-1.5"
                 >
                   <MapPin className="w-3 h-3 text-white" />
