@@ -19,8 +19,10 @@ const STARKNET_RPC    = process.env.STARKNET_RPC_URL || "https://starknet-sepoli
 const PRIV_KEY        = process.env.STARKNET_PRIVATE_KEY || "0x0ef319415259f51659596f39e8e5a34d4bea0f2db92351c8ca8bfd937697d9c";
 const WALLET_ADDR     = process.env.STARKNET_WALLET_ADDRESS || "0x17ecda611fa4c7f75758f669a2cf0a0d1091032b1e3172bc9f293f462818d9c";
 const STATE_FILE      = join(process.cwd(), "starknet-state.json");
-const SIERRA_PATH     = join(process.cwd(), "contracts/insurance.sierra.json");
-const CASM_PATH       = join(process.cwd(), "contracts/insurance.casm.json");
+// Use __dirname (injected by the esbuild banner → points to dist/) so the path
+// stays correct regardless of what directory the server is started from.
+const SIERRA_PATH     = join(__dirname, "../contracts/insurance.sierra.json");
+const CASM_PATH       = join(__dirname, "../contracts/insurance.casm.json");
 const EXPLORER_BASE   = "https://sepolia.voyager.online";
 const NETWORK_NAME    = "Starknet Sepolia";
 const OZ_CLASS_HASH   = "0x061dac032f228abef9c6626f995015233097ae253a7f72d68552db02f2971b8f";
