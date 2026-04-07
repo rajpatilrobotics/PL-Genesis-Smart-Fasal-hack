@@ -26,7 +26,7 @@ import {
   Leaf, CheckCircle2, Loader2, ExternalLink, Copy,
   TrendingUp, Droplets, FlaskConical, BadgeCheck,
   CloudSun, Coins, BarChart3, ScrollText, ArrowRight,
-  Star, Trophy, Globe, Users, AlertTriangle, RefreshCw, FileText, Wifi, WifiOff,
+  Star, Trophy, Globe, Users, AlertTriangle, RefreshCw, FileText, Wifi, WifiOff, Archive,
 } from "lucide-react";
 
 function randomHex(len: number) {
@@ -717,13 +717,117 @@ function FlowTab() {
 // ─────────────────────────────────────────────────────────────────────────────
 // FILECOIN TAB — Data Marketplace
 // ─────────────────────────────────────────────────────────────────────────────
+type ArchiveRecord = {
+  id: string;
+  category: "crop-history" | "financial" | "oracle-readings";
+  label: string;
+  cid: string;
+  ipfsUrl: string | null;
+  recordCount: number;
+  archivedAt: string;
+};
+
 function FilecoinTab() {
   const { toast } = useToast();
-  const { walletAddress, dataListings, dataHistory, publishDataListing } = useWallet();
+  const {
+    walletAddress,
+    dataListings,
+    dataHistory,
+    publishDataListing,
+    nfts,
+    insuranceClaims,
+    oracleReadings,
+    carbonCredits,
+    expertPayments,
+  } = useWallet();
   const [publishing, setPublishing] = useState(false);
+  const [archiveCategory, setArchiveCategory] = useState<"crop-history" | "financial" | "oracle-readings">("crop-history");
+  const [archiving, setArchiving] = useState(false);
+  const [archivedRecords, setArchivedRecords] = useState<ArchiveRecord[]>([]);
   const storeOnFilecoin = useStoreOnFilecoin();
 
   const totalEarnings = dataListings.reduce((s, l) => s + (l.sold ? l.earnings : 0), 0);
+
+  const archiveCategories = [
+    {
+      id: "crop-history" as const,
+      label: "Crop History",
+      icon: "🌾",
+      description: "Season NFTs, soil readings & AI insights",
+      count: nfts.length + dataHistory.length,
+    },
+    {
+      id: "financial" as const,
+      label: "Financial Records",
+      icon: "💰",
+      description: "Insurance claims, carbon credits & expert payments",
+      count: insuranceClaims.length + carbonCredits.length + expertPayments.length,
+    },
+    {
+      id: "oracle-readings" as const,
+      label: "Oracle Readings",
+      icon: "📡",
+      description: "On-chain anchored NPK & soil sensor data",
+      count: oracleReadings.length,
+    },
+  ];
+
+  const handleArchive = async () => {
+    if (!walletAddress) {
+      toast({ title: "Connect wallet first", variant: "destructive" });
+      return;
+    }
+    const cat = archiveCategories.find(c => c.id === archiveCategory)!;
+    if (cat.count === 0) {
+      toast({ title: "No records to archive", description: `Run farm analysis to generate ${cat.label.toLowerCase()} first.`, variant: "destructive" });
+      return;
+    }
+    setArchiving(true);
+
+    let payload: object;
+    if (archiveCategory === "crop-history") {
+      payload = { farmer: walletAddress, nfts, soilReadings: dataHistory, totalRecords: nfts.length + dataHistory.length };
+    } else if (archiveCategory === "financial") {
+      payload = { farmer: walletAddress, insuranceClaims, carbonCredits, expertPayments, totalRecords: insuranceClaims.length + carbonCredits.length + expertPayments.length };
+    } else {
+      payload = { farmer: walletAddress, oracleReadings, totalRecords: oracleReadings.length };
+    }
+
+    let realCid: string | null = null;
+    try {
+      const lhResult = await lighthouseUpload(`farm-archive-${archiveCategory}`, payload);
+      if (lhResult.real && lhResult.cid) realCid = lhResult.cid;
+    } catch { /* fall through */ }
+
+    try {
+      const result = await storeOnFilecoin.mutateAsync({
+        data: {
+          dataType: `farm-archive-${archiveCategory}`,
+          data: realCid
+            ? { _existingCid: realCid, ...payload }
+            : payload,
+        },
+      });
+      const record: ArchiveRecord = {
+        id: randomHex(8),
+        category: archiveCategory,
+        label: cat.label,
+        cid: result.cid,
+        ipfsUrl: realCid ? `https://gateway.lighthouse.storage/ipfs/${result.cid}` : null,
+        recordCount: cat.count,
+        archivedAt: new Date().toISOString(),
+      };
+      setArchivedRecords(prev => [record, ...prev]);
+      toast({
+        title: `${cat.label} Archived on Filecoin ✅`,
+        description: `${cat.count} records · CID: ${shortHash(result.cid)}`,
+      });
+    } catch {
+      toast({ title: "Archive failed", variant: "destructive" });
+    } finally {
+      setArchiving(false);
+    }
+  };
 
   const researchBuyers = [
     { name: "ICAR Research Institute", interest: "Soil NPK Profiles", offer: 25, badge: "Government" },
@@ -847,6 +951,85 @@ function FilecoinTab() {
           </div>
         </div>
       )}
+
+      {/* Farm Record Archive */}
+      <Card className="border-indigo-200 bg-gradient-to-br from-indigo-50 to-purple-50">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm flex items-center gap-2">
+            <Archive className="w-4 h-4 text-indigo-600" />
+            Permanent Farm Record Archive
+          </CardTitle>
+          <p className="text-xs text-muted-foreground">
+            Bundle and store your farm records permanently on Filecoin. Immutable, verifiable, yours forever.
+          </p>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {/* Category selector */}
+          <div className="space-y-2">
+            {archiveCategories.map(cat => (
+              <button
+                key={cat.id}
+                onClick={() => setArchiveCategory(cat.id)}
+                className={`w-full flex items-center justify-between p-2.5 rounded-xl border text-left transition-all ${
+                  archiveCategory === cat.id
+                    ? "border-indigo-400 bg-indigo-100 ring-1 ring-indigo-300"
+                    : "border-border bg-white/70 hover:border-indigo-200"
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-base">{cat.icon}</span>
+                  <div>
+                    <p className="text-xs font-semibold">{cat.label}</p>
+                    <p className="text-[10px] text-muted-foreground">{cat.description}</p>
+                  </div>
+                </div>
+                <Badge variant={cat.count > 0 ? "default" : "outline"} className="text-[10px] shrink-0">
+                  {cat.count} records
+                </Badge>
+              </button>
+            ))}
+          </div>
+
+          <Button
+            className="w-full bg-indigo-600 hover:bg-indigo-700 text-white"
+            onClick={handleArchive}
+            disabled={archiving}
+          >
+            {archiving
+              ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Archiving to Filecoin...</>
+              : <><Archive className="w-4 h-4 mr-2" />Archive {archiveCategories.find(c => c.id === archiveCategory)?.label}</>
+            }
+          </Button>
+
+          {/* Archived records list */}
+          {archivedRecords.length > 0 && (
+            <div className="space-y-2 pt-1">
+              <p className="text-[11px] font-semibold text-indigo-700">Archived Records</p>
+              {archivedRecords.map(rec => (
+                <div key={rec.id} className="bg-white/80 rounded-lg border border-indigo-100 px-3 py-2 flex items-center justify-between gap-2">
+                  <div>
+                    <p className="text-xs font-semibold">{rec.label}</p>
+                    <p className="text-[10px] text-muted-foreground font-mono">{shortHash(rec.cid)} · {rec.recordCount} records</p>
+                    <p className="text-[10px] text-muted-foreground">
+                      {new Date(rec.archivedAt).toLocaleString("en-IN", { dateStyle: "short", timeStyle: "short" })}
+                    </p>
+                  </div>
+                  {rec.ipfsUrl && (
+                    <a
+                      href={rec.ipfsUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="shrink-0 text-[10px] text-indigo-600 hover:underline flex items-center gap-0.5"
+                    >
+                      <ExternalLink className="w-3 h-3" /> View
+                    </a>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Research Buyers */}
       <div>
