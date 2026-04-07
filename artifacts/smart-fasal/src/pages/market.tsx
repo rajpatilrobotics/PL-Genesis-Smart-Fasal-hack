@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { apiUrl } from "@/lib/api";
 import { useTranslation } from "react-i18next";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -453,7 +454,7 @@ export default function Market() {
   } | null>(null);
 
   useEffect(() => {
-    fetch("/api/market/prices/status")
+    fetch(apiUrl("/api/market/prices/status"))
       .then(r => r.json())
       .then(data => setPriceStatus(data as typeof priceStatus))
       .catch(() => {});

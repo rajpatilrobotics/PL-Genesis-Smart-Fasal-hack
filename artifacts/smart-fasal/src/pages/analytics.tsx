@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { apiUrl } from "@/lib/api";
 import { useTranslation } from "react-i18next";
 import {
   useGetSensorHistory, getGetSensorHistoryQueryKey,
@@ -101,7 +102,7 @@ function CropAITab({ history }: { history: { nitrogen: number; phosphorus: numbe
     }
     setLoading(true);
     try {
-      const res = await fetch("/api/crop-predict", {
+      const res = await fetch(apiUrl("/api/crop-predict"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

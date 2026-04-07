@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { apiUrl } from "@/lib/api";
 import {
   Card, CardContent, CardHeader, CardTitle, CardFooter
 } from "@/components/ui/card";
@@ -313,7 +314,7 @@ function FundingDialog({
     }
     setLoading(true);
     try {
-      const res = await fetch(`/api/retroactive/claims/${claim.id}/fund`, {
+      const res = await fetch(apiUrl(`/api/retroactive/claims/${claim.id}/fund`), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -480,7 +481,7 @@ function SubmitClaimForm({ onSuccess }: { onSuccess: (claim: ImpactClaim) => voi
     }
     setLoading(true);
     try {
-      const res = await fetch("/api/retroactive/claims", {
+      const res = await fetch(apiUrl("/api/retroactive/claims"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -646,7 +647,7 @@ function FunderPortal({ onOpenFundDialog }: { onOpenFundDialog: () => void }) {
   const fetchFunders = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/retroactive/funders");
+      const res = await fetch(apiUrl("/api/retroactive/funders"));
       const json = await res.json();
       setData(json);
     } catch (e) {
@@ -959,8 +960,8 @@ export default function Retroactive() {
     setLoading(true);
     try {
       const [claimsRes, statsRes] = await Promise.all([
-        fetch("/api/retroactive/claims"),
-        fetch("/api/retroactive/stats"),
+        fetch(apiUrl("/api/retroactive/claims")),
+        fetch(apiUrl("/api/retroactive/stats")),
       ]);
       const [claimsData, statsData] = await Promise.all([claimsRes.json(), statsRes.json()]);
       setClaims(Array.isArray(claimsData) ? claimsData : []);

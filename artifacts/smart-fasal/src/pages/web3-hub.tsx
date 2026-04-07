@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, lazy, Suspense } from "react";
+import { apiUrl } from "@/lib/api";
 import { useTranslation } from "react-i18next";
 const RetroactivePage = lazy(() => import("@/pages/retroactive"));
 import { litEncrypt, litDecrypt, getLitClient, shortCipher, getEphemeralWallet, type LitEncryptResult } from "@/lib/lit";
@@ -1278,7 +1279,7 @@ function ZamaTab() {
   const loadDashboard = async () => {
     setLoadingDash(true);
     try {
-      const res = await fetch("/api/disease-intel/aggregate");
+      const res = await fetch(apiUrl("/api/disease-intel/aggregate"));
       if (!res.ok) throw new Error("Failed to load");
       const data = await res.json() as AggregateData;
       setAggregate(data);
@@ -1308,7 +1309,7 @@ function ZamaTab() {
     let handle: string;
 
     try {
-      const fheRes = await fetch("/api/fhe/public-key");
+      const fheRes = await fetch(apiUrl("/api/fhe/public-key"));
       if (!fheRes.ok) throw new Error(`FHE key API returned ${fheRes.status}`);
       const fheKeys = await fheRes.json() as {
         publicKey: string;
@@ -1371,7 +1372,7 @@ function ZamaTab() {
       setFheStep("done");
 
       setSubmitting(true);
-      const res = await fetch("/api/disease-intel/submit", {
+      const res = await fetch(apiUrl("/api/disease-intel/submit"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ district, cropType, encryptedStatus: proof, encryptionHandle: handle }),
@@ -1744,12 +1745,12 @@ function StarknetTab() {
 
   const refreshStatus = () => {
     setLoadingStatus(true);
-    fetch("/api/starknet/network-status")
+    fetch(apiUrl("/api/starknet/network-status"))
       .then(r => r.json())
       .then(d => setNetworkStatus(d))
       .catch(() => {})
       .finally(() => setLoadingStatus(false));
-    fetch("/api/starknet/claims")
+    fetch(apiUrl("/api/starknet/claims"))
       .then(r => r.json())
       .then(d => setOnChainClaims(d.claims ?? []))
       .catch(() => {});
@@ -1768,10 +1769,10 @@ function StarknetTab() {
     setGenerating(true);
     setGeneratingId(type.id);
     try {
-      const sensorRes = await fetch("/api/sensor-data");
+      const sensorRes = await fetch(apiUrl("/api/sensor-data"));
       const sensor = await sensorRes.json() as { ph: number; nitrogen: number; phosphorus: number; potassium: number; moisture: number };
 
-      const proofRes = await fetch("/api/starknet/generate-proof", {
+      const proofRes = await fetch(apiUrl("/api/starknet/generate-proof"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ph: sensor.ph, nitrogen: sensor.nitrogen, phosphorus: sensor.phosphorus, potassium: sensor.potassium, moisture: sensor.moisture, claimType: type.claimType }),
@@ -1811,10 +1812,10 @@ function StarknetTab() {
     if (!walletAddress) { toast({ title: "Connect wallet first", variant: "destructive" }); return; }
     setMinting(true);
     try {
-      const sensorRes = await fetch("/api/sensor-data");
+      const sensorRes = await fetch(apiUrl("/api/sensor-data"));
       const sensor = await sensorRes.json();
 
-      const mintRes = await fetch("/api/starknet/carbon-credit/mint", {
+      const mintRes = await fetch(apiUrl("/api/starknet/carbon-credit/mint"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(sensor),
@@ -1839,7 +1840,7 @@ function StarknetTab() {
   const handleDeployAccount = async () => {
     setDeployingAccount(true);
     try {
-      const r = await fetch("/api/starknet/deploy-account", { method: "POST" });
+      const r = await fetch(apiUrl("/api/starknet/deploy-account"), { method: "POST" });
       const d = await r.json();
       if (!r.ok) throw new Error(d.error ?? "Account deploy failed");
       if (d.alreadyDeployed) {
@@ -1859,7 +1860,7 @@ function StarknetTab() {
   const handleDeploy = async () => {
     setDeploying(true);
     try {
-      const r = await fetch("/api/starknet/deploy", { method: "POST" });
+      const r = await fetch(apiUrl("/api/starknet/deploy"), { method: "POST" });
       const d = await r.json();
       if (!r.ok) throw new Error(d.error ?? "Deploy failed");
       if (d.alreadyDeployed) {
@@ -1878,7 +1879,7 @@ function StarknetTab() {
   const handleRegisterPolicy = async () => {
     setRegisteringPolicy(true);
     try {
-      const r = await fetch("/api/starknet/register-policy", {
+      const r = await fetch(apiUrl("/api/starknet/register-policy"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ farmerId: "SmartFasal_Farm_001", droughtThreshold: 30, heatThreshold: 35 }),
@@ -1897,9 +1898,9 @@ function StarknetTab() {
   const handleSubmitClaim = async () => {
     setSubmittingClaim(true);
     try {
-      const sensorRes = await fetch("/api/sensor-data");
+      const sensorRes = await fetch(apiUrl("/api/sensor-data"));
       const sensor = await sensorRes.json();
-      const r = await fetch("/api/starknet/submit-claim", {
+      const r = await fetch(apiUrl("/api/starknet/submit-claim"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

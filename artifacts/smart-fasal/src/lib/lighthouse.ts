@@ -1,3 +1,4 @@
+import { apiUrl } from "@/lib/api";
 
 let cachedApiKey: string | null = null;
 let cacheChecked = false;
@@ -8,7 +9,7 @@ const UPLOAD_TIMEOUT_MS = 3000;
 async function getApiKey(): Promise<string | null> {
   if (cacheChecked) return cachedApiKey;
   try {
-    const res = await fetch("/api/filecoin/upload-token");
+    const res = await fetch(apiUrl("/api/filecoin/upload-token"));
     if (!res.ok) return null;
     const json = (await res.json()) as { available: boolean; apiKey?: string };
     cachedApiKey = json.available && json.apiKey ? json.apiKey : null;

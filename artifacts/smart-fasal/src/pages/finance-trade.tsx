@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { apiUrl } from "@/lib/api";
 import { useTranslation } from "react-i18next";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -471,7 +472,7 @@ function LoansTab({ creditScore }: { creditScore: number }) {
   const myLoans = useQuery<any[]>({
     queryKey: ["myLoans"],
     queryFn: async () => {
-      const r = await fetch("/api/loans");
+      const r = await fetch(apiUrl("/api/loans"));
       if (!r.ok) throw new Error("Failed");
       return r.json();
     },
@@ -486,7 +487,7 @@ function LoansTab({ creditScore }: { creditScore: number }) {
     }
     setApplying(true);
     try {
-      const r = await fetch("/api/loans/apply", {
+      const r = await fetch(apiUrl("/api/loans/apply"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ requestedAmount: requested, purpose }),
@@ -725,7 +726,7 @@ function InsuranceTab() {
   const { data: policies, isLoading: loadingPolicies, refetch: refetchPolicies } = useQuery<any[]>({
     queryKey: ["insurancePolicies"],
     queryFn: async () => {
-      const r = await fetch("/api/insurance/policies");
+      const r = await fetch(apiUrl("/api/insurance/policies"));
       if (!r.ok) throw new Error("Failed");
       return r.json();
     },
@@ -734,7 +735,7 @@ function InsuranceTab() {
   const { data: weather } = useQuery({
     queryKey: ["weatherOracle"],
     queryFn: async () => {
-      const r = await fetch("/api/insurance/weather");
+      const r = await fetch(apiUrl("/api/insurance/weather"));
       if (!r.ok) throw new Error("Failed");
       return r.json();
     },
@@ -778,7 +779,7 @@ function InsuranceTab() {
     }
     setPurchasingPolicy(true);
     try {
-      const r = await fetch("/api/insurance/policies", {
+      const r = await fetch(apiUrl("/api/insurance/policies"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

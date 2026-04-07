@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
+import { apiUrl } from "@/lib/api";
 import { useTranslation } from "react-i18next";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -149,7 +150,7 @@ export default function AiHub() {
   const fetchCatalog = useCallback(async () => {
     setCatalogLoading(true);
     try {
-      const res = await fetch("/api/data-catalog");
+      const res = await fetch(apiUrl("/api/data-catalog"));
       if (res.ok) setCatalog(await res.json());
     } catch { } finally {
       setCatalogLoading(false);
@@ -190,7 +191,7 @@ export default function AiHub() {
     }
     setCropPredicting(true);
     try {
-      const res = await fetch("/api/crop-predict", {
+      const res = await fetch(apiUrl("/api/crop-predict"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -375,7 +376,7 @@ export default function AiHub() {
     }
     setPublishing(true);
     try {
-      const res = await fetch("/api/data-catalog/publish", {
+      const res = await fetch(apiUrl("/api/data-catalog/publish"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -1136,7 +1137,7 @@ export default function AiHub() {
                           target="_blank"
                           rel="noopener noreferrer"
                           onClick={async () => {
-                            try { await fetch(`/api/data-catalog/${entry.id}/access`, { method: "POST" }); } catch {}
+                            try { await fetch(apiUrl(`/api/data-catalog/${entry.id}/access`), { method: "POST" }); } catch {}
                           }}
                           className="inline-flex items-center gap-1 text-[10px] text-blue-600 hover:underline"
                         >
