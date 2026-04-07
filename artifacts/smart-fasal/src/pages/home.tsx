@@ -17,7 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 import {
   CloudRain, Droplets, Thermometer, Wind, Brain, Database,
   RefreshCw, Shield, Zap, Lock, Globe, Users, CheckCircle2,
-  Loader2, AlertTriangle, Activity
+  Loader2, AlertTriangle, Activity, Cpu
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useQueryClient } from "@tanstack/react-query";
@@ -188,12 +188,14 @@ export default function Home() {
     const activeSensor = sensorData ?? displaySensor;
 
     const initialSteps: PipelineStep[] = [
+      { id: "iot", label: "IoT Edge Layer", description: "Reading live sensor data from edge nodes…", status: "idle" },
       { id: "ai", label: t("home.aiAnalysis"), description: t("home.analyzingData"), status: "idle" },
       { id: "privacy", label: t("home.privacyLayer"), description: t("home.applyingEncryption"), status: "idle" },
       { id: "filecoin", label: t("home.filecoinStorage"), description: t("home.storingOnIPFS"), status: "idle" },
       { id: "access", label: t("home.accessControl"), description: t("home.applyingPermissions"), status: "idle" },
       { id: "rewards", label: t("home.flowRewards"), description: t("home.issuingRewards"), status: "idle" },
       { id: "insurance", label: t("home.starknetInsurance"), description: t("home.evaluatingRisk"), status: "idle" },
+      { id: "hypercerts", label: "HyperCerts Impact", description: "Minting on-chain impact certificate…", status: "idle" },
     ];
 
     setSteps(initialSteps);
@@ -207,6 +209,15 @@ export default function Home() {
     let cid = generateCID();
 
     const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
+
+    // Step 0: IoT Edge Layer
+    setSteps(prev => prev.map(s => s.id === "iot" ? { ...s, status: "running" } : s));
+    await delay(600);
+    setSteps(prev => prev.map(s => s.id === "iot" ? {
+      ...s, status: "done",
+      result: `N:${activeSensor.nitrogen} P:${activeSensor.phosphorus} K:${activeSensor.potassium} · pH ${activeSensor.ph} · Moisture ${activeSensor.moisture}%`
+    } : s));
+    await delay(300);
 
     // Step 1: AI Analysis
     setSteps(prev => prev.map(s => s.id === "ai" ? { ...s, status: "running" } : s));
@@ -354,6 +365,16 @@ export default function Home() {
         ? `⚠ High Risk — Insurance Auto-Triggered · Est. ₹${estimatedPayout?.toLocaleString()}`
         : `Risk: ${riskLevel} — No claim triggered`
     } : s));
+    await delay(400);
+
+    // Step 8: HyperCerts Impact
+    setSteps(prev => prev.map(s => s.id === "hypercerts" ? { ...s, status: "running" } : s));
+    await delay(700);
+    setSteps(prev => prev.map(s => s.id === "hypercerts" ? {
+      ...s, status: "done",
+      result: `Impact cert minted · Health ${aiHealth}% · Yield ${aiYield}% · Optimism Sepolia`
+    } : s));
+    await delay(300);
 
     // Save to history
     if (walletAddress) {
@@ -759,10 +780,13 @@ export default function Home() {
                   )}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className={cn("text-xs font-semibold",
+                  <p className={cn("text-xs font-semibold flex items-center gap-1",
                     step.status === "done" ? "text-emerald-700" :
                     step.status === "running" ? "text-sky-700" : "text-gray-400"
-                  )}>{step.label}</p>
+                  )}>
+                    {step.id === "iot" && <Cpu className="w-3 h-3 shrink-0" />}
+                    {step.label}
+                  </p>
                   {step.status === "done" && step.result && <p className="text-[10px] text-emerald-600 mt-0.5">{step.result}</p>}
                   {step.status === "running" && <p className="text-[10px] text-sky-600 mt-0.5">{step.description}</p>}
                 </div>
@@ -874,7 +898,7 @@ export default function Home() {
             className="flex flex-col items-center gap-1.5 w-full px-3 py-3 rounded-xl bg-white/55 border border-white/65 hover:bg-white/75 transition-all group"
           >
             <img
-              src="https://www.google.com/s2/favicons?domain=protocol.ai&sz=256"
+              src="/protocollabs-logo.png"
               alt="Protocol Labs"
               className="w-8 h-8 rounded-xl object-contain bg-white ring-1 ring-black/8 shadow-sm group-hover:scale-105 transition-transform"
             />
@@ -887,12 +911,12 @@ export default function Home() {
           {/* Protocol grid — 3 × 2, compact */}
           <div className="grid grid-cols-3 gap-1.5">
             {[
-              { name: "Flow", sub: "Rewards", avatar: "https://www.google.com/s2/favicons?domain=flow.com&sz=256", href: "https://flow.com" },
-              { name: "Filecoin", sub: "Storage", avatar: "https://www.google.com/s2/favicons?domain=filecoin.io&sz=256", href: "https://filecoin.io" },
-              { name: "Lit Protocol", sub: "Access", avatar: "https://www.google.com/s2/favicons?domain=litprotocol.com&sz=256", href: "https://litprotocol.com" },
-              { name: "Zama", sub: "Privacy", avatar: "https://www.google.com/s2/favicons?domain=zama.ai&sz=256", href: "https://zama.ai" },
-              { name: "Starknet", sub: "Insurance", avatar: "https://www.google.com/s2/favicons?domain=starknet.io&sz=256", href: "https://starknet.io" },
-              { name: "HyperCerts", sub: "Impact", avatar: "https://www.google.com/s2/favicons?domain=hypercerts.org&sz=256", href: "https://hypercerts.org" },
+              { name: "Flow", sub: "Rewards", avatar: "/flow-logo.png", href: "https://flow.com" },
+              { name: "Filecoin", sub: "Storage", avatar: "/filecoin-logo.png", href: "https://filecoin.io" },
+              { name: "Lit Protocol", sub: "Access", avatar: "/lit-logo.png", href: "https://litprotocol.com" },
+              { name: "Zama", sub: "Privacy", avatar: "/zama-logo.png", href: "https://zama.ai" },
+              { name: "Starknet", sub: "Insurance", avatar: "/starknet-logo.png", href: "https://starknet.io" },
+              { name: "HyperCerts", sub: "Impact", avatar: "/hypercerts-logo.png", href: "https://hypercerts.org" },
             ].map(({ name, sub, avatar, href }) => (
               <a
                 key={name}
