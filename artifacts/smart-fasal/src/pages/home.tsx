@@ -90,12 +90,7 @@ export default function Home() {
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
   const [privacyEnabled, setPrivacyEnabled] = useState(false);
   const [accessLevel, setAccessLevel] = useState<AccessLevel>("Expert");
-  const [gpsCoords, setGpsCoords] = useState<{ lat: number; lon: number } | null>(() => {
-    try {
-      const stored = localStorage.getItem("sf_gps_coords");
-      return stored ? (JSON.parse(stored) as { lat: number; lon: number }) : null;
-    } catch { return null; }
-  });
+  const [gpsCoords, setGpsCoords] = useState<{ lat: number; lon: number } | null>(null);
   const [locationDenied, setLocationDenied] = useState(false);
   const [locationLoading, setLocationLoading] = useState(false);
   const [liveTime, setLiveTime] = useState(new Date());
@@ -120,7 +115,6 @@ export default function Home() {
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const coords = { lat: pos.coords.latitude, lon: pos.coords.longitude };
-        localStorage.setItem("sf_gps_coords", JSON.stringify(coords));
         setGpsCoords(coords);
         setLocationDenied(false);
         setLocationLoading(false);
@@ -133,9 +127,10 @@ export default function Home() {
     );
   }, []);
 
-  // Auto-request GPS on mount if we don't already have cached coords
+  // Always request fresh GPS on mount — also clear any stale cached coords
   useEffect(() => {
-    if (!gpsCoords) requestLocation();
+    try { localStorage.removeItem("sf_gps_coords"); } catch { /* ignore */ }
+    requestLocation();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
