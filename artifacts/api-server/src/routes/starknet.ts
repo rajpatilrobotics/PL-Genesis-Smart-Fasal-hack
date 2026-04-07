@@ -15,7 +15,7 @@ const __dirname = dirname(__filename);
 const router: IRouter = Router();
 
 // ─── Config ────────────────────────────────────────────────────────────────
-const STARKNET_RPC    = process.env.STARKNET_RPC_URL || "https://starknet-sepolia.drpc.org/";
+const STARKNET_RPC    = process.env.STARKNET_RPC_URL || "https://starknet-sepolia.public.blastapi.io/rpc/v0_7";
 const PRIV_KEY        = process.env.STARKNET_PRIVATE_KEY || "0x0ef319415259f51659596f39e8e5a34d4bea0f2db92351c8ca8bfd937697d9c";
 const WALLET_ADDR     = process.env.STARKNET_WALLET_ADDRESS || "0x17ecda611fa4c7f75758f669a2cf0a0d1091032b1e3172bc9f293f462818d9c";
 const STATE_FILE      = join(process.cwd(), "starknet-state.json");
@@ -25,15 +25,53 @@ const EXPLORER_BASE   = "https://sepolia.voyager.online";
 const NETWORK_NAME    = "Starknet Sepolia";
 const OZ_CLASS_HASH   = "0x061dac032f228abef9c6626f995015233097ae253a7f72d68552db02f2971b8f";
 
-const provider = new RpcProvider({ nodeUrl: STARKNET_RPC });
+// Fallback RPC list — tried in order until one responds
+const RPC_FALLBACKS = [
+  STARKNET_RPC,
+  "https://starknet-sepolia.public.blastapi.io/rpc/v0_7",
+  "https://free-rpc.nethermind.io/sepolia-juno/",
+  "https://starknet-sepolia.drpc.org/",
+].filter((url, idx, arr) => arr.indexOf(url) === idx); // deduplicate
 
-function getAccount() {
-  return new Account({ provider, address: WALLET_ADDR, signer: PRIV_KEY, cairoVersion: "1" });
+let _provider: RpcProvider | null = null;
+
+async function getProvider(): Promise<RpcProvider> {
+  if (_provider) return _provider;
+  for (const url of RPC_FALLBACKS) {
+    const p = new RpcProvider({ nodeUrl: url });
+    try {
+      await Promise.race([
+        p.getBlockNumber(),
+        new Promise<never>((_, rej) => setTimeout(() => rej(new Error("timeout")), 6000)),
+      ]);
+      console.log(`[Starknet] Using RPC: ${url}`);
+      _provider = p;
+      return p;
+    } catch {
+      console.warn(`[Starknet] RPC unreachable, trying next: ${url}`);
+    }
+  }
+  // All failed — return a provider anyway so callers get a clean error
+  _provider = new RpcProvider({ nodeUrl: RPC_FALLBACKS[0] });
+  return _provider;
+}
+
+// Reset cached provider so next request re-probes (e.g. after transient failure)
+function resetProvider() { _provider = null; }
+
+function getAccount(p: RpcProvider) {
+  return new Account({ provider: p, address: WALLET_ADDR, signer: PRIV_KEY, cairoVersion: "1" });
+}
+
+function isNetworkError(err: unknown): boolean {
+  const msg = (err as any)?.message ?? String(err);
+  return /fetch failed|Failed to fetch|Failed to determine starting block|tip statistics|ECONNREFUSED|ENOTFOUND|network error|getaddrinfo/i.test(msg);
 }
 
 async function isAccountDeployed(address: string): Promise<boolean> {
   try {
-    await provider.getClassAt(address);
+    const p = await getProvider();
+    await p.getClassAt(address);
     return true;
   } catch {
     return false;
@@ -89,8 +127,9 @@ function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T
 async function getLiveBlock() {
   const TIMEOUT_MS = 8000;
   try {
+    const p = await getProvider();
     const blockNumber = await withTimeout(
-      provider.getBlockNumber(),
+      p.getBlockNumber(),
       TIMEOUT_MS,
       0,
     );
@@ -98,7 +137,7 @@ async function getLiveBlock() {
     let blockHash = "";
     try {
       const block = await withTimeout(
-        provider.getBlock(blockNumber) as Promise<any>,
+        p.getBlock(blockNumber) as Promise<any>,
         3000,
         null,
       );
@@ -122,10 +161,11 @@ function computeSoilHash(ph: number, n: number, p: number, k: number, moisture: 
   return num.toHex(h);
 }
 
-function getInsuranceContract(state: StarknetState) {
+async function getInsuranceContract(state: StarknetState) {
   if (!state.contractAddress) return null;
+  const p = await getProvider();
   const sierra = JSON.parse(readFileSync(SIERRA_PATH, "utf-8"));
-  return new Contract(sierra.abi as Abi, state.contractAddress, provider);
+  return new Contract(sierra.abi as Abi, state.contractAddress, p);
 }
 
 // ─── Routes ─────────────────────────────────────────────────────────────────
@@ -163,15 +203,16 @@ router.post("/starknet/deploy-account", async (_req, res): Promise<void> => {
     return;
   }
   try {
+    const p = await getProvider();
     const pubKey = ec.starkCurve.getStarkKey(PRIV_KEY);
     const ctorData = CallData.compile({ publicKey: pubKey });
-    const account = getAccount();
+    const account = getAccount(p);
     const { transaction_hash, contract_address } = await account.deployAccount({
       classHash: OZ_CLASS_HASH,
       constructorCalldata: ctorData,
       addressSalt: pubKey,
     });
-    await provider.waitForTransaction(transaction_hash);
+    await p.waitForTransaction(transaction_hash);
     res.json({
       success: true,
       txHash: transaction_hash,
@@ -180,13 +221,21 @@ router.post("/starknet/deploy-account", async (_req, res): Promise<void> => {
       explorerUrl: `${EXPLORER_BASE}/contract/${contract_address ?? WALLET_ADDR}`,
     });
   } catch (err: any) {
+    resetProvider();
     const msg: string = err?.message ?? String(err);
     const isInsufficientFunds = /insufficient|balance|fee|fund/i.test(msg);
+    const isNetwork = isNetworkError(err);
     res.status(500).json({
-      error: isInsufficientFunds ? "Insufficient funds — need STRK for gas" : msg,
-      hint: isInsufficientFunds
-        ? `Fund ${WALLET_ADDR} with STRK at https://faucet.starknet.io then try again.`
-        : "Check that the private key matches the wallet address.",
+      error: isNetwork
+        ? "Starknet RPC network error — the Sepolia testnet node is temporarily unreachable. Please try again in a moment."
+        : isInsufficientFunds
+          ? "Insufficient funds — need STRK for gas"
+          : msg,
+      hint: isNetwork
+        ? "The Starknet Sepolia RPC endpoint is temporarily unavailable. The app will automatically retry a different node."
+        : isInsufficientFunds
+          ? `Fund ${WALLET_ADDR} with STRK at https://faucet.starknet.io then try again.`
+          : "Check that the private key matches the wallet address.",
     });
   }
 });
@@ -200,18 +249,20 @@ router.post("/starknet/deploy", async (_req, res): Promise<void> => {
   }
 
   try {
+    const p = await getProvider();
+    const account = getAccount(p);
     const sierraJson = JSON.parse(readFileSync(SIERRA_PATH, "utf-8"));
     const casmJson   = JSON.parse(readFileSync(CASM_PATH,   "utf-8"));
 
     // Declare the class
-    const declareResp = await getAccount().declare({ contract: sierraJson, casm: casmJson });
-    await provider.waitForTransaction(declareResp.transaction_hash);
+    const declareResp = await account.declare({ contract: sierraJson, casm: casmJson });
+    await p.waitForTransaction(declareResp.transaction_hash);
     const classHash = declareResp.class_hash;
 
     // Deploy an instance — oracle = our own wallet address
     const constructorCalldata = CallData.compile({ oracle: WALLET_ADDR });
-    const deployResp = await getAccount().deployContract({ classHash, constructorCalldata });
-    await provider.waitForTransaction(deployResp.transaction_hash);
+    const deployResp = await account.deployContract({ classHash, constructorCalldata });
+    await p.waitForTransaction(deployResp.transaction_hash);
     const contractAddress = deployResp.contract_address;
 
     state.contractAddress = contractAddress;
@@ -231,13 +282,18 @@ router.post("/starknet/deploy", async (_req, res): Promise<void> => {
       deployedAt: state.deployedAt,
     });
   } catch (err: any) {
+    resetProvider();
     console.error("[Starknet] Deploy error:", err);
     const msg: string = err?.message ?? String(err);
     const isNotDeployed = msg.includes("is not deployed") || msg.includes("Contract not found");
     const isInsufficientFunds = msg.includes("insufficient") || msg.includes("Insufficient") || msg.includes("balance");
+    const isNetwork = isNetworkError(err);
     let userError = msg;
     let hint = "Make sure the wallet has Starknet Sepolia ETH from https://faucet.starknet.io/";
-    if (isNotDeployed) {
+    if (isNetwork) {
+      userError = "Starknet RPC network error — the Sepolia testnet node is temporarily unreachable.";
+      hint = "The Starknet Sepolia RPC endpoint is temporarily unavailable. Please try again in a moment.";
+    } else if (isNotDeployed) {
       userError = "Wallet account is not deployed on Starknet Sepolia";
       hint = "The wallet address must be a deployed Argent X or Braavos account on Starknet Sepolia. Visit https://www.starknet.io/en/ecosystem/wallets to create and fund one, then update STARKNET_WALLET_ADDRESS and STARKNET_PRIVATE_KEY in environment variables.";
     } else if (isInsufficientFunds) {
@@ -283,12 +339,13 @@ router.post("/starknet/register-policy", async (req, res): Promise<void> => {
       heat_temp_threshold: heatThreshold,
     });
 
-    const resp = await withRetry(() => getAccount().execute({
+    const p = await getProvider();
+    const resp = await withRetry(() => getAccount(p).execute({
       contractAddress: state.contractAddress!,
       entrypoint: "register_policy",
       calldata,
     }));
-    await provider.waitForTransaction(resp.transaction_hash);
+    await p.waitForTransaction(resp.transaction_hash);
 
     const { blockNumber, networkLive } = await getLiveBlock();
     state.policies[farmerId] = {
@@ -310,11 +367,17 @@ router.post("/starknet/register-policy", async (req, res): Promise<void> => {
       registeredAt: state.policies[farmerId].registeredAt,
     });
   } catch (err: any) {
+    resetProvider();
     console.error("[Starknet] Register policy error:", err);
     const msg: string = err?.message ?? String(err);
     const isTransient = /temporary internal error|please retry/i.test(msg);
+    const isNetwork = isNetworkError(err);
     res.status(500).json({
-      error: isTransient ? "Starknet RPC is temporarily busy — please try again in a few seconds" : msg,
+      error: isNetwork
+        ? "Starknet RPC network error — please try again in a moment."
+        : isTransient
+          ? "Starknet RPC is temporarily busy — please try again in a few seconds"
+          : msg,
     });
   }
 });
@@ -368,12 +431,13 @@ router.post("/starknet/submit-claim", async (req, res): Promise<void> => {
       temperature:  Math.round(temperature ?? 0),
     });
 
-    const resp = await withRetry(() => getAccount().execute({
+    const p = await getProvider();
+    const resp = await withRetry(() => getAccount(p).execute({
       contractAddress: state.contractAddress!,
       entrypoint: "submit_claim",
       calldata,
     }));
-    await provider.waitForTransaction(resp.transaction_hash);
+    await p.waitForTransaction(resp.transaction_hash);
 
     const { blockNumber, networkLive } = await getLiveBlock();
     const claimId = state.claims.length;
@@ -400,8 +464,14 @@ router.post("/starknet/submit-claim", async (req, res): Promise<void> => {
       message: `${trigger === "drought" ? "Drought" : "Heat stress"} confirmed on-chain. Parametric payout triggered automatically.`,
     });
   } catch (err: any) {
+    resetProvider();
     console.error("[Starknet] Submit claim error:", err);
-    res.status(500).json({ error: err?.message ?? String(err) });
+    const isNetwork = isNetworkError(err);
+    res.status(500).json({
+      error: isNetwork
+        ? "Starknet RPC network error — please try again in a moment."
+        : (err?.message ?? String(err)),
+    });
   }
 });
 
@@ -493,12 +563,13 @@ router.post("/starknet/carbon-credit/mint", async (req, res): Promise<void> => {
           heat_temp_threshold:        BigInt(Math.round(healthScore * 100)),
         });
 
-        const resp = await withRetry(() => getAccount().execute({
+        const p = await getProvider();
+        const resp = await withRetry(() => getAccount(p).execute({
           contractAddress: state.contractAddress!,
           entrypoint:      "register_policy",
           calldata,
         }));
-        await provider.waitForTransaction(resp.transaction_hash);
+        await p.waitForTransaction(resp.transaction_hash);
 
         txHash  = resp.transaction_hash;
         txUrl   = `${EXPLORER_BASE}/tx/${txHash}`;
