@@ -18,8 +18,10 @@
 import { openai } from "@workspace/integrations-openai-ai-server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const GEMINI_PRIMARY_MODEL = "gemini-2.0-flash";
-const GEMINI_FALLBACK_MODEL = "gemini-1.5-flash";
+// gemini-1.5-flash: 1,500 req/day free tier (higher quota)
+// gemini-2.0-flash: 200 req/day free tier (lower quota, used as fallback)
+const GEMINI_PRIMARY_MODEL = "gemini-1.5-flash";
+const GEMINI_FALLBACK_MODEL = "gemini-2.0-flash";
 
 // Support GOOGLE_API_KEY (official SDK name) and GEMINI_API_KEY (common on Render/Vercel)
 function getGeminiApiKey(): string | undefined {
