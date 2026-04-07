@@ -107,14 +107,14 @@ export default function Home() {
     return () => clearInterval(id);
   }, []);
 
-  // Fallback: get approximate location via our backend (avoids browser CORS restrictions)
+  // Fallback: get approximate location via IP geolocation (browser sends its own real IP)
   const fetchIpLocation = useCallback(async () => {
     try {
-      const res = await fetch("/api/geoip", { signal: AbortSignal.timeout(6000) });
+      const res = await fetch("https://ipapi.co/json/", { signal: AbortSignal.timeout(6000) });
       if (!res.ok) return;
-      const json = (await res.json()) as { lat?: number; lon?: number };
-      if (json.lat && json.lon) {
-        setGpsCoords({ lat: json.lat, lon: json.lon });
+      const json = (await res.json()) as { latitude?: number; longitude?: number };
+      if (json.latitude && json.longitude) {
+        setGpsCoords({ lat: json.latitude, lon: json.longitude });
       }
     } catch {
       // silent — will stay on server-side region rotation
