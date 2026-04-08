@@ -82,6 +82,16 @@ const DUMMY_SENSOR_BASE = {
   moisture: 58,
 };
 
+const FALLBACK_WEATHER = {
+  location: "Pen Taluka, Maharashtra",
+  temperature: 26,
+  description: "Partly Cloudy",
+  humidity: 80,
+  windSpeed: 2.6,
+  feelsLike: 31,
+  rainfall: 0,
+};
+
 export default function Home() {
   const { t } = useTranslation();
   const { toast } = useToast();
@@ -99,7 +109,7 @@ export default function Home() {
   const [pipelineRunning, setPipelineRunning] = useState(false);
   const [pipelineResult, setPipelineResult] = useState<PipelineResult | null>(null);
   const [steps, setSteps] = useState<PipelineStep[]>([]);
-  const [displaySensor, setDisplaySensor] = useState({ nitrogen: 0, phosphorus: 0, potassium: 0, ph: 0, moisture: 0 });
+  const [displaySensor, setDisplaySensor] = useState(DUMMY_SENSOR_BASE);
   const [isSampling, setIsSampling] = useState(false);
   const [tick, setTick] = useState(0);
 
@@ -135,6 +145,7 @@ export default function Home() {
       refetchInterval: 10 * 60 * 1000,
     }
   });
+  const effectiveWeather = weather ?? FALLBACK_WEATHER;
 
   const { data: sensorData, isLoading: loadingSensor } = useGetLatestSensorData({
     query: { queryKey: getGetLatestSensorDataQueryKey(), refetchInterval: 5000 }
@@ -262,9 +273,9 @@ export default function Home() {
             potassium: activeSensor.potassium,
             ph: activeSensor.ph,
             moisture: activeSensor.moisture,
-            temperature: weather?.temperature,
-            humidity: weather?.humidity,
-            rainfall: weather?.rainfall
+            temperature: effectiveWeather.temperature,
+            humidity: effectiveWeather.humidity,
+            rainfall: effectiveWeather.rainfall
           }
         }, {
           onSuccess: (data) => resolve(data as typeof data),
@@ -277,7 +288,7 @@ export default function Home() {
       fertilizerAdvice = aiResult.fertilizerAdvice;
     } catch {
       // fallback
-      const n = activeSensor.nitrogen; const m = activeSensor.moisture; const t = weather?.temperature ?? 30;
+      const n = activeSensor.nitrogen; const m = activeSensor.moisture; const t = effectiveWeather.temperature;
       aiHealth = Math.min(95, Math.max(30, 75 + (activeSensor.ph > 6 && activeSensor.ph < 7.5 ? 10 : -10)));
       aiYield = Math.min(95, Math.max(30, 70 + (n > 40 ? 10 : -5)));
       riskLevel = (t > 35 && m < 30) ? "High" : m < 40 ? "Medium" : "Low";
@@ -311,7 +322,7 @@ export default function Home() {
         potassium: privacyEnabled ? "***" : sensorData.potassium,
         ph: sensorData.ph,
         moisture: sensorData.moisture,
-        temperature: weather?.temperature,
+        temperature: effectiveWeather.temperature,
         timestamp: new Date().toISOString(),
         walletAddress: walletAddress ?? "anonymous",
         accessLevel,
@@ -422,7 +433,7 @@ export default function Home() {
         potassium: sensorData.potassium,
         ph: sensorData.ph,
         moisture: sensorData.moisture,
-        temperature: weather?.temperature,
+        temperature: effectiveWeather.temperature,
       });
     }
 
@@ -540,16 +551,16 @@ export default function Home() {
                     <Skeleton className="h-8 w-20 bg-white/30 rounded-lg" />
                     <Skeleton className="h-3 w-24 bg-white/30 rounded-full" />
                   </div>
-                ) : weather ? (
+                ) : (
                   <div className="flex items-center justify-between gap-3">
                     {/* Left: location + temp */}
                     <div>
                       <div className="flex items-center gap-1 mb-1">
                         <Navigation className="w-3 h-3 text-white/80" />
-                        <span className="text-[10px] font-bold text-white/80 uppercase tracking-wider">{weather.location}</span>
+                        <span className="text-[10px] font-bold text-white/80 uppercase tracking-wider">{effectiveWeather.location}</span>
                       </div>
-                      <p className="text-3xl font-extrabold text-white tracking-tight drop-shadow-sm">{weather.temperature}°C</p>
-                      <p className="text-[11px] text-white/80 capitalize mt-0.5">{weather.description}</p>
+                      <p className="text-3xl font-extrabold text-white tracking-tight drop-shadow-sm">{effectiveWeather.temperature}°C</p>
+                      <p className="text-[11px] text-white/80 capitalize mt-0.5">{effectiveWeather.description}</p>
                       <p className="text-[10px] text-white/60 mt-1">
                         {liveTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
                       </p>
@@ -558,34 +569,23 @@ export default function Home() {
                     <div className="flex flex-col items-end gap-1.5">
                       <div className="flex items-center gap-1 bg-white/25 backdrop-blur-sm rounded-full px-2.5 py-1">
                         <Droplets className="w-2.5 h-2.5 text-white" />
-                        <span className="text-[11px] font-bold text-white">{weather.humidity}%</span>
+                        <span className="text-[11px] font-bold text-white">{effectiveWeather.humidity}%</span>
                       </div>
                       <div className="flex items-center gap-1 bg-white/25 backdrop-blur-sm rounded-full px-2.5 py-1">
                         <Wind className="w-2.5 h-2.5 text-white" />
-                        <span className="text-[11px] font-bold text-white">{weather.windSpeed} m/s</span>
+                        <span className="text-[11px] font-bold text-white">{effectiveWeather.windSpeed} m/s</span>
                       </div>
                       <div className="flex items-center gap-1 bg-white/25 backdrop-blur-sm rounded-full px-2.5 py-1">
                         <Thermometer className="w-2.5 h-2.5 text-amber-200" />
-                        <span className="text-[11px] font-bold text-white">Feels {weather.feelsLike ?? weather.temperature}°C</span>
+                        <span className="text-[11px] font-bold text-white">Feels {effectiveWeather.feelsLike ?? effectiveWeather.temperature}°C</span>
                       </div>
-                      {weather.rainfall > 0 && (
+                      {effectiveWeather.rainfall > 0 && (
                         <div className="flex items-center gap-1 bg-white/25 backdrop-blur-sm rounded-full px-2.5 py-1">
                           <CloudRain className="w-2.5 h-2.5 text-sky-200" />
-                          <span className="text-[11px] font-bold text-white">{weather.rainfall} mm</span>
+                          <span className="text-[11px] font-bold text-white">{effectiveWeather.rainfall} mm</span>
                         </div>
                       )}
                     </div>
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-between">
-                    <p className="text-[11px] text-white/70">Could not load weather</p>
-                    <button
-                      onClick={() => setCoords({ ...coords })}
-                      className="flex items-center gap-1 bg-white/25 rounded-full px-2.5 py-1"
-                    >
-                      <RefreshCw className="w-3 h-3 text-white" />
-                      <span className="text-[11px] font-bold text-white">Retry</span>
-                    </button>
                   </div>
                 )}
               </>
