@@ -17,6 +17,8 @@ import FinanceTrade from "@/pages/finance-trade";
 import Onboarding from "@/pages/onboarding";
 import NotFound from "@/pages/not-found";
 import { WalletProvider } from "@/lib/wallet-context";
+import { useEffect } from "react";
+import { wakeUpServer } from "@/lib/api";
 
 const queryClient = new QueryClient();
 
@@ -65,6 +67,13 @@ function Router() {
 }
 
 function App() {
+  useEffect(() => {
+    // Wake up the backend immediately on app load, then keep it alive every 4 minutes
+    wakeUpServer();
+    const interval = setInterval(wakeUpServer, 4 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <WouterRouter base={basePath}>
       <QueryClientProvider client={queryClient}>
