@@ -17,7 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 import {
   CloudRain, Droplets, Thermometer, Wind, Brain, Database,
   RefreshCw, Shield, Zap, Lock, Globe, Users, CheckCircle2,
-  Loader2, AlertTriangle, Activity, Cpu, MapPin, Pencil, X, Search, Navigation
+  Loader2, AlertTriangle, Activity, Cpu, MapPin, X, Search, Navigation
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useQueryClient } from "@tanstack/react-query";
@@ -547,13 +547,6 @@ export default function Home() {
                       <div className="flex items-center gap-1 mb-1">
                         <Navigation className="w-3 h-3 text-white/80" />
                         <span className="text-[10px] font-bold text-white/80 uppercase tracking-wider">{weather.location}</span>
-                        <button
-                          onClick={() => { setShowLocationEdit(true); setLocationSuggestions([]); setLocationSearch(""); }}
-                          className="ml-0.5 p-0.5 rounded-full hover:bg-white/25 active:bg-white/35 transition-colors"
-                          title="Change location"
-                        >
-                          <Pencil className="w-2.5 h-2.5 text-white/60" />
-                        </button>
                       </div>
                       <p className="text-3xl font-extrabold text-white tracking-tight drop-shadow-sm">{weather.temperature}°C</p>
                       <p className="text-[11px] text-white/80 capitalize mt-0.5">{weather.description}</p>
