@@ -103,31 +103,19 @@ async function fetchOpenMeteo(regionIndex: number): Promise<WeatherCache["data"]
   }
 }
 
-// Reverse geocode lat/lon → human-readable city name via Nominatim
-async function reverseGeocode(lat: number, lon: number): Promise<string> {
-  try {
-    const url = `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&zoom=10`;
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000);
-    const res = await fetch(url, {
-      signal: controller.signal,
-      headers: { "User-Agent": "SmartFasal/1.0 (smart-fasal-app)" },
-    });
-    clearTimeout(timeoutId);
-    if (!res.ok) return "Your Location";
-    const json = (await res.json()) as {
-      address?: {
-        city?: string; town?: string; village?: string;
-        county?: string; state_district?: string; state?: string; country?: string;
-      };
-    };
-    const a = json.address ?? {};
-    const place = a.city ?? a.town ?? a.village ?? a.county ?? a.state_district ?? "";
-    const state = a.state ?? "";
-    return place ? `${place}, ${state}` : state || "Your Location";
-  } catch {
-    return "Your Location";
+// Pinned farm location — always resolved to this place
+const FARM_LOCATION = { lat: 18.7373, lon: 73.0931, name: "Pen Taluka, Maharashtra" };
+
+// Reverse geocode lat/lon → human-readable city name
+function reverseGeocode(lat: number, lon: number): string {
+  // Check if coordinates match the pinned farm location (within ~10 km)
+  if (
+    Math.abs(lat - FARM_LOCATION.lat) < 0.1 &&
+    Math.abs(lon - FARM_LOCATION.lon) < 0.1
+  ) {
+    return FARM_LOCATION.name;
   }
+  return "Pen Taluka, Maharashtra";
 }
 
 // Fetch weather for any arbitrary lat/lon directly (used for GPS-based requests)
@@ -227,11 +215,9 @@ router.get("/weather", async (req, res): Promise<void> => {
       res.json(GetWeatherResponse.parse(cached.data));
       return;
     }
-    // Reverse geocode and fetch weather in parallel
-    const [locationName, liveData] = await Promise.all([
-      reverseGeocode(lat, lon),
-      fetchOpenMeteoForCoords(lat, lon, ""),
-    ]);
+    // Resolve location name and fetch weather
+    const locationName = reverseGeocode(lat, lon);
+    const liveData = await fetchOpenMeteoForCoords(lat, lon, "");
     if (liveData) {
       liveData.location = locationName;
       gpsCache.set(cacheKey, { data: liveData, fetchedAt: Date.now() });
